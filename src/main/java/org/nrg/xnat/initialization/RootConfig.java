@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.hibernate4.Hibernate4Module;
 import lombok.extern.slf4j.Slf4j;
@@ -142,6 +143,16 @@ public class RootConfig {
     @Bean
     public Module hibernateModule() {
         return new Hibernate4Module();
+    }
+
+    @Bean
+    public Module guavaModule() {
+        return new GuavaModule();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper(final Jackson2ObjectMapperBuilder objectMapperBuilder) {
+        return objectMapperBuilder.build();
     }
 
     @Bean

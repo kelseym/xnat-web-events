@@ -36,7 +36,8 @@ import java.util.Locale;
 
 @Configuration
 @EnableSwagger2
-@ComponentScan(value = {"org.nrg.xapi.rest", "org.nrg.xnat.spawner.configuration"}, includeFilters = @Filter(ControllerAdvice.class))
+@ComponentScan(value = {"org.nrg.xapi.rest", "org.nrg.xnat.spawner.configuration", "org.nrg.xnat.eventservice.rest"}, includeFilters = @Filter(ControllerAdvice.class))
+
 public class RestApiConfig {
     @Bean
     public UserFactory userFactory(final XdatUserAuthService service) {
