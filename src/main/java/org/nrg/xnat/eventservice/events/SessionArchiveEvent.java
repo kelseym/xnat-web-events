@@ -1,0 +1,35 @@
+package org.nrg.xnat.eventservice.events;
+
+
+import org.nrg.framework.event.XnatEventServiceEvent;
+import org.nrg.xdat.om.XnatImagesessiondata;
+import org.nrg.xft.security.UserI;
+import org.springframework.stereotype.Service;
+
+@Service
+@XnatEventServiceEvent(
+        name="SessionArchiveEvent",
+        displayName = "Session Archived",
+        description="Session Archive Event",
+        object = "Session",
+        operation = "Archived")
+public class SessionArchiveEvent extends SimpleEventServiceEvent<SessionArchiveEvent, XnatImagesessiondata> {
+
+
+    public SessionArchiveEvent(){};
+
+    public SessionArchiveEvent(XnatImagesessiondata payload, UserI eventUser) {
+        super(payload, eventUser);
+    }
+
+
+    @Override
+    public String getDisplayName() {
+        return "SessionArchiveEvent";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Session Archive Event";
+    }
+}

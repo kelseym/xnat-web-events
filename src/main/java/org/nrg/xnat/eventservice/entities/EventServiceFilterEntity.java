@@ -1,0 +1,97 @@
+package org.nrg.xnat.eventservice.entities;
+
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import org.nrg.xnat.eventservice.model.EventFilter;
+
+import javax.persistence.*;
+import java.util.List;
+
+
+@Entity
+public class EventServiceFilterEntity {
+
+    public EventServiceFilterEntity() {}
+
+    private long id;
+    private String name;
+    private List<String> projectIds;
+    private List<SubscriptionEntity> eventSubscriptionEntities = Lists.newArrayList();
+
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                          .add("id", id)
+                .add("name", name)
+                .add("projectIds", projectIds)
+                .toString();
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EventServiceFilterEntity that = (EventServiceFilterEntity) o;
+        return id == that.id &&
+                Objects.equal(name, that.name) &&
+                Objects.equal(projectIds, that.projectIds) &&
+                Objects.equal(eventSubscriptionEntities, that.eventSubscriptionEntities);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id, name, projectIds, eventSubscriptionEntities);
+    }
+
+    public EventServiceFilterEntity(String name, List<String> projectIds) {
+        this.name = name;
+        this.projectIds = projectIds;
+    }
+
+    public static EventServiceFilterEntity fromPojo(EventFilter eventServiceFilter) {
+
+        return eventServiceFilter != null ?
+                new EventServiceFilterEntity(
+                eventServiceFilter.name(),
+                eventServiceFilter.projectIds())
+                : null;
+
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public long getId() {
+        return id;
+    }
+
+    public void setId(final long id) {
+        this.id = id;
+    }
+
+    public String getName() { return name; }
+
+    public void setName(String name) { this.name = name; }
+
+    @ElementCollection
+    public List<String> getProjectIds() { return projectIds; }
+
+    public void setProjectIds(List<String> projectIds) { this.projectIds = projectIds; }
+
+    @OneToMany(mappedBy = "eventServiceFilterEntity", cascade= CascadeType.ALL)
+    public List<SubscriptionEntity> getEventSubscriptionEntities() { return eventSubscriptionEntities; }
+
+    public void setEventSubscriptionEntities(List<SubscriptionEntity> eventSubscriptionEntities) {
+        this.eventSubscriptionEntities = eventSubscriptionEntities;
+    }
+
+    public EventFilter toPojo() {
+        return EventFilter.builder()
+                          .id(this.id)
+                          .name(this.name)
+                          .projectIds(this.projectIds)
+                          .build();
+    }
+}
