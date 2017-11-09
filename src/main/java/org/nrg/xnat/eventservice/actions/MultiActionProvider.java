@@ -14,5 +14,4 @@ public abstract class MultiActionProvider implements EventServiceActionProvider 
         return this.getClass().getCanonicalName();
     }
 
-
 }

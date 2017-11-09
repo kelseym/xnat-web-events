@@ -32,4 +32,14 @@ public class SessionArchiveEvent extends SimpleEventServiceEvent<SessionArchiveE
     public String getDescription() {
         return "Session Archive Event";
     }
+
+    @Override
+    public String getPayloadXnatType() {
+        return "xnat:imageSessionData";
+    }
+
+    @Override
+    public Boolean isPayloadXsiType() {
+        return true;
+    }
 }

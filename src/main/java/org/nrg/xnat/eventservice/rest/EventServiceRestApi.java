@@ -129,13 +129,15 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     }
 
 
-    @XapiRequestMapping(value = "/actionproviders", method = GET)
+    @XapiRequestMapping(value = "/actionproviders", params = {"!projectid", "!xsitype"}, method = GET)
+    @ApiOperation(value = "Get Action Providers and associated Actions")
     @ResponseBody
-    public List<ActionProvider> getActionProviders()
+    public List<ActionProvider> getActionProviders(final @RequestParam String project,
+                                                   final @RequestParam String xsiType)
             throws NrgServiceRuntimeException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
         checkCreateOrThrow(userI);
-        return eventService.getActionProviders();
+        return eventService.getActionProviders(xsiType, project);
     }
 
     @XapiRequestMapping(value = "/actions", method = GET)

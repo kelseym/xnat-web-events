@@ -7,8 +7,11 @@ import java.util.List;
 public interface ActionManager {
 
     Action getActionByKey(String actionKey);
+
     List<Action> getActions();
-    List<Action> getActionsByEvent(String eventName) throws Exception;
+    List<Action> getActions(String xnatType);
+    List<Action> getActions(String xnatType, String projectId);
+
     List<Action> getActionsByProvider(String providerName);
     List<Action> getActionsByProvider(EventServiceActionProvider provider);
     List<Action> getActionsByObject(String operation);

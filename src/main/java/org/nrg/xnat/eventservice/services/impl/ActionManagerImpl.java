@@ -63,15 +63,23 @@ public class ActionManagerImpl implements ActionManager {
     }
 
     @Override
-    public List<Action> getActionsByEvent(String eventName) throws Exception {
+    public List<Action> getActions(String xnatType) {
         List<Action> actions = new ArrayList<>();
-        for(Action action : getActions()){
-            if(action.events().contains(eventName)) {
-                actions.add(action);
-            }
+        for(EventServiceActionProvider provider:getActionProviders()) {
+            actions.addAll(provider.getActions(xnatType, null));
         }
         return actions;
     }
+
+    @Override
+    public List<Action> getActions(String xnatType, String projectId) {
+        List<Action> actions = new ArrayList<>();
+        for(EventServiceActionProvider provider:getActionProviders()) {
+            actions.addAll(provider.getActions(xnatType, projectId,null));
+        }
+        return actions;
+    }
+
     @Override
     public List<Action> getActionsByProvider(String providerName) {
         for(EventServiceActionProvider provider : componentManager.getActionProviders()){

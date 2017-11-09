@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.bus.Event;
 
-@SuppressWarnings("unused")
+@Deprecated
 @XnatEventServiceListener(name = "SessionArchivedDefaultListener", description = "Placeholder event listener for Session Archive Event")
 @Service
 public class SessionArchivedDefaultListener implements EventServiceListener<SessionArchiveEvent> {

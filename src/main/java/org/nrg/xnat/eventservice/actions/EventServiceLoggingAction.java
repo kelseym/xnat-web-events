@@ -1,8 +1,9 @@
 package org.nrg.xnat.eventservice.actions;
 
-import org.nrg.framework.event.XnatEventServiceAction;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.SimpleEventServiceEvent;
+import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@XnatEventServiceAction
 public class EventServiceLoggingAction extends SingleActionProvider {
 
     private static final Logger log = LoggerFactory.getLogger(EventService.class);

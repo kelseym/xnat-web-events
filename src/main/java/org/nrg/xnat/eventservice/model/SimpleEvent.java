@@ -12,18 +12,25 @@ public abstract class SimpleEvent {
     @JsonProperty("display-name") public abstract String displayName();
     @JsonProperty("description") public abstract String description();
     @JsonProperty("payload") public abstract String payloadClass();
+    @JsonProperty("xnat-type") public abstract String xnatType();
+    @JsonProperty("is-xsi-type") public abstract boolean isXsiType();
+
 
     public static SimpleEvent create( @JsonProperty("id") String id,
                                      @JsonProperty("listener") String listenerService,
                                      @JsonProperty("display-name") String displayName,
                                      @JsonProperty("description") String description,
-                                     @JsonProperty("payload") String payloadClass) {
+                                     @JsonProperty("payload") String payloadClass,
+                                     @JsonProperty("xnat-type") String xnatType,
+                                     @JsonProperty("is-xsi-type") boolean isXsiType) {
         return builder()
                 .id(id)
                 .listenerService(listenerService)
                 .displayName(displayName)
                 .description(description)
                 .payloadClass(payloadClass)
+                .xnatType(xnatType)
+                .isXsiType(isXsiType)
                 .build();
     }
 
@@ -42,6 +49,10 @@ public abstract class SimpleEvent {
         public abstract Builder description(String description);
 
         public abstract Builder payloadClass(String payloadClass);
+
+        public abstract Builder xnatType(String xnatType);
+
+        public abstract Builder isXsiType(boolean isXsiType);
 
         public abstract SimpleEvent build();
     }

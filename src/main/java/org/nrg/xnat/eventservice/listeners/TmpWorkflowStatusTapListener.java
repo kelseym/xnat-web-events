@@ -11,6 +11,7 @@ import org.nrg.xft.event.entities.WorkflowStatusEvent;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
 import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
+import org.nrg.xnat.eventservice.model.EventFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,19 +24,19 @@ import static reactor.bus.selector.Selectors.type;
 
 @Service
 @SuppressWarnings("unused")
-public class TmpSessionTransferredListener implements Consumer<Event<WorkflowStatusEvent>> {
-    private static final Logger log = LoggerFactory.getLogger(TmpSessionTransferredListener.class);
+public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStatusEvent>> {
+    private static final Logger log = LoggerFactory.getLogger(TmpWorkflowStatusTapListener.class);
 
     private final NrgEventService eventService;
 
     @Autowired
-    public TmpSessionTransferredListener(final EventBus eventBus, final NrgEventService eventService) {
+    public TmpWorkflowStatusTapListener(final EventBus eventBus, final NrgEventService eventService) {
         eventBus.on(type(WorkflowStatusEvent.class), this);
         this.eventService = eventService;
     }
 
     //*
-    // Translate "Transferred" workflow event into SessionArchivedEvent for workflow events containing Session type
+    // Translate workflow status events into Event Service events for workflow events containing appropriate labels
     //*
     @Override
     public void accept(Event<WorkflowStatusEvent> event) {
@@ -48,9 +49,9 @@ public class TmpSessionTransferredListener implements Consumer<Event<WorkflowSta
 
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
-                String eventLabel = "ProjectId:" + session.getProject();
-                eventService.triggerEvent(eventLabel, new SessionArchiveEvent(session, user), false);
-                log.error("Firing SessionArchiveEvent for EventLabel: " + eventLabel);
+                String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexPattern();
+                eventService.triggerEvent(filter, new SessionArchiveEvent(session, user), false);
+                log.error("Firing SessionArchiveEvent for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {
@@ -66,8 +67,8 @@ public class TmpSessionTransferredListener implements Consumer<Event<WorkflowSta
 
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
-                String eventLabel = "ProjectId:" + projectId;
-                eventService.triggerEvent(eventLabel, new ProjectCreatedEvent(projectData, user), false);
+                String filter = EventFilter.builder().addProjectId(projectId).build().toRegexPattern();
+                eventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user), false);
                 log.error("Firing New Project for EventLabel: " + "XXX");
 
 

@@ -16,8 +16,11 @@ public interface EventService {
 
 
     List<ActionProvider> getActionProviders();
+    List<ActionProvider> getActionProviders(String xnatType, String projectId);
 
     List<Action> getAllActions();
+    List<Action> getAllActions(String xnatType);
+    List<Action> getAllActions(String xnatType, String projectId);
 
     List<Action> getActionsByProvider(String actionProvider);
 

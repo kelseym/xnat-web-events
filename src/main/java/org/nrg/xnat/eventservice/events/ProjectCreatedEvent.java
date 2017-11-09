@@ -21,6 +21,15 @@ public class ProjectCreatedEvent extends SimpleEventServiceEvent<ProjectCreatedE
     @Override
     public String getDescription() { return description; }
 
+    @Override
+    public String getPayloadXnatType() {
+        return "xnat:projectData";
+    }
+
+    @Override
+    public Boolean isPayloadXsiType() {
+        return true;
+    }
 
 
 }

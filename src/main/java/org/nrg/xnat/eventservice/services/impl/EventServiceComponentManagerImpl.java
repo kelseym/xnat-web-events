@@ -27,7 +27,6 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     private List<EventServiceListener> installedListeners;
     private List<EventServiceActionProvider> actionProviders;
     private List<EventServiceEvent> installedEvents;
-    private List<EventServiceActionProvider> actionProviders1;
 
     @Autowired
     public EventServiceComponentManagerImpl(@Lazy final List<EventServiceListener> installedListeners,
@@ -75,7 +74,7 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
 
     @Override
     public List<EventServiceActionProvider> getActionProviders() {
-        return actionProviders1;
+        return actionProviders;
     }
 
     public List<EventServiceEvent> loadInstalledEvents() throws IOException, NoSuchMethodException {

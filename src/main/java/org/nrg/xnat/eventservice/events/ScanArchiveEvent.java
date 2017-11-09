@@ -33,4 +33,14 @@ public class ScanArchiveEvent extends SimpleEventServiceEvent<ScanArchiveEvent, 
     public String getDescription() {
         return "Session Archive Event";
     }
+
+    @Override
+    public String getPayloadXnatType() {
+        return "xnat:imageScanData";
+    }
+
+    @Override
+    public Boolean isPayloadXsiType() {
+        return true;
+    }
 }

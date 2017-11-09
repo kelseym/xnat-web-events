@@ -4,7 +4,8 @@ package org.nrg.xnat.eventservice.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
-@Deprecated
+@Deprecated()
+// Use SimpleEvent instead
 @AutoValue
 public abstract class Event {
 

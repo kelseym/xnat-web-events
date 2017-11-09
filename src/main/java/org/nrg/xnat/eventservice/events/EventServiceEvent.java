@@ -8,5 +8,7 @@ public interface EventServiceEvent<ObjectT> extends EventI {
     String getDisplayName();
     String getDescription();
     ObjectT getObject();
-    String getObjectType();
+    String getObjectClass();
+    String getPayloadXnatType();
+    Boolean isPayloadXsiType();
 }

@@ -49,7 +49,7 @@ public abstract class SimpleEventServiceEvent<EventT extends EventServiceEvent, 
     }
 
     @Override
-    public String getObjectType() {
+    public String getObjectClass() {
         return getObject() == null ? null : getObject().getClass().getCanonicalName();
     }
 

@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.actions;
 
 import com.google.common.base.Joiner;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
@@ -35,6 +36,16 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
     @Override
     public List<Action> getActions() {
         return new ArrayList<>(Arrays.asList(getAction()));
+    }
+
+    @Override
+    public List<Action> getActions(String xsiType, UserI user) {
+        return getActions();
+    }
+
+    @Override
+    public List<Action> getActions(String projectId, String xsiType, UserI user) {
+        return getActions();
     }
 
     public String getActionKey() {

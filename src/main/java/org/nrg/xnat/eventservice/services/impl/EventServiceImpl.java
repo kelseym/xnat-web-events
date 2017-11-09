@@ -2,91 +2,85 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.google.common.collect.Lists;
 import javassist.Modifier;
-import org.nrg.framework.event.XnatEventServiceAction;
-import org.nrg.framework.event.XnatEventServiceListener;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
-import org.nrg.xnat.eventservice.actions.EventServiceActionI;
-import org.nrg.xnat.eventservice.events.AbstractLifecycleEvent;
-import org.nrg.xnat.eventservice.listeners.EventServiceListenerI;
-import org.nrg.xnat.eventservice.model.EventServiceAction;
-import org.nrg.xnat.eventservice.model.EventServiceEvent;
-import org.nrg.xnat.eventservice.model.EventServiceListener;
-import org.nrg.xnat.eventservice.model.EventSubscription;
-import org.nrg.xnat.eventservice.services.EventService;
-import org.nrg.xnat.eventservice.services.EventSubscriptionEntityService;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
+import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
+import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.*;
+import org.nrg.xnat.eventservice.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
-import reactor.bus.Event;
 import reactor.bus.EventBus;
-import reactor.bus.registry.Registration;
+import reactor.bus.Event;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import static reactor.bus.selector.Selectors.regex;
-
 @Service
 public class EventServiceImpl implements EventService {
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
-    private static final String EVENT_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
-    private static final String LISTENER_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventservicelistener.properties";
-    private static final String ACTION_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventserviceaction.properties";
+//    private static final String EVENT_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
 
     private ContextService contextService;
     private EventSubscriptionEntityService subscriptionService;
     private EventBus eventBus;
-    private List<EventServiceEvent> installedEvents;
+    private EventServiceComponentManager componentManager;
+    private ActionManager actionManager;
 
     @Autowired
     public EventServiceImpl(final EventSubscriptionEntityService subscriptionService,
-                            final EventBus eventBus, final ContextService contextService) {
+                            final EventBus eventBus,
+                            final ContextService contextService,
+                            final EventServiceComponentManager componentManager,
+                            final ActionManager actionManager) {
         this.subscriptionService = subscriptionService;
         this.eventBus = eventBus;
         this.contextService = contextService;
-        this.installedEvents = new ArrayList<>();
+        this.componentManager = componentManager;
+        this.actionManager = actionManager;
+
     }
 
     @Override
-    @Deprecated
-    //TODO: Use new subscription model
-    public EventSubscription createSubscription(EventSubscription subscription) {
-        log.info("Creating new subscription: " + subscription.name());
+    public Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException {
 
-        try {
-            Registration registrationKey = eventBus.on(regex("ProjectId:" + subscription.projectId()), null);
-            log.info("Created registrationKey: " + registrationKey.hashCode());
-            return subscription.withSubscriptionKey(registrationKey.hashCode());
-        }
-        catch (Exception e) {
-            log.debug("Event subscription failed for " + subscription.consumerType());
-        }
-        return null;
+        return subscriptionService.activateAndSave(subscription);
     }
 
     @Override
-    public void updateSubscription(EventSubscription subscription) throws SubscriptionValidationException, NotFoundException {
-        subscriptionService.update(subscription);
+    public Subscription updateSubscription(Subscription subscription) throws SubscriptionValidationException, NotFoundException {
+        return subscriptionService.update(subscription);
     }
 
     @Override
-    public List<EventSubscription> getSubscriptions() {
+    public void deleteSubscription(Subscription subscription) {
+
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions() {
         return subscriptionService.getAllSubscriptions();
     }
 
     @Override
-    public EventSubscription getSubscription(Long id) throws NotFoundException {
+    public Subscription getSubscription(Long id) throws NotFoundException {
         return subscriptionService.getSubscription(id);
     }
 
     @Override
+    public Subscription validateSubscription(Subscription subscription) throws SubscriptionValidationException {
+        return null;
+    }
+
+    @Deprecated
     public List<Class<?>> getClassList(Class<?> parentClass, String resourcePath, String propertyKey) {
         final List<Class<?>> classList = Lists.newArrayList();
         try {
@@ -117,81 +111,91 @@ public class EventServiceImpl implements EventService {
 
 
     @Override
-    public List<EventServiceAction> getInstalledActions() {
-        List<EventServiceAction> actions = new ArrayList<>();
-        try {
-            for (Class<?> clazz : this.getClassList(EventServiceActionI.class, ACTION_RESOURCE_PATH, XnatEventServiceAction.ACTION_CLASS)) {
-                if (EventServiceActionI.class.isAssignableFrom(clazz)) {
-                    try {
-                        EventServiceActionI action = (EventServiceActionI)clazz.getConstructor().newInstance();
-                        //EventServiceActionI action = (EventServiceActionI) applicationContext.getBean(clazz);
-                        actions.add(toPojo(action));
-                    } catch (Exception e) {
-                        log.debug("Error reading installed actions into displayable Actions.\n" + clazz.getCanonicalName());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Error reading installed actions into displayable Actions.");
+    public List<ActionProvider> getActionProviders() {
+        List<ActionProvider> providers = new ArrayList<>();
+        for(EventServiceActionProvider ap : componentManager.getActionProviders()) {
+            providers.add(toPojo(ap));
         }
-        return actions;
+        return providers;
     }
 
     @Override
-    public List<EventServiceEvent> getInstalledEvents() {
-        List<EventServiceEvent> events = new ArrayList<>();
-        try {
-            for (final Resource resource : BasicXnatResourceLocator.getResources(EVENT_RESOURCE_PATH)) {
-                events.add(toPojo(AbstractLifecycleEvent.createFromResource(resource)));
-            }
-        } catch (Exception e) {
-            log.debug("Error reading installed events into displayable Events.");
-            log.debug(e.getMessage());
+    public List<ActionProvider> getActionProviders(String xsiType, String projectId) {
+        List<ActionProvider> providers = new ArrayList<>();
+        for(EventServiceActionProvider ap : componentManager.getActionProviders()) {
+            providers.add(toPojo(ap));
+        }
+        return providers;
+    }
+
+
+    @Override
+    public List<Action> getAllActions() {
+        return actionManager.getActions();
+    }
+
+    @Override
+    public List<Action> getAllActions(String xnatType) {
+        return actionManager.getActions();
+    }
+
+    @Override
+    public List<Action> getAllActions(String xnatType, String projectId) {
+        return actionManager.getActions();
+    }
+
+    @Override
+    public List<Action> getActionsByProvider(String actionProvider) {
+        return actionManager.getActionsByProvider(actionProvider);
+    }
+
+    @Override
+    public List<SimpleEvent> getEvents() throws Exception {
+        List<SimpleEvent> events = new ArrayList();
+        for(EventServiceEvent e : componentManager.getInstalledEvents()){
+            events.add(toPojo(e));
         }
         return events;
     }
 
     @Override
-    public List<EventServiceListener> getInstalledListeners() {
+    public List<Listener> getInstalledListeners() {
 
-        List<EventServiceListener> listeners = new ArrayList<>();
-        try {
-            for (Class<?> clazz : this.getClassList(EventServiceListenerI.class, LISTENER_RESOURCE_PATH, XnatEventServiceListener.LISTENER_CLASS)) {
-                if (EventServiceListenerI.class.isAssignableFrom(clazz)) {
-                    try {
-                        EventServiceListenerI listener = (EventServiceListenerI) contextService.getBean(clazz);
-                        listeners.add(toPojo(listener));
-                    } catch (Exception e) {
-                        log.debug("Error reading installed listeners into displayable Listeners.\n" + clazz.getCanonicalName());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Error reading installed listeners into displayable Listeners.");
-        }
-        return listeners;
-    }
-
-    private EventServiceEvent toPojo(AbstractLifecycleEvent event) {
-            return EventServiceEvent.create(event.getId() == null ? 0 : event.getId(), event.getClassName(), event.getDisplayName(), event.getDescription(),
-                    event.getEventObject(), event.getEventOperation());
-    }
-    private EventServiceAction toPojo(EventServiceActionI action) {
-        return EventServiceAction.builder()
-                .displayName(action.getDisplayName())
-                .description(action.getDescription())
-                .isEnabled(action.getEnabled())
-                .className(action.getClass().getName()).build();
-    }
-    private EventServiceListener toPojo(EventServiceListenerI listener) {
         return null;
     }
 
+
     @Override
-    public void processEvent(Event<?> event) {
+    public void processEvent(Event event) {
         log.debug("SessionArchiveEvent noticed by EventService: " + event.toString());
 
         // Lookup subscription, filter, and notify action(s)
     }
+
+    private SimpleEvent toPojo(EventServiceEvent event) {
+        return SimpleEvent.builder()
+                .id(event.getId() == null ? "" : event.getId())
+                .listenerService(
+                        event instanceof EventServiceListener
+                        ? ((EventServiceListener) event).getClass().getName()
+                        : null)
+                .displayName(event.getDisplayName() == null ? "" : event.getDisplayName())
+                .description(event.getDescription() == null ? "" : event.getDescription())
+                .payloadClass(event.getObjectClass() == null ? "" : event.getObjectClass())
+                .xnatType(event.getPayloadXnatType() == null ? "" : event.getPayloadXnatType())
+                .isXsiType(event.isPayloadXsiType() == null ? false : event.isPayloadXsiType())
+                .build();
+    }
+
+    private ActionProvider toPojo(EventServiceActionProvider actionProvider) {
+        return ActionProvider.builder()
+                .className(actionProvider.getName())
+                .displayName((actionProvider.getDisplayName()))
+                .description(actionProvider.getDescription())
+                .actions(actionProvider.getActions())
+                .events(actionProvider.getEvents())
+                .build();
+    }
+
 
 }

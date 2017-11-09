@@ -30,4 +30,14 @@ public class SubjectCreatedEvent extends SimpleEventServiceEvent<SubjectCreatedE
     public String getDescription() {
         return "Subject Created Event";
     }
+
+    @Override
+    public String getPayloadXnatType() {
+        return "xnat:subjectData";
+    }
+
+    @Override
+    public Boolean isPayloadXsiType() {
+        return true;
+    }
 }
