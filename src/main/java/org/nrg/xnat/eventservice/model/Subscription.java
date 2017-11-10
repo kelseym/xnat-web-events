@@ -17,8 +17,7 @@ public abstract class Subscription {
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  Integer listenerRegistrationKey();
     @Nullable @JsonProperty("event-id") public abstract String event();
-    @Nullable @JsonProperty("action-key") public abstract String actionKey();
-    @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
+    @Nullable @JsonProperty("action") public abstract Action action();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
 
@@ -35,8 +34,7 @@ public abstract class Subscription {
                                            @JsonProperty("active") final Boolean active,
                                            @JsonProperty("registration-key") final Integer listenerRegistrationKey,
                                            @JsonProperty("event-id") final String event,
-                                           @JsonProperty("action-key") final String actionKey,
-                                           @JsonProperty("attributes") final Map<String, String> attributes,
+                                           @JsonProperty("action") final Action action,
                                            @JsonProperty("event-filter") final EventFilter eventFilter,
                                            @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
         return builder()
@@ -45,8 +43,7 @@ public abstract class Subscription {
                 .active(active)
                 .listenerRegistrationKey(listenerRegistrationKey)
                 .event(event)
-                .actionKey(actionKey)
-                .attributes(attributes)
+                .action(action)
                 .eventFilter(eventFilter)
                 .actAsEventUser(actAsEventUser)
                 .build();
@@ -57,8 +54,7 @@ public abstract class Subscription {
                 .name(creator.name())
                 .active(creator.active())
                 .event(creator.event())
-                .actionKey(creator.actionKey())
-                .attributes(creator.attributes())
+                .action(creator.action())
                 .eventFilter(creator.eventFilter())
                 .actAsEventUser(creator.actAsEventUser())
                 .build();
@@ -76,9 +72,7 @@ public abstract class Subscription {
 
         public abstract Builder event(String event);
 
-        public abstract Builder actionKey(String actionKey);
-
-        public abstract Builder attributes(Map<String, String> attributes);
+        public abstract Builder action(Action action);
 
         public abstract Builder eventFilter(EventFilter eventFilter);
 

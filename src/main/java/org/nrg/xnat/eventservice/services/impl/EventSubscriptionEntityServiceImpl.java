@@ -68,8 +68,8 @@ public class EventSubscriptionEntityServiceImpl
             }
             // Check that Action is valid and service is accessible
 
-            if (! actionManager.validateAction(actionManager.getActionByKey(subscription.actionKey()))) {
-                throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
+            if (! actionManager.validateAction(actionManager.getActionByKey(subscription.action().actionKey()))) {
+                throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.action().actionKey() != null ? subscription.action().actionKey() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException e) {
             throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.event() != null ? subscription.event() : "unknown" + ", from application context.");

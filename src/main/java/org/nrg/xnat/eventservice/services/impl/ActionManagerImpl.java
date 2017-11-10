@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.ActionManager;
 import org.nrg.xnat.eventservice.services.EventService;
@@ -54,28 +55,28 @@ public class ActionManagerImpl implements ActionManager {
     }
 
     @Override
-    public List<Action> getActions() {
+    public List<Action> getActions(UserI user) {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions());
+            actions.addAll(provider.getActions(user));
         }
         return actions;
     }
 
     @Override
-    public List<Action> getActions(String xnatType) {
+    public List<Action> getActions(String xnatType, UserI user) {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions(xnatType, null));
+            actions.addAll(provider.getActions(xnatType, user));
         }
         return actions;
     }
 
     @Override
-    public List<Action> getActions(String xnatType, String projectId) {
+    public List<Action> getActions(String projectId, String xnatType, UserI user) {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions(xnatType, projectId,null));
+            actions.addAll(provider.getActions(projectId, xnatType, user));
         }
         return actions;
     }
@@ -84,7 +85,7 @@ public class ActionManagerImpl implements ActionManager {
     public List<Action> getActionsByProvider(String providerName) {
         for(EventServiceActionProvider provider : componentManager.getActionProviders()){
             if(provider.getName().contentEquals(providerName)) {
-                return provider.getActions();
+                return provider.getActions(null);
             }
         }
         return null;
@@ -92,7 +93,7 @@ public class ActionManagerImpl implements ActionManager {
 
     @Override
     public List<Action> getActionsByProvider(EventServiceActionProvider provider) {
-        return provider.getActions();
+        return provider.getActions(null);
     }
 
     @Override

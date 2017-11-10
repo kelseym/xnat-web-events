@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.services;
 
 
 import org.nrg.framework.exceptions.NotFoundException;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.model.*;
 import reactor.bus.Event;
@@ -18,9 +19,9 @@ public interface EventService {
     List<ActionProvider> getActionProviders();
     List<ActionProvider> getActionProviders(String xnatType, String projectId);
 
-    List<Action> getAllActions();
-    List<Action> getAllActions(String xnatType);
-    List<Action> getAllActions(String xnatType, String projectId);
+    List<Action> getAllActions(UserI user);
+    List<Action> getAllActions(String xnatType, UserI user);
+    List<Action> getAllActions(String projectId, String xnatType, UserI user);
 
     List<Action> getActionsByProvider(String actionProvider);
 

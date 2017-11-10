@@ -5,6 +5,7 @@ import javassist.Modifier;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -16,8 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
-import reactor.bus.EventBus;
 import reactor.bus.Event;
+import reactor.bus.EventBus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -130,18 +131,18 @@ public class EventServiceImpl implements EventService {
 
 
     @Override
-    public List<Action> getAllActions() {
-        return actionManager.getActions();
+    public List<Action> getAllActions(UserI user) {
+        return actionManager.getActions(user);
     }
 
     @Override
-    public List<Action> getAllActions(String xnatType) {
-        return actionManager.getActions();
+    public List<Action> getAllActions(String xnatType, UserI user) {
+        return actionManager.getActions(xnatType, user);
     }
 
     @Override
-    public List<Action> getAllActions(String xnatType, String projectId) {
-        return actionManager.getActions();
+    public List<Action> getAllActions(String projectId, String xnatType, UserI user) {
+        return actionManager.getActions(projectId, xnatType, user);
     }
 
     @Override
@@ -192,7 +193,7 @@ public class EventServiceImpl implements EventService {
                 .className(actionProvider.getName())
                 .displayName((actionProvider.getDisplayName()))
                 .description(actionProvider.getDescription())
-                .actions(actionProvider.getActions())
+                .actions(actionProvider.getActions(null))
                 .events(actionProvider.getEvents())
                 .build();
     }

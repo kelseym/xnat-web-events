@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
@@ -8,11 +9,13 @@ import com.google.auto.value.AutoValue;
 public abstract class SimpleEvent {
 
     @JsonProperty("id") public abstract String id();
+    @JsonIgnore
     @JsonProperty("listener") public abstract String listenerService();
     @JsonProperty("display-name") public abstract String displayName();
     @JsonProperty("description") public abstract String description();
     @JsonProperty("payload") public abstract String payloadClass();
     @JsonProperty("xnat-type") public abstract String xnatType();
+    @JsonIgnore
     @JsonProperty("is-xsi-type") public abstract boolean isXsiType();
 
 

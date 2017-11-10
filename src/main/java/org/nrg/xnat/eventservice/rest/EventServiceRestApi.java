@@ -52,20 +52,20 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         this.eventService = eventService;
     }
 
-    @XapiRequestMapping(value = "/test", method = POST)
-    @ApiOperation(value = "Test OK")
-    public ResponseEntity<Void> getOk() {
-        return ResponseEntity.ok().build();
-    }
-
-
-    @XapiRequestMapping(value = "admintest", method = POST)
-    @ApiOperation(value = "Test Admin OK")
-    public ResponseEntity<Void> getAdminOk() throws UnauthorizedException {
-        final UserI userI = XDAT.getUserDetails();
-        checkCreateOrThrow(userI);
-        return ResponseEntity.ok().build();
-    }
+//    @XapiRequestMapping(value = "/test", method = POST)
+//    @ApiOperation(value = "Test OK")
+//    public ResponseEntity<Void> getOk() {
+//        return ResponseEntity.ok().build();
+//    }
+//
+//
+//    @XapiRequestMapping(value = "admintest", method = POST)
+//    @ApiOperation(value = "Test Admin OK")
+//    public ResponseEntity<Void> getAdminOk() throws UnauthorizedException {
+//        final UserI userI = XDAT.getUserDetails();
+//        checkCreateOrThrow(userI);
+//        return ResponseEntity.ok().build();
+//    }
 
     @XapiRequestMapping(value = "/subscription", method = POST)
     @ApiOperation(value = "Create a Subscription", code = 201)
@@ -112,41 +112,47 @@ public class EventServiceRestApi extends AbstractXapiRestController {
 
     @XapiRequestMapping(value = "/events", method = GET)
     @ResponseBody
-    public List<SimpleEvent> getInstalledEvents() throws Exception {
+    public List<SimpleEvent> getEvents() throws Exception {
         final UserI userI = XDAT.getUserDetails();
         checkCreateOrThrow(userI);
         return eventService.getEvents();
     }
 
-    @Deprecated
-    @XapiRequestMapping(value = "/listeners", method = GET)
-    @ResponseBody
-    public List<Listener> getInstalledListeners()
-            throws NrgServiceRuntimeException, UnauthorizedException {
-        final UserI userI = XDAT.getUserDetails();
-        checkCreateOrThrow(userI);
-        return eventService.getInstalledListeners();
-    }
+//    @Deprecated
+//    @XapiRequestMapping(value = "/listeners", method = GET)
+//    @ResponseBody
+//    public List<Listener> getInstalledListeners()
+//            throws NrgServiceRuntimeException, UnauthorizedException {
+//        final UserI userI = XDAT.getUserDetails();
+//        checkCreateOrThrow(userI);
+//        return eventService.getInstalledListeners();
+//    }
 
 
-    @XapiRequestMapping(value = "/actionproviders", params = {"!projectid", "!xsitype"}, method = GET)
+    @XapiRequestMapping(value = "/actionproviders", method = GET)
     @ApiOperation(value = "Get Action Providers and associated Actions")
     @ResponseBody
-    public List<ActionProvider> getActionProviders(final @RequestParam String project,
-                                                   final @RequestParam String xsiType)
+    public List<ActionProvider> getActionProviders()
             throws NrgServiceRuntimeException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
         checkCreateOrThrow(userI);
-        return eventService.getActionProviders(xsiType, project);
+        return eventService.getActionProviders();
     }
 
     @XapiRequestMapping(value = "/actions", method = GET)
     @ResponseBody
-    public List<Action> getAllActions()
+    public List<Action> getAllActions(final @RequestParam(value = "projectid", required = false) String projectId,
+                                      final @RequestParam(value = "xnattype", required = false) String xnatType)
             throws NrgServiceRuntimeException, UnauthorizedException {
-        final UserI userI = XDAT.getUserDetails();
-        checkCreateOrThrow(userI);
-        return eventService.getAllActions();
+        final UserI user = XDAT.getUserDetails();
+        checkCreateOrThrow(user);
+        if(projectId != null && xnatType != null)
+            return eventService.getAllActions(projectId, xnatType, user);
+        else if(xnatType != null)
+            return eventService.getAllActions(xnatType, user);
+        else
+            return eventService.getAllActions(user);
+            
     }
 
 
@@ -176,7 +182,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
 
     private void checkCreateOrThrow(final UserI userI) throws UnauthorizedException {
         if (!isAdmin(userI)) {
-            throw new UnauthorizedException(String.format("User %s cannot create.", userI == null ? "" : userI.getLogin()));
+            throw new UnauthorizedException(String.format("User %s not authorize.", userI == null ? "" : userI.getLogin()));
         }
     }
 

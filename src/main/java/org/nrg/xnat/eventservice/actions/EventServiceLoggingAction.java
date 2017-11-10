@@ -1,9 +1,7 @@
 package org.nrg.xnat.eventservice.actions;
 
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.SimpleEventServiceEvent;
-import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +39,7 @@ public class EventServiceLoggingAction extends SingleActionProvider {
     public List<String> getEvents() { return events; }
 
     @Override
-    public List<String> getAttributeKeys() { return null; }
+    public Map<String, String> getAttributes() { return null; }
 
     @Override
     public void processEvent(SimpleEventServiceEvent event, SubscriptionEntity subscription) {
