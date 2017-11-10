@@ -9,6 +9,7 @@ import org.nrg.xnat.eventservice.model.Subscription;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.transaction.Transactional;
@@ -78,6 +79,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     public void setEventType(String eventType) { this.eventType = eventType; }
 
+    @Embedded
     public Action getAction() { return action; }
 
     public void setAction(Action action) { this.action = action; }
