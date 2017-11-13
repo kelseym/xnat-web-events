@@ -11,13 +11,12 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public abstract class SingleActionProvider implements  EventServiceActionProvider {
 
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
 
-    public abstract Map<String, String> getAttributes();
+    public abstract List<String> getAttributeKeys();
 
     public Action getAction() {
         return Action.builder().id(getName())
@@ -26,13 +25,13 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
                         .description(getDescription())
                         .provider(this)
                         .events(getEvents())
-                        .attributes(getAttributes())
+                        .attributes(getAttributeKeys())
                         .build();
 
     }
 
     @Override
-    public String getName() { return this.getClass().getSimpleName(); }
+    public String getName() { return this.getClass().getName(); }
 
     @Override
     public List<Action> getActions(UserI user) {
@@ -50,7 +49,8 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
     }
 
     public String getActionKey() {
-        return Joiner.on(':').join(getName(), this.getClass().getSimpleName());
+        return Joiner.on(':').join(getName(), this.getName()
+        );
     }
 
 

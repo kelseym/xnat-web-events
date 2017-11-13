@@ -11,7 +11,7 @@ public abstract class MultiActionProvider implements EventServiceActionProvider 
 
     @Override
     public String getName() {
-        return this.getClass().getCanonicalName();
+        return this.getClass().getName();
     }
 
 }

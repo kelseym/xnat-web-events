@@ -25,10 +25,6 @@ public class EventServiceLoggingAction extends SingleActionProvider {
     }
 
 
-
-    @Override
-    public String getName() { return this.getClass().getCanonicalName(); }
-
     @Override
     public String getDisplayName() { return displayName; }
 
@@ -39,7 +35,7 @@ public class EventServiceLoggingAction extends SingleActionProvider {
     public List<String> getEvents() { return events; }
 
     @Override
-    public Map<String, String> getAttributes() { return null; }
+    public List<String> getAttributeKeys() { return null; }
 
     @Override
     public void processEvent(SimpleEventServiceEvent event, SubscriptionEntity subscription) {

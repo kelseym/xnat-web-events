@@ -2,8 +2,10 @@ package org.nrg.xnat.eventservice.model;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
@@ -14,7 +16,7 @@ import java.util.List;
 @AutoValue
 public abstract class EventFilter {
 
-    @Nullable @JsonProperty("id") public abstract Long id();
+    @JsonIgnore @Nullable @JsonProperty("id") public abstract Long id();
     @Nullable @JsonProperty("name") public abstract String name();
     @JsonProperty("project-ids") public abstract ImmutableList<String> projectIds();
 
@@ -46,11 +48,7 @@ public abstract class EventFilter {
     public String toRegexPattern() {
         String pattern = "";
         if (projectIds() != null && !projectIds().isEmpty()) {
-            pattern = "project-id:(";
-            for (String projectId:projectIds()) {
-                pattern = pattern + "|" + projectId;
-            }
-            pattern = pattern + ")";
+            pattern = "project-id:(" + Joiner.on('|').join(projectIds()) + ")";
         }
         return pattern;
     }

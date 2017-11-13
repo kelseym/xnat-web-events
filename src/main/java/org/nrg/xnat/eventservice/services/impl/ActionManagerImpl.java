@@ -33,21 +33,21 @@ public class ActionManagerImpl implements ActionManager {
     @Override
     public Action getActionByKey(String actionKey) {
         String actionProvider = null;
-        String actionName = null;
+        String actionId = null;
         Iterable<String> key = Splitter.on(':')
                                          .trimResults()
                                          .omitEmptyStrings()
                                          .split(actionKey);
         ImmutableList<String> keyList = ImmutableList.copyOf(key);
         if(!keyList.isEmpty()) {
-            actionProvider = actionName = keyList.get(0);
+            actionProvider = actionId = keyList.get(0);
             if(keyList.size()>1){
-                actionName = keyList.get(1);
+                actionId = keyList.get(1);
             }
         }
         List<Action> actions = getActionsByProvider(actionProvider);
         for(Action action : actions) {
-            if(action.id().contentEquals(actionName)) {
+            if(action.actionKey().contentEquals(actionKey)) {
                 return action;
             }
         }
@@ -88,7 +88,7 @@ public class ActionManagerImpl implements ActionManager {
                 return provider.getActions(null);
             }
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

@@ -7,9 +7,7 @@ import com.google.auto.value.AutoValue;
 import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @AutoValue
 public abstract class Action {
@@ -24,7 +22,7 @@ public abstract class Action {
     @JsonIgnore
     @JsonProperty("provider") public abstract EventServiceActionProvider provider();
     @Nullable
-    @JsonProperty("attributes") public abstract Map<String, String> attributes();
+    @JsonProperty("attributes") public abstract List<String> attributes();
     @Nullable
     @JsonProperty("events") public abstract List<String> events();
 
@@ -33,7 +31,7 @@ public abstract class Action {
                                 String displayName,
                                 String description,
                                 EventServiceActionProvider provider,
-                                Map<String, String> attributes,
+                                List<String> attributes,
                                 List<String> events) {
         return builder()
                 .id(id)
@@ -41,7 +39,7 @@ public abstract class Action {
                 .displayName(displayName)
                 .description(description)
                 .provider(provider)
-                .attributes(attributes==null ? Collections.<String, String>emptyMap() : attributes)
+                .attributes(attributes)
                 .events(events)
                 .build();
     }
@@ -54,7 +52,7 @@ public abstract class Action {
     @AutoValue.Builder
     public abstract static class Builder {
 
-        public abstract Builder id(String className);
+        public abstract Builder id(String id);
 
         public abstract Builder actionKey(String actionKey);
 
@@ -64,7 +62,7 @@ public abstract class Action {
 
         public abstract Builder provider(EventServiceActionProvider provider);
 
-        public abstract Builder attributes(Map<String, String> attributes);
+        public abstract Builder attributes(List<String> attributes);
 
         public abstract Builder events(List<String> events);
 
