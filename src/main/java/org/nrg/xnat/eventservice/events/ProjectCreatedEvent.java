@@ -3,11 +3,12 @@ package org.nrg.xnat.eventservice.events;
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
 @Service
 @XnatEventServiceEvent(name="ProjectCreatedEvent")
-public class ProjectCreatedEvent extends SimpleEventServiceEvent<ProjectCreatedEvent, XnatProjectdata>  {
+public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreatedEvent, XnatProjectdata>  {
     final String displayName = "Project Created";
     final String description ="New project created.";
 
@@ -34,4 +35,8 @@ public class ProjectCreatedEvent extends SimpleEventServiceEvent<ProjectCreatedE
     }
 
 
+    @Override
+    public EventServiceListener getInstance() {
+        return new ProjectCreatedEvent();
+    }
 }

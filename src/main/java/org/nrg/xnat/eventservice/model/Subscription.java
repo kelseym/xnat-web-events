@@ -15,7 +15,7 @@ public abstract class Subscription {
     @Nullable @JsonProperty("id") public abstract Long id();
     @Nullable @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
-    @Nullable @JsonProperty("registration-key") public abstract  Integer listenerRegistrationKey();
+    @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();
     @Nullable @JsonProperty("event-id") public abstract String event();
     @Nullable @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
@@ -33,7 +33,7 @@ public abstract class Subscription {
     public static Subscription create(@JsonProperty("id") final Long id,
                                            @JsonProperty("name") final String name,
                                            @JsonProperty("active") final Boolean active,
-                                           @JsonProperty("registration-key") final Integer listenerRegistrationKey,
+                                           @JsonProperty("registration-key") final String listenerRegistrationKey,
                                            @JsonProperty("event-id") final String event,
                                            @JsonProperty("action-key") final String actionKey,
                                            @JsonProperty("attributes") final Map<String, String> attributes,
@@ -70,7 +70,7 @@ public abstract class Subscription {
 
         public abstract Builder name(String name);
 
-        public abstract Builder listenerRegistrationKey(Integer listenerRegistrationKey);
+        public abstract Builder listenerRegistrationKey(String listenerRegistrationKey);
 
         public abstract Builder active(Boolean active);
 

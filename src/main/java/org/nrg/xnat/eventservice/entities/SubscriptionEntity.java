@@ -23,7 +23,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     private String name;
     private java.lang.Boolean active;
-    private Integer listenerRegistrationKey;
+    private String listenerRegistrationKey;
     private String eventType;
     private String actionKey;
     private Map<String,String> attributes;
@@ -47,7 +47,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     }
 
-    public SubscriptionEntity(String name, java.lang.Boolean active, Integer listenerRegistrationKey, String eventType, String actionKey, Map<String, String> attributes, EventServiceFilterEntity eventServiceFilterEntity, Boolean actAsEventUser) {
+    public SubscriptionEntity(String name, java.lang.Boolean active, String listenerRegistrationKey, String eventType, String actionKey, Map<String, String> attributes, EventServiceFilterEntity eventServiceFilterEntity, Boolean actAsEventUser) {
         this.name = name;
         this.active = active;
         this.listenerRegistrationKey = listenerRegistrationKey;
@@ -174,11 +174,11 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         this.active = active;
     }
 
-    public Integer getListenerRegistrationKey() {
+    public String getListenerRegistrationKey() {
         return listenerRegistrationKey;
     }
 
-    public void setListenerRegistrationKey(Integer listenerRegistrationKey) {
+    public void setListenerRegistrationKey(String listenerRegistrationKey) {
         this.listenerRegistrationKey = listenerRegistrationKey;
     }
 }

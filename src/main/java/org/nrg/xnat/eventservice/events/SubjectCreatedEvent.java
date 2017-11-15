@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.events;
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
         description="Subject Created Event",
         object = "Subject",
         operation = "Created")
-public class SubjectCreatedEvent extends SimpleEventServiceEvent<SubjectCreatedEvent, XnatSubjectdata> {
+public class SubjectCreatedEvent extends CombinedEventServiceEvent<SubjectCreatedEvent, XnatSubjectdata> {
 
     public SubjectCreatedEvent(){};
 
@@ -39,5 +40,10 @@ public class SubjectCreatedEvent extends SimpleEventServiceEvent<SubjectCreatedE
     @Override
     public Boolean isPayloadXsiType() {
         return true;
+    }
+
+    @Override
+    public EventServiceListener getInstance() {
+        return new SubjectCreatedEvent();
     }
 }

@@ -4,6 +4,7 @@ package org.nrg.xnat.eventservice.events;
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
         description="Session Archive Event",
         object = "Session",
         operation = "Archived")
-public class SessionArchiveEvent extends SimpleEventServiceEvent<SessionArchiveEvent, XnatImagesessiondata> {
+public class SessionArchiveEvent extends CombinedEventServiceEvent<SessionArchiveEvent, XnatImagesessiondata> {
 
 
     public SessionArchiveEvent(){};
@@ -41,5 +42,10 @@ public class SessionArchiveEvent extends SimpleEventServiceEvent<SessionArchiveE
     @Override
     public Boolean isPayloadXsiType() {
         return true;
+    }
+
+    @Override
+    public EventServiceListener getInstance() {
+        return new SessionArchiveEvent();
     }
 }

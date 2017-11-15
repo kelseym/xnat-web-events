@@ -167,10 +167,9 @@ public class EventServiceImpl implements EventService {
 
 
     @Override
-    public void processEvent(Event event) {
+    public void processEvent(EventServiceListener listener, Event event) {
         log.debug("SessionArchiveEvent noticed by EventService: " + event.toString());
-
-        // Lookup subscription, filter, and notify action(s)
+        subscriptionService.processEvent(listener, event);
     }
 
     private SimpleEvent toPojo(EventServiceEvent event) {

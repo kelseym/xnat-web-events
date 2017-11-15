@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.framework.services.NrgEventService;
+import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,15 +13,12 @@ import java.text.SimpleDateFormat;
 @Service
 @EnableScheduling
 @XnatEventServiceEvent(name = "TimerEvent")
-public class TimerEvent extends SimpleEventServiceEvent<TimerEvent, SimpleDateFormat>{
+public class TimerEvent extends CombinedEventServiceEvent<TimerEvent, SimpleDateFormat>{
     final String displayName = "Timer Event";
     final String description = "Timer Event";
 
     @Autowired
     NrgEventService es;
-
-
-    public TimerEvent(){};
 
     @Override
     public String getDisplayName() {
@@ -42,12 +40,14 @@ public class TimerEvent extends SimpleEventServiceEvent<TimerEvent, SimpleDateFo
         return false;
     }
 
-    @Scheduled(cron = "*/30 * * * * *")
-    public void everyThirtySeconds()
+    @Scheduled(cron = "*/5 * * * * *")
+    public void everyFiveSeconds()
     {
-        es.triggerEvent(new TimerEvent());
+        es.triggerEvent("EveryFiveSeconds", new TimerEvent());
     }
 
-
-
+    @Override
+    public EventServiceListener getInstance() {
+        return new TimerEvent();
+    }
 }

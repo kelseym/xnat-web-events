@@ -11,18 +11,20 @@ import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.Subscription;
 import org.nrg.xnat.eventservice.services.ActionManager;
+import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
 import org.nrg.xnat.eventservice.services.EventSubscriptionEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
 import reactor.bus.selector.Selector;
-import reactor.fn.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
@@ -37,19 +39,21 @@ public class EventSubscriptionEntityServiceImpl
         extends AbstractHibernateEntityService<SubscriptionEntity, EventSubscriptionEntityDao>
         implements EventSubscriptionEntityService {
 
-    private static final Logger log = LoggerFactory.getLogger(org.nrg.xnat.eventservice.services.EventSubscriptionEntityService.class);
+    private static final Logger log = LoggerFactory.getLogger(EventSubscriptionEntityService.class);
     private EventBus eventBus;
     private ContextService contextService;
     private ActionManager actionManager;
     private EventServiceComponentManager componentManager;
+    private EventService eventService;
 
 
     @Autowired
-    public EventSubscriptionEntityServiceImpl(final EventBus eventBus, final ContextService contextService, final ActionManager actionManager, final EventServiceComponentManager componentManager) {
+    public EventSubscriptionEntityServiceImpl(final EventBus eventBus, final ContextService contextService, final ActionManager actionManager, final EventServiceComponentManager componentManager, @Lazy final EventService eventService) {
         this.eventBus = eventBus;
         this.contextService = contextService;
         this.actionManager = actionManager;
         this.componentManager = componentManager;
+        this.eventService = eventService;
     }
 
 
@@ -84,17 +88,19 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription activate(Subscription subscription) {
         try {
-            Consumer consumer = componentManager.getListener(subscription.event());
-            Class<?> clazz = Class.forName(subscription.event());
-            if(clazz != null && EventServiceListener.class.isAssignableFrom(clazz)) {
-                Selector selector = T(clazz.getClass());
+            EventServiceListener listener = componentManager.getListener(subscription.event());
+            EventServiceListener uniqueListener = listener.getInstance();
+            uniqueListener.setEventService(eventService);
+            Class<?> eventClazz = Class.forName(subscription.event());
+            if(eventClazz != null && EventServiceListener.class.isAssignableFrom(eventClazz)) {
+                Selector selector = T(eventClazz);
                 if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexPattern()))
                     selector = R(subscription.eventFilter().toRegexPattern());
-                Registration registration = eventBus.on(selector, consumer);
+                Registration registration = eventBus.on(selector, uniqueListener);
 
                 log.info("Created registrationKey: " + registration.hashCode());
                 subscription = subscription.toBuilder()
-                       .listenerRegistrationKey(registration.hashCode())
+                       .listenerRegistrationKey(uniqueListener.getListenerId().toString())
                         .build();
             } else throw new SubscriptionValidationException("Could not activate subscription.");
         }
@@ -145,7 +151,7 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public Subscription activateAndSave(Subscription subscription) throws SubscriptionValidationException {
-        subscription = validate(subscription);
+        //subscription = validate(subscription);
         subscription = activate(subscription);
         subscription = save(subscription);
         return subscription;
@@ -169,6 +175,15 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription getSubscription(Long id) throws NotFoundException {
         return super.get(id).toPojo();
     }
+
+    @Override
+    public void processEvent(EventServiceListener listener, Event event) {
+        log.error(event.toString());
+    }
+
+
+
+
 
     private Subscription toPojo(final SubscriptionEntity eventSubscriptionEntity) {
         return eventSubscriptionEntity == null ? null : eventSubscriptionEntity.toPojo();
