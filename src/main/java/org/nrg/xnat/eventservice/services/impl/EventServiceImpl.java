@@ -62,8 +62,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public void deleteSubscription(Subscription subscription) {
-
+    public void deleteSubscription(Long id) throws NotFoundException{
+        subscriptionService.delete(id);
     }
 
     @Override

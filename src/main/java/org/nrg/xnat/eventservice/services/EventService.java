@@ -30,7 +30,7 @@ public interface EventService {
     Subscription validateSubscription(Subscription subscription) throws SubscriptionValidationException;
     Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException;
     Subscription updateSubscription(Subscription subscription) throws SubscriptionValidationException, NotFoundException;
-    void deleteSubscription(Subscription subscription);
+    void deleteSubscription(Long id) throws NotFoundException;;
 
     void processEvent(Event event);
 

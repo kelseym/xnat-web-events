@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static org.nrg.xdat.security.helpers.AccessLevel.Admin;
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -108,6 +110,11 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         return eventService.getSubscription(id);
     }
 
+    @XapiRequestMapping(value = "/subscription/{id}", method = DELETE, restrictTo = Admin)
+    public ResponseEntity<Void> delete(final @PathVariable long id) throws NotFoundException {
+        eventService.deleteSubscription(id);
+        return ResponseEntity.noContent().build();
+    }
 
 
     @XapiRequestMapping(value = "/events", method = GET)

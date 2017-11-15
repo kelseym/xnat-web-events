@@ -1,10 +1,12 @@
 package org.nrg.xnat.eventservice.events;
 
+import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xft.security.UserI;
 import org.springframework.stereotype.Service;
 
 @Service
+@XnatEventServiceEvent(name="ProjectCreatedEvent")
 public class ProjectCreatedEvent extends SimpleEventServiceEvent<ProjectCreatedEvent, XnatProjectdata>  {
     final String displayName = "Project Created";
     final String description ="New project created.";

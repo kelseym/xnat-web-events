@@ -1,5 +1,6 @@
 package org.nrg.xnat.eventservice.services.impl;
 
+import com.google.common.base.Strings;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.nrg.framework.services.ContextService;
@@ -20,13 +21,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
+import reactor.bus.selector.Selector;
 import reactor.fn.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
-import static reactor.bus.selector.Selectors.regex;
+import static reactor.bus.selector.Selectors.R;
+import static reactor.bus.selector.Selectors.T;
 
 @Service
 @Transactional
@@ -84,13 +87,15 @@ public class EventSubscriptionEntityServiceImpl
             Consumer consumer = componentManager.getListener(subscription.event());
             Class<?> clazz = Class.forName(subscription.event());
             if(clazz != null && EventServiceListener.class.isAssignableFrom(clazz)) {
-                  Registration registration = eventBus.on(
-                  regex(subscription.eventFilter() != null ? subscription.eventFilter().toRegexPattern() : "*"), consumer);
+                Selector selector = T(clazz.getClass());
+                if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexPattern()))
+                    selector = R(subscription.eventFilter().toRegexPattern());
+                Registration registration = eventBus.on(selector, consumer);
 
-           log.info("Created registrationKey: " + registration.hashCode());
-           subscription = subscription.toBuilder()
-                   .listenerRegistrationKey(registration.hashCode())
-                   .build();
+                log.info("Created registrationKey: " + registration.hashCode());
+                subscription = subscription.toBuilder()
+                       .listenerRegistrationKey(registration.hashCode())
+                        .build();
             } else throw new SubscriptionValidationException("Could not activate subscription.");
         }
         catch (SubscriptionValidationException | ClassNotFoundException e) {
