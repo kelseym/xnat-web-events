@@ -103,6 +103,7 @@ public class EventSubscriptionEntityServiceImpl
                        .listenerRegistrationKey(uniqueListener.getListenerId().toString())
                         .build();
             } else throw new SubscriptionValidationException("Could not activate subscription.");
+            subscription = save(subscription);
         }
         catch (SubscriptionValidationException | ClassNotFoundException e) {
             log.error("Event subscription failed for " + subscription.toString());
@@ -153,7 +154,7 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription activateAndSave(Subscription subscription) throws SubscriptionValidationException {
         //subscription = validate(subscription);
         subscription = activate(subscription);
-        subscription = save(subscription);
+        //subscription = save(subscription);
         return subscription;
     }
 
@@ -172,13 +173,31 @@ public class EventSubscriptionEntityServiceImpl
     }
 
     @Override
+    public List<Subscription> getSubscriptionsByKey(String key) throws NotFoundException {
+        return SubscriptionEntity.toPojo(getDao().findByKey(key));
+    }
+
+    @Override
     public Subscription getSubscription(Long id) throws NotFoundException {
         return super.get(id).toPojo();
     }
 
     @Override
-    public void processEvent(EventServiceListener listener, Event event) {
-        log.error(event.toString());
+    public void processEvent(EventServiceListener listener, Event event) throws NotFoundException {
+        for( Subscription subscription : getSubscriptionsByKey(listener.getListenerId().toString())){
+            log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
+
+            // Is subscription enabled
+
+
+            // Serialize data object
+
+
+            //Filter on data object
+
+
+            // call Action Manager with payload
+        }
     }
 
 

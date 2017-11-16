@@ -16,13 +16,14 @@ import java.util.Map;
 
 
 @Entity
+@Table(uniqueConstraints=@UniqueConstraint(columnNames={"name", "listenerRegistrationKey"}))
 public class SubscriptionEntity extends AbstractHibernateEntity {
 
     public SubscriptionEntity() {}
 
 
     private String name;
-    private java.lang.Boolean active;
+    private Boolean active;
     private String listenerRegistrationKey;
     private String eventType;
     private String actionKey;
@@ -166,11 +167,11 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         return subscriptions;
     }
 
-    public java.lang.Boolean getActive() {
+    public Boolean getActive() {
         return active;
     }
 
-    public void setActive(java.lang.Boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 

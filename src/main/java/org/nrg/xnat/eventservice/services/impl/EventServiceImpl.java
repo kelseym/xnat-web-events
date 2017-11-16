@@ -169,7 +169,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public void processEvent(EventServiceListener listener, Event event) {
         log.debug("SessionArchiveEvent noticed by EventService: " + event.toString());
-        subscriptionService.processEvent(listener, event);
+        try {
+            subscriptionService.processEvent(listener, event);
+        } catch (NotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private SimpleEvent toPojo(EventServiceEvent event) {

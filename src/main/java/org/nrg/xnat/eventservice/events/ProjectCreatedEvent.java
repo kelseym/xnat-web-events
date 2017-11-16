@@ -39,4 +39,5 @@ public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreate
     public EventServiceListener getInstance() {
         return new ProjectCreatedEvent();
     }
+
 }

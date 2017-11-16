@@ -76,8 +76,8 @@ repositories {
     }
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 def javaVersion = Jvm.current().javaVersion
 if (javaVersion.java8Compatible || javaVersion.java9Compatible) {

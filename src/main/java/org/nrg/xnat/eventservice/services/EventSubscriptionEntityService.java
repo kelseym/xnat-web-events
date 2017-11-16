@@ -24,7 +24,8 @@ public interface EventSubscriptionEntityService extends BaseHibernateService<Sub
     void delete(Subscription subscription) throws NotFoundException, Exception;
 
     List<Subscription> getAllSubscriptions();
+    List<Subscription> getSubscriptionsByKey(String key) throws NotFoundException;
     Subscription getSubscription(Long id) throws NotFoundException;
 
-    void processEvent(EventServiceListener listener, Event event);
+    void processEvent(EventServiceListener listener, Event event) throws NotFoundException;
 }

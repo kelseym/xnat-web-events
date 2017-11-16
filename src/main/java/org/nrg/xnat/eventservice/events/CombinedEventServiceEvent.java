@@ -1,11 +1,16 @@
 package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
+import org.nrg.xdat.model.XnatImageassessordataI;
+import org.nrg.xdat.model.XnatImagesessiondataI;
+import org.nrg.xdat.model.XnatSubjectdataI;
+import org.nrg.xdat.om.XnatProjectdata;
+import org.nrg.xdat.om.XnatResourcecatalog;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
 import reactor.bus.Event;
@@ -53,6 +58,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
         return object;
     }
 
+
     @Override
     public String getObjectClass() {
         return getObject() == null ? null : getObject().getClass().getCanonicalName();
@@ -68,7 +74,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     }
 
 
-    public static CombinedEventServiceEvent createFromResource(Resource resource)
+    public static CombinedEventServiceEvent createFromResource(org.springframework.core.io.Resource resource)
             throws IOException, ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         CombinedEventServiceEvent event = null;
         final Properties properties = PropertiesLoaderUtils.loadProperties(resource);
@@ -88,5 +94,32 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
         }
         return event;
     }
+
+    @Override
+    public XnatModelObject getModelObject() {
+
+        if(object.getClass() == XnatImageassessordataI.class) {
+            return new Assessor((XnatImageassessordataI) object);
+        }
+        else if(object.getClass() == XnatProjectdata.class) {
+            return new Project((XnatProjectdata) object);
+        }
+        else if(object.getClass() == XnatResourcecatalog.class) {
+            return new Resource((XnatResourcecatalog) object);
+        }
+//        else if(object.getClass() == XnatImagescandataI.class) {
+//            return new Scan((XnatImagescandataI) object);
+//        }
+        else if(object.getClass() == XnatImagesessiondataI.class) {
+            return new Session((XnatImagesessiondataI) object);
+        }
+        else if(object.getClass() == XnatSubjectdataI.class) {
+            return new Subject((XnatSubjectdataI) object);
+        }
+        return null;
+    }
+
+
+
 
 }

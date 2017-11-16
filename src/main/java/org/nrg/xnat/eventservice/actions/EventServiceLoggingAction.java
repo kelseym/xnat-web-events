@@ -39,6 +39,7 @@ public class EventServiceLoggingAction extends SingleActionProvider {
 
     @Override
     public void processEvent(CombinedEventServiceEvent event, SubscriptionEntity subscription) {
+        log.error("EventServiceLoggingAction called for RegKey " + subscription.getListenerRegistrationKey());
 
     }
 
