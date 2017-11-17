@@ -70,7 +70,8 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
 
     @Override
     public void accept(Event<EventT> event){
-        eventService.processEvent(this, event);
+        if( event.getData() instanceof EventServiceEvent)
+            eventService.processEvent(this, event);
     }
 
 

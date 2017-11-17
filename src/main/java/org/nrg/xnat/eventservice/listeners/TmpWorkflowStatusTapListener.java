@@ -69,7 +69,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(projectId).build().toRegexPattern();
                 eventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user), false);
-                log.error("Firing New Project for EventLabel: " + "XXX");
+                log.error("Firing New Project for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {

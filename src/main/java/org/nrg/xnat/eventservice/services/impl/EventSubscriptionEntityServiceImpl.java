@@ -1,5 +1,7 @@
 package org.nrg.xnat.eventservice.services.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
@@ -45,15 +47,16 @@ public class EventSubscriptionEntityServiceImpl
     private ActionManager actionManager;
     private EventServiceComponentManager componentManager;
     private EventService eventService;
-
+    private ObjectMapper mapper;
 
     @Autowired
-    public EventSubscriptionEntityServiceImpl(final EventBus eventBus, final ContextService contextService, final ActionManager actionManager, final EventServiceComponentManager componentManager, @Lazy final EventService eventService) {
+    public EventSubscriptionEntityServiceImpl(final EventBus eventBus, final ContextService contextService, final ActionManager actionManager, final EventServiceComponentManager componentManager, @Lazy final EventService eventService, ObjectMapper mapper) {
         this.eventBus = eventBus;
         this.contextService = contextService;
         this.actionManager = actionManager;
         this.componentManager = componentManager;
         this.eventService = eventService;
+        this.mapper = mapper;
     }
 
 
@@ -184,19 +187,31 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public void processEvent(EventServiceListener listener, Event event) throws NotFoundException {
-        for( Subscription subscription : getSubscriptionsByKey(listener.getListenerId().toString())){
-            log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
+        String strObject = null;
+        if(event.getData() instanceof EventServiceEvent) {
+            EventServiceEvent esEvent = (EventServiceEvent) event.getData();
+            for (Subscription subscription : getSubscriptionsByKey(listener.getListenerId().toString())) {
+                log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
+                try {
+                    // Is subscription enabled
+                    if (!subscription.active()) {
+                        log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
+                    } else if(esEvent.getModelObject() != null && mapper.canSerialize(esEvent.getModelObject().getClass())) {
+                        // Serialize data object
+                        strObject = mapper.writeValueAsString(esEvent.getModelObject());
+                    } else if(esEvent.getObject() != null && mapper.canSerialize(esEvent.getObject().getClass())) {
+                        strObject = mapper.writeValueAsString(esEvent.getObject());
+                    } else {
+                        log.error("Could not serialize event object in: " + esEvent.toString());
+                    }
+                    log.error("Serialized Object: " + strObject);
+                    //Filter on data object
 
-            // Is subscription enabled
-
-
-            // Serialize data object
-
-
-            //Filter on data object
-
-
-            // call Action Manager with payload
+                    // call Action Manager with payload
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
