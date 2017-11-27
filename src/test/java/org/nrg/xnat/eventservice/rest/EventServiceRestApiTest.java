@@ -8,7 +8,7 @@ import org.nrg.xdat.security.services.RoleServiceI;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.config.EventServiceRestApiTestConfig;
-import org.nrg.xnat.eventservice.model.EventSubscription;
+import org.nrg.xnat.eventservice.model.Subscription;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.EventSubscriptionEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,13 +56,11 @@ public class EventServiceRestApiTest {
     @Autowired private RoleServiceI mockRoleService;
     @Autowired private UserManagementServiceI mockUserManagementServiceI;
 
-    private EventSubscription eventSubscription;
+    private Subscription subscription;
 
     @Before
     public void setUp() throws Exception {
-       mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-        mockMvc = MockMvcBuilders.webAppContextSetup(wac).apply(springSecurity()).build();
-
+        mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
 
         final String adminPassword = "admin";
         final UserI admin = mock(UserI.class);
@@ -138,16 +135,16 @@ public class EventServiceRestApiTest {
 
         final MockHttpServletRequestBuilder request =
                 get(path).with(authentication(ADMIN_AUTH))
-                        .with(csrf())
-                        .with(testSecurityContext());
+                         .with(csrf())
+                         .with(testSecurityContext());
 
 
         final String response =
                 mockMvc.perform(request)
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+                       .andExpect(status().isOk())
+                       .andReturn()
+                       .getResponse()
+                       .getContentAsString();
         assertThat(response, not(nullValue()));
     }
 

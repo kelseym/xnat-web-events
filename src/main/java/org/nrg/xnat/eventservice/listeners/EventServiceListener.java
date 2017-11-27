@@ -8,6 +8,7 @@ import reactor.fn.Consumer;
 import java.util.UUID;
 
 public interface EventServiceListener<T> extends Consumer<Event<T>> {
+
     String getEventType();
     EventServiceListener getInstance();
     UUID getListenerId();

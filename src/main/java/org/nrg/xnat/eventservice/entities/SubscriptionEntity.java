@@ -30,6 +30,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     private Map<String,String> attributes;
     private EventServiceFilterEntity eventServiceFilterEntity;
     private Boolean actAsEventUser;
+    private Integer counter;
 
 
 

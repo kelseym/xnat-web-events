@@ -32,12 +32,12 @@ public abstract class SubscriptionCreator {
 
     @JsonCreator
     public static SubscriptionCreator create(@Nonnull @JsonProperty("name") final String name,
-                                                  @JsonProperty("active") final Boolean active,
+                                             @JsonProperty("active") final Boolean active,
                                              @Nonnull @JsonProperty("event-id") final String event,
                                              @Nonnull @JsonProperty("action-key") final String actionKey,
-                                                  @JsonProperty("attributes") final Map<String, String> attributes,
-                                                  @JsonProperty("event-filter") final EventFilter eventFilter,
-                                                  @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
+                                             @JsonProperty("attributes") final Map<String, String> attributes,
+                                             @JsonProperty("event-filter") final EventFilter eventFilter,
+                                             @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
         return builder()
                 .name(name)
                 .active(active)

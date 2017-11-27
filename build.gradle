@@ -350,9 +350,13 @@ dependencies {
     cargo "org.codehaus.cargo:cargo-core-uberjar:1.6.5",
             "org.codehaus.cargo:cargo-ant:1.6.5"
 
+    def vSpringSecurity = dependencyManagement.importedProperties['spring-security.version']
+
     testCompile "org.nrg:test"
     testCompile "junit:junit"
     testCompile "org.springframework:spring-test"
+    testCompile "org.springframework.security:spring-security-test:${vSpringSecurity}"
+    testCompile "org.springframework.security:spring-security-config"
     testCompile "org.mockito:mockito-core:1.+"
     testCompile "org.hamcrest:hamcrest-library:1.3"
 

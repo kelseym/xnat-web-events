@@ -1,8 +1,10 @@
 package org.nrg.xnat.eventservice.config;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.SessionFactory;
 import org.nrg.framework.services.ContextService;
+import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
 import org.nrg.xnat.eventservice.entities.EventServiceFilterEntity;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
@@ -18,6 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.orm.hibernate4.HibernateTransactionManager;
 import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
 import org.springframework.transaction.support.ResourceTransactionManager;
@@ -28,27 +31,31 @@ import java.util.List;
 import java.util.Properties;
 
 @Configuration
-@Import(HibernateConfig.class)
+@Import({HibernateConfig.class, ObjectMapperConfig.class})
 public class EventServiceTestConfig {
+
 
     @Bean
     public EventService eventService(final EventSubscriptionEntityService subscriptionService,
                                      final EventBus eventBus,
                                      final ContextService contextService,
-                                     final EventServiceComponentManager componentManager){
-        return new EventServiceImpl(subscriptionService, eventBus, contextService, componentManager);
+                                     final EventServiceComponentManager componentManager,
+                                     final ActionManager actionManager){
+        return new EventServiceImpl(subscriptionService, eventBus, contextService, componentManager, actionManager);
     }
 
     @Bean
-    public EventSubscriptionEntityService eventSubscriptionService(final EventBus eventBus,
+    public EventSubscriptionEntityService eventSubscriptionService(final @Lazy EventService eventService,
+                                                                   final ObjectMapper objectMapper,
+                                                                   final EventBus eventBus,
                                                                    final ContextService contextService,
                                                                    final ActionManager actionManager,
                                                                    final EventServiceComponentManager componentManager) {
-        return new EventSubscriptionEntityServiceImpl(eventBus, contextService, actionManager, componentManager);
+        return new EventSubscriptionEntityServiceImpl(eventBus, contextService, actionManager, componentManager, eventService, objectMapper);
     }
 
     @Bean
-    public TestListener testListener(EventService eventService) {return new TestListener(eventService); }
+    public TestListener testListener() {return new TestListener(); }
 
     @Bean
     public ContextService contextService(final ApplicationContext applicationContext) {
@@ -95,4 +102,9 @@ public class EventServiceTestConfig {
                                                          final List<EventServiceActionProvider> actionProviders) {
         return new EventServiceComponentManagerImpl(eventListeners, actionProviders);
     }
+
+    @Bean
+    public EventServiceActionProvider eventServiceLoggingAction() {return new EventServiceLoggingAction(); }
+
+
 }
