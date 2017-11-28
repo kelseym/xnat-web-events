@@ -21,7 +21,7 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
 
     @Override
     public EventServiceListener getInstance() {
-        return null;
+        return this;
     }
 
     @Override

@@ -182,7 +182,7 @@ public class EventServiceImpl implements EventService {
                 .listenerService(
                         event instanceof EventServiceListener
                         ? ((EventServiceListener) event).getClass().getName()
-                        : null)
+                        : "")
                 .displayName(event.getDisplayName() == null ? "" : event.getDisplayName())
                 .description(event.getDescription() == null ? "" : event.getDescription())
                 .payloadClass(event.getObjectClass() == null ? "" : event.getObjectClass())

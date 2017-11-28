@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import reactor.bus.EventBus;
 import reactor.bus.selector.Selector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,7 +58,8 @@ public class EventServiceTest {
     @Autowired private ActionManager actionManager;
     @Autowired private ActionManager mockActionManager;
 
-    private SubscriptionCreator eventSubscription;
+    private SubscriptionCreator projectCreatedSubscription;
+
 
     @Before
     public void setUp() throws Exception {
@@ -65,19 +68,21 @@ public class EventServiceTest {
                                                     .addProjectId("PROJECTID-2")
                                                     .build();
 
-        eventSubscription = SubscriptionCreator.builder()
-                                               .name("TestSubscription")
-                                               .active(true)
-                                               .event("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
-                                               .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
-                                               .eventFilter(eventServiceFilter)
-                                               .actAsEventUser(false)
-                                               .build();
+        projectCreatedSubscription = SubscriptionCreator.builder()
+                                                        .name("TestSubscription")
+                                                        .active(true)
+                                                        .event("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
+                                                        .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
+                                                        .eventFilter(eventServiceFilter)
+                                                        .actAsEventUser(false)
+                                                        .build();
 
 
         List<EventServiceActionProvider> mockProviders = new ArrayList<>();
         mockProviders.add(new MockSingleActionProvider());
         when(mockComponentManager.getActionProviders()).thenReturn(mockProviders);
+
+        when(mockComponentManager.getInstalledEvents()).thenReturn(new ArrayList<>(Arrays.asList(new SampleEvent())));
     }
 
     @After
@@ -142,14 +147,41 @@ public class EventServiceTest {
     }
 
     @Test
+    public void buildSubscription() throws Exception {
+        List<SimpleEvent> events = mockEventService.getEvents();
+        assertThat("eventService.getEvents() should not return a null list", events, notNullValue());
+        assertThat("eventService.getEvents() should not return an empty list", events, is(not(empty())));
+
+        List<Action> actions = mockEventService.getAllActions(null);
+        assertThat("eventService.getAllActions() should not return a null list", actions, notNullValue());
+        assertThat("eventService.getAllActions() should not return an empty list", actions, is(not(empty())));
+
+        String eventId = events.get(0).id();
+        String actionId = actions.get(0).id();
+        String actionKey = actions.get(0).actionKey();
+
+        SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder().name("Test Subscription")
+                                                                     .active(true)
+                                                                     .event(eventId)
+                                                                     .actionKey(actionKey)
+                                                                     .actAsEventUser(false)
+                                                                     .build();
+
+        Subscription subscription = Subscription.create(subscriptionCreator);
+        assertThat("Created subscription should not be null", subscription, notNullValue());
+
+        Subscription savedSubscription = mockEventService.createSubscription(subscription);
+    }
+
+    @Test
     public void saveSubscriptionEntity() throws Exception {
-        Subscription subscription = eventSubscriptionEntityService.save(Subscription.create(eventSubscription));
+        Subscription subscription = eventSubscriptionEntityService.save(Subscription.create(projectCreatedSubscription));
         assertThat("EventSubscriptionEntityService.save should not create a null entity.", subscription, not(nullValue()));
         assertThat("Saved subscription entity should have been assigned a database ID.", subscription.id(), not(nullValue()));
-        assertThat("Pojo name mis-match", subscription.name(), containsString(eventSubscription.name()));
-        assertThat("Pojo actionService mis-match", subscription.actionKey(), containsString(eventSubscription.actionKey()));
-        assertThat("Pojo active-status mis-match", subscription.active(), is(eventSubscription.active()));
-        assertThat("Pojo eventListenerFilter mis-match", subscription.eventFilter(), equalTo(eventSubscription.eventFilter()));
+        assertThat("Pojo name mis-match", subscription.name(), containsString(projectCreatedSubscription.name()));
+        assertThat("Pojo actionService mis-match", subscription.actionKey(), containsString(projectCreatedSubscription.actionKey()));
+        assertThat("Pojo active-status mis-match", subscription.active(), is(projectCreatedSubscription.active()));
+        assertThat("Pojo eventListenerFilter mis-match", subscription.eventFilter(), equalTo(projectCreatedSubscription.eventFilter()));
 
         SubscriptionEntity entity = eventSubscriptionEntityService.get(subscription.id());
         assertThat(entity, not(nullValue()));
@@ -158,11 +190,11 @@ public class EventServiceTest {
 
     @Test
     public void activateAndSaveSubscriptions() throws Exception {
-        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(eventSubscription));
+        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
         assertThat(subscription1, not(nullValue()));
         assertThat(subscription1.listenerRegistrationKey(), not(nullValue()));
 
-        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(eventSubscription));
+        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
         assertThat("Subscription 2 needs a non-null ID", subscription2.id(), not(nullValue()));
         assertThat("Subscription 1 and 2 need unique IDs", subscription2.id(), not(is(subscription1.id())));
         assertThat("Subscription 1 and 2 should have unique registration keys.", subscription2.listenerRegistrationKey().toString(), not(containsString(subscription1.listenerRegistrationKey().toString())));
@@ -170,8 +202,8 @@ public class EventServiceTest {
 
     @Test
     public void deleteSubscriptionEntity() throws Exception {
-        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(eventSubscription));
-        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(eventSubscription));
+        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
+        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
         assertThat("Expected two subscriptions in database.", eventSubscriptionEntityService.getAll().size(), equalTo(2));
 
         eventSubscriptionEntityService.delete(subscription1);
@@ -263,6 +295,7 @@ public class EventServiceTest {
         }
     }
 
+    @Service
     class MockConsumer implements EventServiceListener<SampleEvent> {
         private SampleEvent event;
 
