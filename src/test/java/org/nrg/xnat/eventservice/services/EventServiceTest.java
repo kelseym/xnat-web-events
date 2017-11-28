@@ -4,10 +4,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
+import org.nrg.xnat.eventservice.actions.SingleActionProvider;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
+import org.nrg.xnat.eventservice.events.CombinedEventServiceEvent;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
@@ -24,11 +27,14 @@ import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.bus.selector.Selector;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 import static reactor.bus.selector.Selectors.matchAll;
 import static reactor.bus.selector.Selectors.type;
 
@@ -42,9 +48,13 @@ public class EventServiceTest {
     @Autowired private EventBus eventBus;
     @Autowired private TestListener testListener;
     @Autowired @Lazy private EventService eventService;
+    @Autowired private EventService mockEventService;
     @Autowired private EventSubscriptionEntityService eventSubscriptionEntityService;
     @Autowired private ContextService contextService;
     @Autowired private EventServiceComponentManager componentManager;
+    @Autowired private EventServiceComponentManager mockComponentManager;
+    @Autowired private ActionManager actionManager;
+    @Autowired private ActionManager mockActionManager;
 
     private SubscriptionCreator eventSubscription;
 
@@ -64,6 +74,10 @@ public class EventServiceTest {
                                                .actAsEventUser(false)
                                                .build();
 
+
+        List<EventServiceActionProvider> mockProviders = new ArrayList<>();
+        mockProviders.add(new MockSingleActionProvider());
+        when(mockComponentManager.getActionProviders()).thenReturn(mockProviders);
     }
 
     @After
@@ -93,9 +107,6 @@ public class EventServiceTest {
         // Detect all EventServiceEvent type events
         Selector selector = matchAll();
         eventBus.on(selector, testListener);
-
-
-
     }
 
     @Test
@@ -110,7 +121,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void getActionProviders() throws Exception {
+    public void getInstalledActionProviders() throws Exception {
         System.out.println("Installed Action Providers\n");
         assertThat("componentManager.getActionProviders() should not be null.", componentManager.getActionProviders(), notNullValue());
         assertThat("componentManager.getActionProviders() should not be empty.", componentManager.getActionProviders().size(), not(equalTo(0)));
@@ -119,7 +130,6 @@ public class EventServiceTest {
         }
 
     }
-
 
     @Test
     public void getInstalledActions() throws Exception {
@@ -174,13 +184,42 @@ public class EventServiceTest {
 
     }
 
+    @Test
+    public void testGetComponents() throws Exception {
+        List<EventServiceEvent> installedEvents = componentManager.getInstalledEvents();
+        assertThat("componentManager.getInstalledEvents should not return a null list", installedEvents, notNullValue());
+        assertThat("componentManager.getInstalledEvents should not return an empty list", installedEvents, is(not(empty())));
+
+        List<EventServiceActionProvider> actionProviders = componentManager.getActionProviders();
+        assertThat("componentManger.getActionProviders() should not return null list of action providers", actionProviders, notNullValue());
+        assertThat("componentManger.getActionProviders() should not return empty list of action providers", actionProviders, is(not(empty())));
+
+        actionProviders = actionManager.getActionProviders();
+        assertThat("actionManager.getActionProviders() should not return null list of action providers", actionProviders, notNullValue());
+        assertThat("actionManager.getActionProviders() should not return empty list of action providers", actionProviders, is(not(empty())));
+
+        List<SimpleEvent> events = eventService.getEvents();
+        assertThat("eventService.getEvents() should not return a null list", events, notNullValue());
+        assertThat("eventService.getEvents() should not return an empty list", events, is(not(empty())));
+
+        List<ActionProvider> providers = eventService.getActionProviders();
+        assertThat("eventService.getActionProviders() should not return a null list", providers, notNullValue());
+        assertThat("eventService.getActionProviders() should not return an empty list", providers, is(not(empty())));
+
+        List<Action> allActions = eventService.getAllActions(null);
+        assertThat("eventService.getAllActions() should not return a null list", allActions, notNullValue());
+        assertThat("eventService.getAllActions() should not return an empty list", allActions, is(not(empty())));
+
+
+    }
+
     // ** Async Tests ** //
 
     @Test
     public void testSampleEvent() throws InterruptedException {
         MockConsumer consumer = new MockConsumer();
 
-        Selector selector = type(SimpleEvent.class);
+        Selector selector = type(SampleEvent.class);
         // Register with Reactor
         eventBus.on(selector, consumer);
 
@@ -196,9 +235,36 @@ public class EventServiceTest {
         assertThat("Time-out waiting for event", consumer.getEvent(), is(notNullValue()));
     }
 
+    class MockSingleActionProvider extends SingleActionProvider {
 
-    class MockConsumer implements EventServiceListener<EventServiceEvent> {
-        private EventServiceEvent event;
+        @Override
+        public List<String> getAttributeKeys() {
+            return null;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return null;
+        }
+
+        @Override
+        public String getDescription() {
+            return null;
+        }
+
+        @Override
+        public List<String> getEvents() {
+            return null;
+        }
+
+        @Override
+        public void processEvent(CombinedEventServiceEvent event, SubscriptionEntity subscription) {
+
+        }
+    }
+
+    class MockConsumer implements EventServiceListener<SampleEvent> {
+        private SampleEvent event;
 
         public EventServiceEvent getEvent() {
             return event;
@@ -223,8 +289,8 @@ public class EventServiceTest {
         public void setEventService(EventService eventService) { }
 
         @Override
-        public void accept(Event<EventServiceEvent> eventServiceEventEvent) {
-            this.event = event;
+        public void accept(Event<SampleEvent> event) {
+            this.event = event.getData();
             synchronized (this) {
                 notifyAll();
             }
@@ -232,6 +298,7 @@ public class EventServiceTest {
 
     }
 
+    @XnatEventServiceEvent
     class SampleEvent implements EventServiceEvent {
 
         @Override

@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.SessionFactory;
+import org.mockito.Mockito;
 import org.nrg.framework.services.ContextService;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
@@ -45,6 +46,15 @@ public class EventServiceTestConfig {
     }
 
     @Bean
+    public EventService mockEventService(final EventSubscriptionEntityService subscriptionService,
+                                     final EventBus eventBus,
+                                     final ContextService contextService,
+                                     final EventServiceComponentManager mockComponentManager,
+                                     final ActionManager mockActionManager){
+        return new EventServiceImpl(subscriptionService, eventBus, contextService, mockComponentManager, mockActionManager);
+    }
+
+    @Bean
     public EventSubscriptionEntityService eventSubscriptionService(final @Lazy EventService eventService,
                                                                    final ObjectMapper objectMapper,
                                                                    final EventBus eventBus,
@@ -67,6 +77,11 @@ public class EventServiceTestConfig {
     @Bean
     public ActionManager actionManager(EventServiceComponentManager componentManager) {
         return new ActionManagerImpl(componentManager);
+    }
+
+    @Bean
+    public ActionManager mockActionManager(EventServiceComponentManager mockComponentManager) {
+        return new ActionManagerImpl(mockComponentManager);
     }
 
     @Bean
@@ -96,6 +111,9 @@ public class EventServiceTestConfig {
     public ResourceTransactionManager transactionManager(final SessionFactory sessionFactory) throws Exception {
         return new HibernateTransactionManager(sessionFactory);
     }
+
+    @Bean
+    public EventServiceComponentManager mockComponentManager() { return Mockito.mock(EventServiceComponentManager.class); }
 
     @Bean
     public EventServiceComponentManager componentManager(final List<EventServiceListener> eventListeners,
