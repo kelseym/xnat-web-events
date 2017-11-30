@@ -3,6 +3,9 @@ package org.nrg.xnat.eventservice.services.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.nrg.framework.services.ContextService;
@@ -64,17 +67,17 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription validate(Subscription subscription) throws SubscriptionValidationException {
         Class<?> clazz;
         try {
-            clazz = Class.forName(subscription.event());
+            clazz = Class.forName(subscription.eventId());
             if (clazz == null || !EventServiceEvent.class.isAssignableFrom(clazz)) {
-                throw new SubscriptionValidationException("Event class does not have a default listener: " + subscription.event() != null ? subscription.event() : "unknown");
+                throw new SubscriptionValidationException("Event class does not have a default listener: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException|ClassNotFoundException e) {
-            throw new SubscriptionValidationException("Could not load Event class: " + subscription.event() != null ? subscription.event() : "unknown");
+            throw new SubscriptionValidationException("Could not load Event class: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
         }
         try {
             // Check that event class has a default listener loaded into the application context
             if(!EventServiceListener.class.isAssignableFrom(clazz) || contextService.getBean(clazz) == null){
-                throw new NoSuchBeanDefinitionException("Could not load Bean of type " + subscription.event() != null ? subscription.event() : "unknown" + ", from application context.");
+                throw new NoSuchBeanDefinitionException("Could not load Bean of type " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context.");
             }
             // Check that Action is valid and service is accessible
 
@@ -82,7 +85,7 @@ public class EventSubscriptionEntityServiceImpl
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException e) {
-            throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.event() != null ? subscription.event() : "unknown" + ", from application context.");
+            throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context.");
         }
         return subscription;
     }
@@ -91,11 +94,19 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription activate(Subscription subscription) {
         try {
-            EventServiceListener listener = componentManager.getListener(subscription.event());
-            EventServiceListener uniqueListener = listener.getInstance();
-            uniqueListener.setEventService(eventService);
-            Class<?> eventClazz = Class.forName(subscription.event());
-            if(eventClazz != null && EventServiceListener.class.isAssignableFrom(eventClazz)) {
+            Class<?> eventClazz = Class.forName(subscription.eventId());
+            EventServiceListener listener = null;
+            // Is a custom listener defined and valid
+            if(!Strings.isNullOrEmpty(subscription.customListenerId())){
+                listener = componentManager.getListener(subscription.customListenerId());
+            }
+            if(listener == null && EventServiceListener.class.isAssignableFrom(eventClazz)) {
+            // Is event class a combined event/listener
+                listener = componentManager.getListener(subscription.eventId());
+            }
+            if(listener != null) {
+                EventServiceListener uniqueListener = listener.getInstance();
+                uniqueListener.setEventService(eventService);
                 Selector selector = T(eventClazz);
                 if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexPattern()))
                     selector = R(subscription.eventFilter().toRegexPattern());
@@ -103,7 +114,7 @@ public class EventSubscriptionEntityServiceImpl
 
                 log.info("Created registrationKey: " + registration.hashCode());
                 subscription = subscription.toBuilder()
-                       .listenerRegistrationKey(uniqueListener.getListenerId().toString())
+                       .listenerRegistrationKey(uniqueListener.getListenerId() == null ? "" : uniqueListener.getListenerId().toString())
                         .build();
             } else throw new SubscriptionValidationException("Could not activate subscription.");
             subscription = save(subscription);
@@ -187,27 +198,43 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public void processEvent(EventServiceListener listener, Event event) throws NotFoundException {
-        String strObject = null;
+        String jsonObject = null;
         if(event.getData() instanceof EventServiceEvent) {
             EventServiceEvent esEvent = (EventServiceEvent) event.getData();
             for (Subscription subscription : getSubscriptionsByKey(listener.getListenerId().toString())) {
                 log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
                 try {
+
                     // Is subscription enabled
                     if (!subscription.active()) {
                         log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
+                        return;
                     } else if(esEvent.getModelObject() != null && mapper.canSerialize(esEvent.getModelObject().getClass())) {
+
                         // Serialize data object
-                        strObject = mapper.writeValueAsString(esEvent.getModelObject());
+                        jsonObject = mapper.writeValueAsString(esEvent.getModelObject());
                     } else if(esEvent.getObject() != null && mapper.canSerialize(esEvent.getObject().getClass())) {
-                        strObject = mapper.writeValueAsString(esEvent.getObject());
+                        jsonObject = mapper.writeValueAsString(esEvent.getObject());
                     } else {
                         log.error("Could not serialize event object in: " + esEvent.toString());
+                        return;
                     }
-                    log.error("Serialized Object: " + strObject);
-                    //Filter on data object
+                    log.error("Serialized Object: " + jsonObject);
 
+                    //Filter on data object (if filter exists)
+                    if( subscription.eventFilter() != null && subscription.eventFilter().jsonPathFilter() != null ) {
+                        String jsonFilter = subscription.eventFilter().jsonPathFilter();
+                        Configuration conf = Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST);
+                        List<String> filterResult =  JsonPath.using(conf).parse(jsonObject).read(jsonFilter);
+                        if(filterResult.isEmpty()){
+                            log.error("Serialized event:\n" + jsonObject + "\ndidn't match JsonPath Filter:\n" + jsonFilter);
+                            return;
+                        }
+                    }
                     // call Action Manager with payload
+                    SubscriptionEntity subscriptionEntity = super.get(subscription.id());
+                    actionManager.processEvent(subscriptionEntity, esEvent);
+                    subscriptionEntity.incCounter();
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }

@@ -13,11 +13,12 @@ import java.util.Map;
 public abstract class Subscription {
 
     @Nullable @JsonProperty("id") public abstract Long id();
-    @Nullable @JsonProperty("name") public abstract String name();
+    @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();
-    @Nullable @JsonProperty("event-id") public abstract String event();
-    @Nullable @JsonProperty("action-key") public abstract String actionKey();
+    @JsonProperty("event-id") public abstract String eventId();
+    @Nullable @JsonProperty("custom-listener-id") public abstract String customListenerId();
+    @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
@@ -34,17 +35,19 @@ public abstract class Subscription {
                                            @JsonProperty("name") final String name,
                                            @JsonProperty("active") final Boolean active,
                                            @JsonProperty("registration-key") final String listenerRegistrationKey,
-                                           @JsonProperty("event-id") final String event,
+                                           @JsonProperty("event-id") final String eventId,
+                                           @JsonProperty("custom-listener-id") String customListenerId,
                                            @JsonProperty("action-key") final String actionKey,
                                            @JsonProperty("attributes") final Map<String, String> attributes,
-                                           @JsonProperty("event-filter") final EventFilter eventFilter,
-                                           @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
+                                           @JsonProperty("eventId-filter") final EventFilter eventFilter,
+                                           @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser) {
         return builder()
                 .id(id)
                 .name(name)
                 .active(active)
                 .listenerRegistrationKey(listenerRegistrationKey)
-                .event(event)
+                .eventId(eventId)
+                .customListenerId(customListenerId)
                 .actionKey(actionKey)
                 .attributes(attributes)
                 .eventFilter(eventFilter)
@@ -56,7 +59,8 @@ public abstract class Subscription {
         return builder()
                 .name(creator.name())
                 .active(creator.active())
-                .event(creator.event())
+                .eventId(creator.eventId())
+                .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
                 .eventFilter(creator.eventFilter())
@@ -74,7 +78,9 @@ public abstract class Subscription {
 
         public abstract Builder active(Boolean active);
 
-        public abstract Builder event(String event);
+        public abstract Builder eventId(String eventId);
+
+        public abstract Builder customListenerId(String listenerId);
 
         public abstract Builder actionKey(String actionKey);
 

@@ -17,6 +17,7 @@ public class EventServiceFilterEntity {
     private long id;
     private String name;
     private List<String> projectIds;
+    private String jsonPathFilter;
     private List<SubscriptionEntity> eventSubscriptionEntities = Lists.newArrayList();
 
 
@@ -37,26 +38,29 @@ public class EventServiceFilterEntity {
         EventServiceFilterEntity that = (EventServiceFilterEntity) o;
         return id == that.id &&
                 Objects.equal(name, that.name) &&
+                Objects.equal(jsonPathFilter, that.jsonPathFilter) &&
                 Objects.equal(projectIds, that.projectIds) &&
                 Objects.equal(eventSubscriptionEntities, that.eventSubscriptionEntities);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id, name, projectIds, eventSubscriptionEntities);
+        return Objects.hashCode(id, name, jsonPathFilter, projectIds, eventSubscriptionEntities);
     }
 
-    public EventServiceFilterEntity(String name, List<String> projectIds) {
+    public EventServiceFilterEntity(String name, List<String> projectIds, String jsonPathFilter) {
         this.name = name;
         this.projectIds = projectIds;
+        this.jsonPathFilter = jsonPathFilter;
     }
 
     public static EventServiceFilterEntity fromPojo(EventFilter eventServiceFilter) {
 
         return eventServiceFilter != null ?
                 new EventServiceFilterEntity(
-                eventServiceFilter.name(),
-                eventServiceFilter.projectIds())
+                        eventServiceFilter.name(),
+                        eventServiceFilter.projectIds(),
+                        eventServiceFilter.jsonPathFilter())
                 : null;
 
     }
@@ -93,5 +97,13 @@ public class EventServiceFilterEntity {
                           .name(this.name)
                           .projectIds(this.projectIds)
                           .build();
+    }
+
+    public String getJsonPathFilter() {
+        return jsonPathFilter;
+    }
+
+    public void setJsonPathFilter(String jsonPathFilter) {
+        this.jsonPathFilter = jsonPathFilter;
     }
 }

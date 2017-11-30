@@ -13,6 +13,7 @@ import java.util.UUID;
 public class TestListener implements EventServiceListener<EventServiceEvent> {
     List<EventServiceEvent> detectedEvents = new ArrayList();
 
+    UUID listenerId = UUID.randomUUID();
 
     @Override
     public String getEventType() {
@@ -26,7 +27,7 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
 
     @Override
     public UUID getListenerId() {
-        return null;
+        return listenerId;
     }
 
     @Override
@@ -34,9 +35,18 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
 
     }
 
+    public List<EventServiceEvent> getDetectedEvents(){
+        return detectedEvents;
+    }
+
     @Override
     public void accept(Event<EventServiceEvent> event) {
-        if( event.getData() instanceof EventServiceEvent)
-            detectedEvents.add((EventServiceEvent) event);
+        if (event.getData() instanceof EventServiceEvent)
+            detectedEvents.add((EventServiceEvent) event.getData());
+
+        synchronized (this) {
+            notifyAll();
+
+        }
     }
 }

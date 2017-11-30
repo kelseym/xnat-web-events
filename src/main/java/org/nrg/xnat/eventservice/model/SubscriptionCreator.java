@@ -18,7 +18,8 @@ public abstract class SubscriptionCreator {
 
     @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
-    @JsonProperty("event-id") public abstract String event();
+    @JsonProperty("event-id") public abstract String eventId();
+    @Nullable @JsonProperty("custom-listener-id") public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
@@ -33,15 +34,17 @@ public abstract class SubscriptionCreator {
     @JsonCreator
     public static SubscriptionCreator create(@Nonnull @JsonProperty("name") final String name,
                                              @JsonProperty("active") final Boolean active,
-                                             @Nonnull @JsonProperty("event-id") final String event,
+                                             @Nonnull @JsonProperty("event-id") final String eventId,
+                                             @JsonProperty("custom-listener-id") final String customListenerId,
                                              @Nonnull @JsonProperty("action-key") final String actionKey,
                                              @JsonProperty("attributes") final Map<String, String> attributes,
-                                             @JsonProperty("event-filter") final EventFilter eventFilter,
-                                             @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
+                                             @JsonProperty("eventId-filter") final EventFilter eventFilter,
+                                             @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser) {
         return builder()
                 .name(name)
                 .active(active)
-                .event(event)
+                .eventId(eventId)
+                .customListenerId(customListenerId)
                 .actionKey(actionKey)
                 .attributes(attributes==null ? Collections.<String, String>emptyMap() : attributes)
                 .eventFilter(eventFilter)
@@ -59,7 +62,9 @@ public abstract class SubscriptionCreator {
 
         public abstract Builder active(Boolean active);
 
-        public abstract Builder event(String event);
+        public abstract Builder eventId(String eventId);
+
+        public abstract Builder customListenerId(String customListenerId);
 
         public abstract Builder actionKey(String actionKey);
 

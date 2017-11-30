@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface EventServiceComponentManager {
 
-    List<EventServiceEvent> getInstalledEvents() throws Exception;
+    List<EventServiceEvent> getInstalledEvents();
     EventServiceEvent getEvent(String id);
 
     List<EventServiceListener> getInstalledListeners();
-    EventServiceListener getListener(String name);
+    EventServiceListener getListener(String listenerClassName);
 
     List<EventServiceActionProvider> getActionProviders();
 

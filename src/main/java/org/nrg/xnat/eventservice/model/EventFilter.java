@@ -19,6 +19,7 @@ public abstract class EventFilter {
     @JsonIgnore @Nullable @JsonProperty("id") public abstract Long id();
     @Nullable @JsonProperty("name") public abstract String name();
     @JsonProperty("project-ids") public abstract ImmutableList<String> projectIds();
+    @Nullable @JsonProperty("json-path-filter") public abstract String jsonPathFilter();
 
     public static Builder builder() {
         return new AutoValue_EventFilter.Builder();
@@ -29,6 +30,8 @@ public abstract class EventFilter {
         public abstract Builder id(Long id);
 
         public abstract Builder projectIds(@Nonnull List<String> projectIds);
+
+        public abstract Builder jsonPathFilter(String jsonPathFilter);
 
         abstract ImmutableList.Builder<String> projectIdsBuilder();
 
@@ -56,11 +59,13 @@ public abstract class EventFilter {
     @JsonCreator
     public static EventFilter create(@JsonProperty("id") final Long id,
                                      @JsonProperty("name") final String name,
-                                     @JsonProperty("project-ids") final List<String> projectIds) {
+                                     @JsonProperty("project-ids") final List<String> projectIds,
+                                     @JsonProperty("json-path-filter") final String jsonPathFilter) {
         return builder()
                 .id(id)
                 .name(name)
                 .projectIds(projectIds == null ? Collections.<String>emptyList() : projectIds)
+                .jsonPathFilter(jsonPathFilter)
                 .build();
     }
 }

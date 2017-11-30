@@ -1,21 +1,22 @@
 package org.nrg.xnat.eventservice.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xnat.eventservice.actions.SingleActionProvider;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.events.CombinedEventServiceEvent;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
+import org.nrg.xnat.eventservice.events.SampleEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
-import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
+import org.nrg.xnat.eventservice.model.xnat.Scan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,8 +58,12 @@ public class EventServiceTest {
     @Autowired private EventServiceComponentManager mockComponentManager;
     @Autowired private ActionManager actionManager;
     @Autowired private ActionManager mockActionManager;
+    @Autowired private ObjectMapper objectMapper;
 
     private SubscriptionCreator projectCreatedSubscription;
+    private Scan mrScan1 = new Scan();
+    private Scan mrScan2 = new Scan();
+    private Scan ctScan1 = new Scan();
 
 
     @Before
@@ -71,11 +76,38 @@ public class EventServiceTest {
         projectCreatedSubscription = SubscriptionCreator.builder()
                                                         .name("TestSubscription")
                                                         .active(true)
-                                                        .event("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
+                                                        .eventId("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
+                                                        .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                         .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
                                                         .eventFilter(eventServiceFilter)
                                                         .actAsEventUser(false)
                                                         .build();
+        mrScan1.setId("1111");
+        mrScan1.setLabel("TestLabel");
+        mrScan1.setXsiType("xnat:Scan");
+        mrScan1.setNote("Test note.");
+        mrScan1.setModality("MR");
+        mrScan1.setIntegerId(1111);
+        mrScan1.setProjectId("PROJECTID-1");
+        mrScan1.setSeriesDescription("This is the description of a series which is this one.");
+
+        mrScan2.setId("2222");
+        mrScan2.setLabel("TestLabel");
+        mrScan2.setXsiType("xnat:Scan");
+        mrScan2.setNote("Test note.");
+        mrScan2.setModality("MR");
+        mrScan2.setIntegerId(2222);
+        mrScan2.setProjectId("PROJECTID-2");
+        mrScan2.setSeriesDescription("This is the description of a series which is this one.");
+
+        ctScan1.setId("3333");
+        ctScan1.setLabel("TestLabel");
+        ctScan1.setXsiType("xnat:Scan");
+        ctScan1.setNote("Test note.");
+        ctScan1.setModality("CT");
+        ctScan1.setIntegerId(3333);
+        ctScan1.setProjectId("PROJECTID-1");
+        ctScan1.setSeriesDescription("This is the description of a series which is this one.");
 
 
         List<EventServiceActionProvider> mockProviders = new ArrayList<>();
@@ -83,6 +115,9 @@ public class EventServiceTest {
         when(mockComponentManager.getActionProviders()).thenReturn(mockProviders);
 
         when(mockComponentManager.getInstalledEvents()).thenReturn(new ArrayList<>(Arrays.asList(new SampleEvent())));
+
+        when(mockComponentManager.getInstalledListeners()).thenReturn(new ArrayList<>(Arrays.asList(new TestListener())));
+
     }
 
     @After
@@ -107,6 +142,38 @@ public class EventServiceTest {
     }
 
     @Test
+    public void filterSerializedModelObjects() throws Exception {
+        String mrFilter = "$[?(@.modality == \"MR\")]";
+        String ctFilter = "$[?(@.modality == \"CT\")]";
+        String mrCtProj2Filter = "$[?(@.project-id == \"PROJECTID-2\" && (@.modality == \"MR\" || @.modality == \"CT\"))]";
+        String proj2Filter = "$[?(@.project-id == \"PROJECTID-2\" && (@.modality == \"MR\" || @.modality == \"CT\"))]";
+
+        assertThat(objectMapper.canSerialize(Scan.class), is(true));
+        String jsonMrScan1 = objectMapper.writeValueAsString(mrScan1);
+        String jsonMrScan2 = objectMapper.writeValueAsString(mrScan2);
+        String jsonCtScan1 = objectMapper.writeValueAsString(ctScan1);
+
+
+        List<String> match = JsonPath.parse(jsonMrScan1).read(mrFilter);
+        assertThat("JsonPath result should not be null", match, notNullValue());
+        assertThat("JsonPath match result should not be empty", match, is(not(empty())));
+
+        List<String> mismatch = JsonPath.parse(jsonCtScan1).read(mrFilter);
+        assertThat("JsonPath result should not be null", mismatch, notNullValue());
+        assertThat("JsonPath mismatch result should be empty" + mismatch, mismatch, is(empty()));
+
+        match = JsonPath.parse(jsonMrScan2).read(mrCtProj2Filter);
+        assertThat("JsonPath result should not be null", match, notNullValue());
+        assertThat("JsonPath match result should not be empty", match, is(not(empty())));
+
+        mismatch = JsonPath.parse(jsonMrScan1).read(mrCtProj2Filter);
+        assertThat("JsonPath result should not be null", mismatch, notNullValue());
+        assertThat("JsonPath mismatch result should be empty: " + mismatch, mismatch, is(empty()));
+
+
+    }
+
+    @Test
     public void listenForEverything() throws Exception {
 
         // Detect all EventServiceEvent type events
@@ -117,7 +184,7 @@ public class EventServiceTest {
     @Test
     public void getInstalledEvents() throws Exception {
         List<SimpleEvent> events = eventService.getEvents();
-        Integer eventPropertyFileCount = BasicXnatResourceLocator.getResources("classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties").size();
+        Integer eventPropertyFileCount = BasicXnatResourceLocator.getResources("classpath*:META-INF/xnat/eventId/*-xnateventserviceevent.properties").size();
         System.out.println("\nFound " + events.size() + " Event classes:");
         for (SimpleEvent event : events) {
             System.out.println(event.toString());
@@ -147,7 +214,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void buildSubscription() throws Exception {
+    public void createSubscription() throws Exception {
         List<SimpleEvent> events = mockEventService.getEvents();
         assertThat("eventService.getEvents() should not return a null list", events, notNullValue());
         assertThat("eventService.getEvents() should not return an empty list", events, is(not(empty())));
@@ -156,13 +223,19 @@ public class EventServiceTest {
         assertThat("eventService.getAllActions() should not return a null list", actions, notNullValue());
         assertThat("eventService.getAllActions() should not return an empty list", actions, is(not(empty())));
 
+        List<EventServiceListener> listeners = mockComponentManager.getInstalledListeners();
+        assertThat("componentManager.getInstalledListeners() should not return a null list", listeners, notNullValue());
+        assertThat("componentManager.getInstalledListeners() should not return an empty list", listeners, is(not(empty())));
+
         String eventId = events.get(0).id();
         String actionId = actions.get(0).id();
         String actionKey = actions.get(0).actionKey();
+        String listenerType = listeners.get(0).getClass().getCanonicalName();
 
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder().name("Test Subscription")
                                                                      .active(true)
-                                                                     .event(eventId)
+                                                                     .eventId(eventId)
+                                                                     .customListenerId(listenerType)
                                                                      .actionKey(actionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -171,6 +244,12 @@ public class EventServiceTest {
         assertThat("Created subscription should not be null", subscription, notNullValue());
 
         Subscription savedSubscription = mockEventService.createSubscription(subscription);
+        assertThat("eventService.createSubscription() should not return null", savedSubscription, notNullValue());
+        assertThat("subscription id should not be null", savedSubscription.id(), notNullValue());
+        assertThat("subscription id should not be zero", savedSubscription.id(), not(0));
+        assertThat("subscription registration key should not be null", savedSubscription.listenerRegistrationKey(), notNullValue());
+        assertThat("subscription registration key should not be empty", savedSubscription.listenerRegistrationKey(), not(""));
+
     }
 
     @Test
@@ -264,8 +343,27 @@ public class EventServiceTest {
             consumer.wait(1000);
         }
 
-        assertThat("Time-out waiting for event", consumer.getEvent(), is(notNullValue()));
+        assertThat("Time-out waiting for eventId", consumer.getEvent(), is(notNullValue()));
     }
+
+    @Test
+    public void catchSubscribedEvent() throws Exception {
+        createSubscription();
+
+        // Trigger event
+        EventServiceEvent event = new SampleEvent();
+        eventBus.notify(event, Event.wrap(event));
+
+        // wait for listener (max 1 sec.)
+        synchronized (testListener) {
+            testListener.wait(1000);
+        }
+
+        assertThat("List of detected events should not be null.",testListener.getDetectedEvents(), notNullValue());
+        assertThat("List of detected events should not be empty.",testListener.getDetectedEvents().size(), not(0));
+
+    }
+
 
     class MockSingleActionProvider extends SingleActionProvider {
 
@@ -290,7 +388,7 @@ public class EventServiceTest {
         }
 
         @Override
-        public void processEvent(CombinedEventServiceEvent event, SubscriptionEntity subscription) {
+        public void processEvent(EventServiceEvent event, SubscriptionEntity subscription) {
 
         }
     }
@@ -331,48 +429,6 @@ public class EventServiceTest {
 
     }
 
-    @XnatEventServiceEvent
-    class SampleEvent implements EventServiceEvent {
 
-        @Override
-        public String getId() {
-            return null;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return null;
-        }
-
-        @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public Object getObject() {
-            return null;
-        }
-
-        @Override
-        public XnatModelObject getModelObject() {
-            return null;
-        }
-
-        @Override
-        public String getObjectClass() {
-            return null;
-        }
-
-        @Override
-        public String getPayloadXnatType() {
-            return null;
-        }
-
-        @Override
-        public Boolean isPayloadXsiType() {
-            return null;
-        }
-    }
 
 }

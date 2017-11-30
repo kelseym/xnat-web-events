@@ -1,6 +1,8 @@
 package org.nrg.xnat.eventservice.services;
 
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.Action;
 
 import java.util.List;
@@ -21,4 +23,6 @@ public interface ActionManager {
     EventServiceActionProvider getActionProvider(String providerName);
 
     boolean validateAction(Action action);
+
+    void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent);
 }

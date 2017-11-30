@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -43,11 +44,11 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     }
 
     @Override
-    public List<EventServiceEvent> getInstalledEvents() throws Exception {
+    public List<EventServiceEvent> getInstalledEvents() {
         if (installedEvents == null || installedEvents.isEmpty()){
             try {
                 installedEvents = loadInstalledEvents();
-            } catch (Exception e) {
+            } catch (NoSuchMethodException|IOException e) {
                 e.printStackTrace();
             }
         }
@@ -55,7 +56,12 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     }
 
     @Override
-    public org.nrg.xnat.eventservice.events.EventServiceEvent getEvent(String id) {
+    public org.nrg.xnat.eventservice.events.EventServiceEvent getEvent(@Nonnull String eventId) {
+        for(EventServiceEvent event : getInstalledEvents()) {
+            if(eventId.matches(event.getId())) {
+                return event;
+            }
+        }
         return null;
     }
 

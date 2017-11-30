@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -176,7 +177,7 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private SimpleEvent toPojo(EventServiceEvent event) {
+    private SimpleEvent toPojo(@Nonnull EventServiceEvent event) {
         return SimpleEvent.builder()
                 .id(event.getId() == null ? "" : event.getId())
                 .listenerService(
@@ -191,7 +192,7 @@ public class EventServiceImpl implements EventService {
                 .build();
     }
 
-    private ActionProvider toPojo(EventServiceActionProvider actionProvider) {
+    private ActionProvider toPojo(@Nonnull EventServiceActionProvider actionProvider) {
         return ActionProvider.builder()
                 .className(actionProvider.getName())
                 .displayName((actionProvider.getDisplayName()))

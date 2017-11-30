@@ -3,6 +3,8 @@ package org.nrg.xnat.eventservice.services.impl;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.ActionManager;
 import org.nrg.xnat.eventservice.services.EventService;
@@ -128,6 +130,26 @@ public class ActionManagerImpl implements ActionManager {
             return true;
         }
         return false;
+    }
+
+    private EventServiceActionProvider getActionProviderByKey(String actionKey) {
+        String providerId;
+        Iterable<String> key = Splitter.on(':')
+                                       .trimResults()
+                                       .omitEmptyStrings()
+                                       .split(actionKey);
+        ImmutableList<String> keyList = ImmutableList.copyOf(key);
+        if(!keyList.isEmpty()) {
+            providerId = keyList.get(0);
+            return getActionProvider(providerId);
+        }
+        return null;
+    }
+
+    @Override
+    public void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent) {
+        EventServiceActionProvider provider = getActionProviderByKey(subscription.getActionKey());
+        provider.processEvent(esEvent, subscription);
     }
 
 }
