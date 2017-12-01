@@ -96,6 +96,7 @@ public class EventServiceFilterEntity {
                           .id(this.id)
                           .name(this.name)
                           .projectIds(this.projectIds)
+                          .jsonPathFilter(this.jsonPathFilter)
                           .build();
     }
 

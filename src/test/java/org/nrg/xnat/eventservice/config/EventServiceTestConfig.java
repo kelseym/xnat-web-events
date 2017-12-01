@@ -6,9 +6,11 @@ import org.hibernate.SessionFactory;
 import org.mockito.Mockito;
 import org.nrg.framework.services.ContextService;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
+import org.nrg.xnat.eventservice.actions.TestAction;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
 import org.nrg.xnat.eventservice.entities.EventServiceFilterEntity;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
+import org.nrg.xnat.eventservice.events.TestCombinedEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.services.*;
@@ -68,11 +70,23 @@ public class EventServiceTestConfig {
     public TestListener testListener() {return new TestListener(); }
 
     @Bean
+    public TestCombinedEvent testCombinedEvent() {return new TestCombinedEvent(); }
+
+    @Bean
     public ContextService contextService(final ApplicationContext applicationContext) {
         final ContextService contextService = new ContextService();
         contextService.setApplicationContext(applicationContext);
         return contextService;
     }
+
+    @Bean
+    public EventServiceActionProvider testAction() {return new TestAction(); }
+
+    @Bean
+    public EventServiceActionProvider eventServiceLoggingAction() {return new EventServiceLoggingAction(); }
+
+    @Bean
+    public EventServiceLoggingAction mockEventServiceLoggingAction() { return Mockito.mock(EventServiceLoggingAction.class); }
 
     @Bean
     public ActionManager actionManager(EventServiceComponentManager componentManager) {
@@ -120,9 +134,6 @@ public class EventServiceTestConfig {
                                                          final List<EventServiceActionProvider> actionProviders) {
         return new EventServiceComponentManagerImpl(eventListeners, actionProviders);
     }
-
-    @Bean
-    public EventServiceActionProvider eventServiceLoggingAction() {return new EventServiceLoggingAction(); }
 
 
 }

@@ -6,13 +6,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
+import org.nrg.xdat.bean.XnatImagesessiondataBean;
+import org.nrg.xdat.model.XnatImagesessiondataI;
+import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.actions.SingleActionProvider;
+import org.nrg.xnat.eventservice.actions.TestAction;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.events.SampleEvent;
+import org.nrg.xnat.eventservice.events.TestCombinedEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
@@ -48,6 +55,10 @@ import static reactor.bus.selector.Selectors.type;
 public class EventServiceTest {
     private static final Logger log = LoggerFactory.getLogger(EventServiceTest.class);
 
+    private UserI mockUser;
+
+    private final String FAKE_USER = "mockUser";
+
     @Autowired private EventBus eventBus;
     @Autowired private TestListener testListener;
     @Autowired @Lazy private EventService eventService;
@@ -59,6 +70,7 @@ public class EventServiceTest {
     @Autowired private ActionManager actionManager;
     @Autowired private ActionManager mockActionManager;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private EventServiceLoggingAction mockEventServiceLoggingAction;
 
     private SubscriptionCreator projectCreatedSubscription;
     private Scan mrScan1 = new Scan();
@@ -68,6 +80,7 @@ public class EventServiceTest {
 
     @Before
     public void setUp() throws Exception {
+
         EventFilter eventServiceFilter = EventFilter.builder()
                                                     .addProjectId("PROJECTID-1")
                                                     .addProjectId("PROJECTID-2")
@@ -82,6 +95,8 @@ public class EventServiceTest {
                                                         .eventFilter(eventServiceFilter)
                                                         .actAsEventUser(false)
                                                         .build();
+
+
         mrScan1.setId("1111");
         mrScan1.setLabel("TestLabel");
         mrScan1.setXsiType("xnat:Scan");
@@ -110,13 +125,17 @@ public class EventServiceTest {
         ctScan1.setSeriesDescription("This is the description of a series which is this one.");
 
 
-        List<EventServiceActionProvider> mockProviders = new ArrayList<>();
-        mockProviders.add(new MockSingleActionProvider());
-        when(mockComponentManager.getActionProviders()).thenReturn(mockProviders);
+        // Mock the userI
+        mockUser = Mockito.mock(UserI.class);
+        when(mockUser.getLogin()).thenReturn(FAKE_USER);
+
+        when(mockComponentManager.getActionProviders()).thenReturn(new ArrayList<>(Arrays.asList(new MockSingleActionProvider())));
 
         when(mockComponentManager.getInstalledEvents()).thenReturn(new ArrayList<>(Arrays.asList(new SampleEvent())));
 
         when(mockComponentManager.getInstalledListeners()).thenReturn(new ArrayList<>(Arrays.asList(new TestListener())));
+
+
 
     }
 
@@ -364,6 +383,92 @@ public class EventServiceTest {
 
     }
 
+    @Test
+    public void registerMrSessionSubscription() throws Exception {
+        EventServiceEvent testCombinedEvent = componentManager.getEvent("org.nrg.xnat.eventservice.events.TestCombinedEvent");
+        assertThat("Could not load TestCombinedEvent from componentManager", testCombinedEvent, notNullValue());
+
+        EventFilter eventServiceFilterWithJson = EventFilter.builder()
+                                                            .addProjectId("PROJECTID-1")
+                                                            .addProjectId("PROJECTID-2")
+                                                            .jsonPathFilter("$[?(@.modality == \"MR\")]")
+                                                            .build();
+
+        SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
+                                                                     .name("FilterTestSubscription")
+                                                                     .active(true)
+                                                                     .eventId("org.nrg.xnat.eventservice.events.TestCombinedEvent")
+                                                                     .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
+                                                                     .eventFilter(eventServiceFilterWithJson)
+                                                                     .actAsEventUser(false)
+                                                                     .build();
+        assertThat("Json Filtered SubscriptionCreator builder failed :(", subscriptionCreator, notNullValue());
+
+        Subscription subscription = Subscription.create(subscriptionCreator);
+        assertThat("Json Filtered Subscription creation failed :(", subscription, notNullValue());
+
+        Subscription createdSubsciption = eventService.createSubscription(subscription);
+        assertThat("eventService.createSubscription() returned a null value", createdSubsciption, not(nullValue()));
+        assertThat("Created subscription is missing listener registration key.", createdSubsciption.listenerRegistrationKey(), not(nullValue()));
+        assertThat("Created subscription is missing DB id.", createdSubsciption.id(), not(nullValue()));
+
+    }
+
+    @Test
+    public void matchMrSubscriptionToMrSession() throws Exception {
+        registerMrSessionSubscription();
+
+        // Test MR Project 1 session - match
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction");
+        assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
+
+
+        XnatImagesessiondataI session = new XnatImagesessiondataBean();
+        session.setModality("MR");
+        session.setProject("PROJECTID-1");
+        session.setSessionType("xnat:imageSessionData");
+
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser);
+        String filter =  "project-id:PROJECTID-1";
+        eventBus.notify(filter, Event.wrap(combinedEvent));
+
+        // wait for async action (max 1 sec.)
+        synchronized (testAction) {
+            testAction.wait(1000);
+        }
+
+        TestAction actionProvider = (TestAction) testAction.provider();
+        assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
+        assertThat("List of detected events should not be empty.",actionProvider.getDetectedEvents().size(), not(0));
+    }
+
+    @Test
+    public void mismatchMrSubscriptionToCtSession() throws Exception {
+        registerMrSessionSubscription();
+
+        // Test CT Project 1 session - match
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction");
+        assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
+
+
+        XnatImagesessiondataI session = new XnatImagesessiondataBean();
+        session.setModality("CT");
+        session.setProject("PROJECTID-1");
+        session.setSessionType("xnat:imageSessionData");
+
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser);
+        String filter =  "project-id:PROJECTID-1";
+        eventBus.notify(filter, Event.wrap(combinedEvent));
+
+        // wait for async action (max 1 sec.)
+        synchronized (testAction) {
+            testAction.wait(1000);
+        }
+
+        TestAction actionProvider = (TestAction) testAction.provider();
+        assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
+        assertThat("List of detected events should be empty.",actionProvider.getDetectedEvents().size(), is(0));
+    }
 
     class MockSingleActionProvider extends SingleActionProvider {
 
@@ -402,6 +507,9 @@ public class EventServiceTest {
         }
 
         @Override
+        public String getId() { return this.getClass().getCanonicalName(); }
+
+        @Override
         public String getEventType() {
             return event.getObjectClass();
         }
@@ -412,7 +520,7 @@ public class EventServiceTest {
         }
 
         @Override
-        public UUID getListenerId() {
+        public UUID getInstanceId() {
             return null;
         }
 

@@ -16,7 +16,7 @@ import java.util.Date;
 @XnatEventServiceEvent(name = "TimerEvent")
 public class TimerEvent extends CombinedEventServiceEvent<TimerEvent, Date>{
     final String displayName = "Timer Event";
-    final String description = "Timer Event";
+    final String description = "Triggers every five seconds";
 
     @Autowired
     NrgEventService es;

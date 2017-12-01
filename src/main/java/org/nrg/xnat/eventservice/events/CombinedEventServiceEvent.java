@@ -11,6 +11,7 @@ import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
 import reactor.bus.Event;
@@ -30,7 +31,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     EventObjectT object;
     UUID listenerId = UUID.randomUUID();
 
-    @Autowired
+    @Autowired @Lazy
     EventService eventService;
 
     public CombinedEventServiceEvent() {};
@@ -44,7 +45,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     public String getId() { return this.getClass().getCanonicalName(); }
 
     @Override
-    public UUID getListenerId() {return listenerId;}
+    public UUID getInstanceId() {return listenerId;}
 
     @Override
     public String getEventType() {
@@ -97,22 +98,22 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     @Override
     public XnatModelObject getModelObject() {
 
-        if(object.getClass() == XnatImageassessordataI.class) {
+        if(XnatImageassessordataI.class.isAssignableFrom(object.getClass())) {
             return new Assessor((XnatImageassessordataI) object);
         }
-        else if(object.getClass() == XnatProjectdata.class) {
+        else if(XnatProjectdata.class.isAssignableFrom(object.getClass())) {
             return new Project((XnatProjectdata) object);
         }
-        else if(object.getClass() == XnatResourcecatalog.class) {
+        else if(XnatResourcecatalog.class.isAssignableFrom(object.getClass())) {
             return new Resource((XnatResourcecatalog) object);
         }
 //        else if(object.getClass() == XnatImagescandataI.class) {
-//            return new Scan((XnatImagescandataI) object);
+//            return new Scan((XnatImagescandataI) object, null, "");
 //        }
-        else if(object.getClass() == XnatImagesessiondataI.class) {
+        else if(XnatImagesessiondataI.class.isAssignableFrom(object.getClass())) {
             return new Session((XnatImagesessiondataI) object);
         }
-        else if(object.getClass() == XnatSubjectdataI.class) {
+        else if(XnatSubjectdataI.class.isAssignableFrom(object.getClass())) {
             return new Subject((XnatSubjectdataI) object);
         }
         return null;

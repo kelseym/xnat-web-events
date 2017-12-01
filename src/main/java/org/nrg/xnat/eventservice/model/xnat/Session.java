@@ -37,6 +37,7 @@ public class Session extends XnatModelObject {
     @JsonProperty("project-id") private String projectId;
     @JsonProperty("subject-id") private String subjectId;
     private String directory;
+    @JsonProperty("modality") private String modality;
 
     public Session() {}
 
@@ -76,9 +77,11 @@ public class Session extends XnatModelObject {
         this.xsiType = xnatImagesessiondataI.getXSIType();
         this.projectId = xnatImagesessiondataI.getProject();
         this.subjectId = xnatImagesessiondataI.getSubjectId();
+        this.modality = xnatImagesessiondataI.getModality();
 
         try {
-            this.directory = ((XnatExperimentdata) xnatImagesessiondataI).getCurrentSessionFolder(true);
+            if(XnatExperimentdata.class.isAssignableFrom(xnatImagesessiondataI.getClass()))
+                this.directory = ((XnatExperimentdata) xnatImagesessiondataI).getCurrentSessionFolder(true);
         } catch (UnknownPrimaryProjectException | InvalidArchiveStructure e) {
             // ignored, I guess?
         }

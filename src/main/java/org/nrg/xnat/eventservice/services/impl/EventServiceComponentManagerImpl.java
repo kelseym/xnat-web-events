@@ -58,7 +58,7 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     @Override
     public org.nrg.xnat.eventservice.events.EventServiceEvent getEvent(@Nonnull String eventId) {
         for(EventServiceEvent event : getInstalledEvents()) {
-            if(eventId.matches(event.getId())) {
+            if(event != null && eventId.matches(event.getId())) {
                 return event;
             }
         }
@@ -71,7 +71,7 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     @Override
     public EventServiceListener getListener(String name) {
         for(EventServiceListener el: installedListeners){
-            if(el.toString().contains(name)) {
+            if(el.getId().contains(name)) {
                 return el;
             }
         }
@@ -89,9 +89,9 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
             try {
                 events.add(CombinedEventServiceEvent.createFromResource(resource));
             } catch (IOException |ClassNotFoundException|IllegalAccessException|InvocationTargetException |InstantiationException e) {
-                log.debug("Exception loading EventClass from " + resource.toString());
-                log.debug("Possible missing Class Definition");
-                log.debug(e.getMessage());
+                log.error("Exception loading EventClass from " + resource.toString());
+                log.error("Possible missing Class Definition");
+                log.error(e.getMessage());
             }
         }
         return events;

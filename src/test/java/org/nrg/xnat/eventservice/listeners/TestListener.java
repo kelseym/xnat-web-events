@@ -16,6 +16,9 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
     UUID listenerId = UUID.randomUUID();
 
     @Override
+    public String getId() { return this.getClass().getCanonicalName(); }
+
+    @Override
     public String getEventType() {
         return null;
     }
@@ -26,7 +29,7 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
     }
 
     @Override
-    public UUID getListenerId() {
+    public UUID getInstanceId() {
         return listenerId;
     }
 

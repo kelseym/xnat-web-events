@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.bus.Event;
 
+@Deprecated
 @Service
 public abstract class SimpleEventServiceConsumer<EventT> implements EventServiceListener<EventT>{
 
@@ -18,10 +19,6 @@ public abstract class SimpleEventServiceConsumer<EventT> implements EventService
 
     public SimpleEventServiceConsumer(long id){
         this.id = id;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     @Override

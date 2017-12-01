@@ -29,12 +29,12 @@ import static reactor.bus.selector.Selectors.type;
 public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStatusEvent>> {
     private static final Logger log = LoggerFactory.getLogger(TmpWorkflowStatusTapListener.class);
 
-    private final NrgEventService eventService;
+    private final NrgEventService nrgEventService;
 
     @Autowired
-    public TmpWorkflowStatusTapListener(final EventBus eventBus, final NrgEventService eventService) {
+    public TmpWorkflowStatusTapListener(final EventBus eventBus, final NrgEventService nrgEventService) {
         eventBus.on(type(WorkflowStatusEvent.class), this);
-        this.eventService = eventService;
+        this.nrgEventService = nrgEventService;
     }
 
     //*
@@ -52,7 +52,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexPattern();
-                eventService.triggerEvent(filter, new SessionArchiveEvent(session, user), false);
+                nrgEventService.triggerEvent(filter, new SessionArchiveEvent(session, user), false);
                 log.error("Firing SessionArchiveEvent for EventLabel: " + filter);
 
 
@@ -69,7 +69,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexPattern();
-                eventService.triggerEvent(filter, new SessionArchiveEvent(session, user), false);
+                nrgEventService.triggerEvent(filter, new SessionArchiveEvent(session, user), false);
                 log.error("Firing SessionArchiveEvent for EventLabel: " + filter);
 
 
@@ -87,7 +87,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(projectId).build().toRegexPattern();
-                eventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user), false);
+                nrgEventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user), false);
                 log.error("Firing New Project for EventLabel: " + filter);
 
 
@@ -107,7 +107,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(projectId).build().toRegexPattern();
-                eventService.triggerEvent(filter, new SubjectCreatedEvent(subjectdata, user), false);
+                nrgEventService.triggerEvent(filter, new SubjectCreatedEvent(subjectdata, user), false);
                 log.error("Firing New Project for EventLabel: " + filter);
 
 

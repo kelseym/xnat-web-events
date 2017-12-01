@@ -15,6 +15,7 @@ import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.Subscription;
+import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 import org.nrg.xnat.eventservice.services.ActionManager;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
@@ -114,9 +115,9 @@ public class EventSubscriptionEntityServiceImpl
 
                 log.info("Created registrationKey: " + registration.hashCode());
                 subscription = subscription.toBuilder()
-                       .listenerRegistrationKey(uniqueListener.getListenerId() == null ? "" : uniqueListener.getListenerId().toString())
+                       .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
                         .build();
-            } else throw new SubscriptionValidationException("Could not activate subscription.");
+            } else throw new SubscriptionValidationException("Could not activate subscription. No appropriate listener found.");
             subscription = save(subscription);
         }
         catch (SubscriptionValidationException | ClassNotFoundException e) {
@@ -168,7 +169,6 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription activateAndSave(Subscription subscription) throws SubscriptionValidationException {
         //subscription = validate(subscription);
         subscription = activate(subscription);
-        //subscription = save(subscription);
         return subscription;
     }
 
@@ -201,7 +201,7 @@ public class EventSubscriptionEntityServiceImpl
         String jsonObject = null;
         if(event.getData() instanceof EventServiceEvent) {
             EventServiceEvent esEvent = (EventServiceEvent) event.getData();
-            for (Subscription subscription : getSubscriptionsByKey(listener.getListenerId().toString())) {
+            for (Subscription subscription : getSubscriptionsByKey(listener.getInstanceId().toString())) {
                 log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
                 try {
 
@@ -209,7 +209,9 @@ public class EventSubscriptionEntityServiceImpl
                     if (!subscription.active()) {
                         log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
                         return;
-                    } else if(esEvent.getModelObject() != null && mapper.canSerialize(esEvent.getModelObject().getClass())) {
+                    }
+                    XnatModelObject modelObject = esEvent.getModelObject();
+                    if(modelObject != null && mapper.canSerialize(modelObject.getClass())) {
 
                         // Serialize data object
                         jsonObject = mapper.writeValueAsString(esEvent.getModelObject());

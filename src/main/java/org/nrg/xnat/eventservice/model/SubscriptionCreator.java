@@ -38,8 +38,8 @@ public abstract class SubscriptionCreator {
                                              @JsonProperty("custom-listener-id") final String customListenerId,
                                              @Nonnull @JsonProperty("action-key") final String actionKey,
                                              @JsonProperty("attributes") final Map<String, String> attributes,
-                                             @JsonProperty("eventId-filter") final EventFilter eventFilter,
-                                             @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser) {
+                                             @JsonProperty("event-filter") final EventFilter eventFilter,
+                                             @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
         return builder()
                 .name(name)
                 .active(active)

@@ -86,7 +86,7 @@ public class ActionManagerImpl implements ActionManager {
     @Override
     public List<Action> getActionsByProvider(String providerName) {
         for(EventServiceActionProvider provider : componentManager.getActionProviders()){
-            if(provider.getName().contentEquals(providerName)) {
+            if(provider != null && provider.getName() != null && provider.getName().contentEquals(providerName)) {
                 return provider.getActions(null);
             }
         }
