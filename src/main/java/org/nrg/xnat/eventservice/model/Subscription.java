@@ -2,8 +2,10 @@ package org.nrg.xnat.eventservice.model;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import org.nrg.xft.security.UserI;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -22,6 +24,7 @@ public abstract class Subscription {
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
+    @JsonProperty("subscription-owner") public abstract Integer subscriptionOwner();
 
     public static Builder builder() {
         return new AutoValue_Subscription.Builder();
@@ -32,15 +35,16 @@ public abstract class Subscription {
 
     @JsonCreator
     public static Subscription create(@JsonProperty("id") final Long id,
-                                           @JsonProperty("name") final String name,
-                                           @JsonProperty("active") final Boolean active,
-                                           @JsonProperty("registration-key") final String listenerRegistrationKey,
-                                           @JsonProperty("event-id") final String eventId,
-                                           @JsonProperty("custom-listener-id") String customListenerId,
-                                           @JsonProperty("action-key") final String actionKey,
-                                           @JsonProperty("attributes") final Map<String, String> attributes,
-                                           @JsonProperty("eventId-filter") final EventFilter eventFilter,
-                                           @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser) {
+                                      @JsonProperty("name") final String name,
+                                      @JsonProperty("active") final Boolean active,
+                                      @JsonProperty("registration-key") final String listenerRegistrationKey,
+                                      @JsonProperty("event-id") final String eventId,
+                                      @JsonProperty("custom-listener-id") String customListenerId,
+                                      @JsonProperty("action-key") final String actionKey,
+                                      @JsonProperty("attributes") final Map<String, String> attributes,
+                                      @JsonProperty("eventId-filter") final EventFilter eventFilter,
+                                      @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser,
+                                      final Integer subscriptionOwner) {
         return builder()
                 .id(id)
                 .name(name)
@@ -52,6 +56,7 @@ public abstract class Subscription {
                 .attributes(attributes)
                 .eventFilter(eventFilter)
                 .actAsEventUser(actAsEventUser)
+                .subscriptionOwner(subscriptionOwner)
                 .build();
     }
 
@@ -65,6 +70,20 @@ public abstract class Subscription {
                 .attributes(creator.attributes())
                 .eventFilter(creator.eventFilter())
                 .actAsEventUser(creator.actAsEventUser())
+                .build();
+    }
+
+    public static Subscription create(final SubscriptionCreator creator, final Integer subscriptionOwner) {
+        return builder()
+                .name(creator.name())
+                .active(creator.active())
+                .eventId(creator.eventId())
+                .customListenerId(creator.customListenerId())
+                .actionKey(creator.actionKey())
+                .attributes(creator.attributes())
+                .eventFilter(creator.eventFilter())
+                .actAsEventUser(creator.actAsEventUser())
+                .subscriptionOwner(subscriptionOwner)
                 .build();
     }
 
@@ -89,6 +108,8 @@ public abstract class Subscription {
         public abstract Builder eventFilter(EventFilter eventFilter);
 
         public abstract Builder actAsEventUser(Boolean actAsEventUser);
+
+        public abstract Builder subscriptionOwner(Integer user);
 
         public abstract Subscription build();
     }

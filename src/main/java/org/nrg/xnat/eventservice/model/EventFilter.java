@@ -48,10 +48,18 @@ public abstract class EventFilter {
     }
 
 
-    public String toRegexPattern() {
+    public String toRegexMatcher() {
         String pattern = "";
         if (projectIds() != null && !projectIds().isEmpty()) {
             pattern = "project-id:(" + Joiner.on('|').join(projectIds()) + ")";
+        }
+        return pattern;
+    }
+
+    public String toRegexKey() {
+        String pattern = "project-id:";
+        if (projectIds() != null && !projectIds().isEmpty()) {
+            pattern += projectIds().get(0);
         }
         return pattern;
     }

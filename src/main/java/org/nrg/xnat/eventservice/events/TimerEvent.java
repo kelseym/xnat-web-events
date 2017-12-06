@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.framework.services.NrgEventService;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -23,8 +22,8 @@ public class TimerEvent extends CombinedEventServiceEvent<TimerEvent, Date>{
 
     public TimerEvent(){ };
 
-    public TimerEvent(final Date payload, final UserI user) {
-        super(payload, user);
+    public TimerEvent(final Date payload, final Integer userId) {
+        super(payload, userId);
     }
 
     @Override

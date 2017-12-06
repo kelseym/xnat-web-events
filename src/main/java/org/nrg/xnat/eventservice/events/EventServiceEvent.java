@@ -13,4 +13,5 @@ public interface EventServiceEvent<ObjectT> extends EventI {
     String getObjectClass();
     String getPayloadXnatType();
     Boolean isPayloadXsiType();
+    Integer getUser();
 }

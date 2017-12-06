@@ -31,6 +31,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     private Map<String,String> attributes;
     private EventServiceFilterEntity eventServiceFilterEntity;
     private Boolean actAsEventUser;
+    private Integer ownerId;
     private Integer counter;
 
 
@@ -75,6 +76,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         this.attributes = subscription.attributes() == null ? this.attributes : subscription.attributes();
         this.eventServiceFilterEntity = subscription.eventFilter() == null ? this.eventServiceFilterEntity : EventServiceFilterEntity.fromPojo(subscription.eventFilter());
         this.actAsEventUser = subscription.actAsEventUser() == null ? this.actAsEventUser : subscription.actAsEventUser();
+        this.ownerId = subscription.subscriptionOwner() == null ? this.ownerId : subscription.subscriptionOwner();
         return this;
     }
 
@@ -152,6 +154,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         template.attributes = subscription.attributes();
         template.eventServiceFilterEntity = EventServiceFilterEntity.fromPojo(subscription.eventFilter());
         template.actAsEventUser = subscription.actAsEventUser();
+        template.ownerId = subscription.subscriptionOwner();
         return template;
     }
 
@@ -167,6 +170,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                            .attributes(this.attributes)
                            .eventFilter(this.eventServiceFilterEntity != null ? this.eventServiceFilterEntity.toPojo() : null)
                            .actAsEventUser(this.actAsEventUser)
+                           .subscriptionOwner(this.ownerId)
                            .build();
     }
 
@@ -202,6 +206,10 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     public void setActionKey(String actionKey) {
         this.actionKey = actionKey;
     }
+
+    public Integer getOwnerId() { return ownerId; }
+
+    public void setOwnerId(Integer ownerId) { this.ownerId = ownerId; }
 
     public Integer getCounter() { return counter; }
 

@@ -140,16 +140,16 @@ public class ActionManagerImpl implements ActionManager {
                                        .split(actionKey);
         ImmutableList<String> keyList = ImmutableList.copyOf(key);
         if(!keyList.isEmpty()) {
-            providerId = keyList.get(0);
+            providerId = keyList.size() > 1 ? keyList.get(1) : keyList.get(0);
             return getActionProvider(providerId);
         }
         return null;
     }
 
     @Override
-    public void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent) {
+    public void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent, final UserI user) {
         EventServiceActionProvider provider = getActionProviderByKey(subscription.getActionKey());
-        provider.processEvent(esEvent, subscription);
+        provider.processEvent(esEvent, subscription, user);
     }
 
 }

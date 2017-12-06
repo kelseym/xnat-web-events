@@ -21,6 +21,13 @@ public interface EventServiceActionProvider {
     List<Action> getActions(String xnatType, UserI user);
     List<Action> getActions(String projectId, String xnatType, UserI user);
 
+    // actionKey uniquely identifies an action across the system
+    // format: <actionId:providerId>
+    String actionKeyToActionId(String actionKey);
+    // actionId uniquely identifies an action with a provider
+    String actionIdToActionKey(String actionId);
+
+
     List<String> getEvents();
-    void processEvent(final EventServiceEvent event, SubscriptionEntity subscription);
+    void processEvent(final EventServiceEvent event, SubscriptionEntity subscription, final UserI user);
 }

@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatProjectdata;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +13,8 @@ public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreate
 
     public ProjectCreatedEvent(){};
 
-    public ProjectCreatedEvent(final XnatProjectdata payload, final UserI user) {
-        super(payload, user);
+    public ProjectCreatedEvent(final XnatProjectdata payload, final Integer userId) {
+        super(payload, userId);
     }
 
     @Override

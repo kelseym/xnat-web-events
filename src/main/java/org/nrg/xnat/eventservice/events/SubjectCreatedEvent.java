@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatSubjectdata;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +16,8 @@ public class SubjectCreatedEvent extends CombinedEventServiceEvent<SubjectCreate
 
     public SubjectCreatedEvent(){};
 
-    public SubjectCreatedEvent(XnatSubjectdata payload, UserI eventUser) {
-        super(payload, eventUser);
+    public SubjectCreatedEvent(XnatSubjectdata payload, Integer eventUserId) {
+        super(payload, eventUserId);
     }
 
 

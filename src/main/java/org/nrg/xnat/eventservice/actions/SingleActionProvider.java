@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.actions;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.EventService;
@@ -49,9 +50,16 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
     }
 
     public String getActionKey() {
-        return Joiner.on(':').join(getName(), this.getName()
-        );
+        return actionIdToActionKey(this.getName());
     }
 
+    @Override
+    public String actionKeyToActionId(String actionKey) {
+        return Splitter.on(':').splitToList(actionKey).get(0);
+    }
 
+    @Override
+    public String actionIdToActionKey(String actionId) {
+        return Joiner.on(':').join(actionId, this.getName() );
+    }
 }

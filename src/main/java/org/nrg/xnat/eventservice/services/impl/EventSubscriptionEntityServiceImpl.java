@@ -9,6 +9,10 @@ import com.jayway.jsonpath.Option;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.nrg.framework.services.ContextService;
+import org.nrg.xdat.security.services.UserManagementServiceI;
+import org.nrg.xdat.security.user.exceptions.UserInitException;
+import org.nrg.xdat.security.user.exceptions.UserNotFoundException;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
@@ -52,15 +56,25 @@ public class EventSubscriptionEntityServiceImpl
     private EventServiceComponentManager componentManager;
     private EventService eventService;
     private ObjectMapper mapper;
+    private UserManagementServiceI userManagementService;
+
 
     @Autowired
-    public EventSubscriptionEntityServiceImpl(final EventBus eventBus, final ContextService contextService, final ActionManager actionManager, final EventServiceComponentManager componentManager, @Lazy final EventService eventService, ObjectMapper mapper) {
+    public EventSubscriptionEntityServiceImpl(final EventBus eventBus,
+                                              final ContextService contextService,
+                                              final ActionManager actionManager,
+                                              final EventServiceComponentManager componentManager,
+                                              @Lazy final EventService eventService,
+                                              final ObjectMapper mapper,
+                                              final UserManagementServiceI userManagementService) {
         this.eventBus = eventBus;
         this.contextService = contextService;
         this.actionManager = actionManager;
         this.componentManager = componentManager;
         this.eventService = eventService;
         this.mapper = mapper;
+        this.userManagementService = userManagementService;
+
     }
 
 
@@ -109,8 +123,8 @@ public class EventSubscriptionEntityServiceImpl
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 Selector selector = T(eventClazz);
-                if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexPattern()))
-                    selector = R(subscription.eventFilter().toRegexPattern());
+                if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexMatcher()))
+                    selector = R(subscription.eventFilter().toRegexMatcher());
                 Registration registration = eventBus.on(selector, uniqueListener);
 
                 log.info("Created registrationKey: " + registration.hashCode());
@@ -235,9 +249,13 @@ public class EventSubscriptionEntityServiceImpl
                     }
                     // call Action Manager with payload
                     SubscriptionEntity subscriptionEntity = super.get(subscription.id());
-                    actionManager.processEvent(subscriptionEntity, esEvent);
+
+                    UserI user = subscription.actAsEventUser() ?
+                            userManagementService.getUser(esEvent.getUser()) :
+                            userManagementService.getUser(subscription.subscriptionOwner());
+                    actionManager.processEvent(subscriptionEntity, esEvent, user);
                     subscriptionEntity.incCounter();
-                } catch (JsonProcessingException e) {
+                } catch (JsonProcessingException|UserNotFoundException|UserInitException e) {
                     e.printStackTrace();
                 }
             }

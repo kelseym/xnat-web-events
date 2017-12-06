@@ -1,5 +1,6 @@
 package org.nrg.xnat.eventservice.actions;
 
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.services.EventService;
@@ -38,7 +39,7 @@ public class EventServiceLoggingAction extends SingleActionProvider {
     public List<String> getAttributeKeys() { return null; }
 
     @Override
-    public void processEvent(EventServiceEvent event, SubscriptionEntity subscription) {
+    public void processEvent(EventServiceEvent event, SubscriptionEntity subscription, UserI user) {
         log.error("EventServiceLoggingAction called for RegKey " + subscription.getListenerRegistrationKey());
 
     }

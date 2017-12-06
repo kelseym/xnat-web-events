@@ -3,7 +3,6 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatImagesessiondata;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,8 @@ public class SessionArchiveEvent extends CombinedEventServiceEvent<SessionArchiv
 
     public SessionArchiveEvent(){};
 
-    public SessionArchiveEvent(XnatImagesessiondata payload, UserI eventUser) {
-        super(payload, eventUser);
+    public SessionArchiveEvent(XnatImagesessiondata payload, Integer eventUserId) {
+        super(payload, eventUserId);
     }
 
 

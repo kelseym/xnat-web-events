@@ -6,7 +6,6 @@ import org.nrg.xdat.model.XnatImagesessiondataI;
 import org.nrg.xdat.model.XnatSubjectdataI;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatResourcecatalog;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventService;
@@ -27,7 +26,7 @@ import java.util.UUID;
 public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent, EventObjectT>
         implements EventServiceEvent<EventObjectT>, EventServiceListener<EventT> {
 
-    UserI eventUser;
+    Integer eventUserId;
     EventObjectT object;
     UUID listenerId = UUID.randomUUID();
 
@@ -36,9 +35,9 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
 
     public CombinedEventServiceEvent() {};
 
-    public CombinedEventServiceEvent(final EventObjectT object, final UserI eventUser) {
+    public CombinedEventServiceEvent(final EventObjectT object, final Integer eventUserId) {
         this.object = object;
-        this.eventUser = eventUser;
+        this.eventUserId = eventUserId;
     }
 
     @Override
@@ -61,6 +60,11 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     @Override
     public String getObjectClass() {
         return getObject() == null ? null : getObject().getClass().getCanonicalName();
+    }
+
+    @Override
+    public Integer getUser() {
+        return eventUserId;
     }
 
     public void setEventService(EventService eventService){

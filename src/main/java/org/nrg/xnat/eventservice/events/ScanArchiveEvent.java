@@ -3,7 +3,6 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.om.XnatImagescandata;
-import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,8 @@ public class ScanArchiveEvent extends CombinedEventServiceEvent<ScanArchiveEvent
 
     public ScanArchiveEvent(){};
 
-    public ScanArchiveEvent(final XnatImagescandata payload, final UserI eventUser) {
-        super(payload, eventUser);
+    public ScanArchiveEvent(final XnatImagescandata payload, final Integer eventUserId) {
+        super(payload, eventUserId);
     }
 
     @Override

@@ -24,5 +24,5 @@ public interface ActionManager {
 
     boolean validateAction(Action action);
 
-    void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent);
+    void processEvent(SubscriptionEntity subscription, EventServiceEvent esEvent, UserI user);
 }

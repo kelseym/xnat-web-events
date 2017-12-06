@@ -493,7 +493,7 @@ public class EventServiceTest {
         }
 
         @Override
-        public void processEvent(EventServiceEvent event, SubscriptionEntity subscription) {
+        public void processEvent(EventServiceEvent event, SubscriptionEntity subscription, UserI user) {
 
         }
     }

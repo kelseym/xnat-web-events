@@ -75,7 +75,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
             throws NrgServiceRuntimeException, UnauthorizedException, SubscriptionValidationException, JsonProcessingException {
         final UserI userI = XDAT.getUserDetails();
         checkCreateOrThrow(userI);
-        Subscription created = eventService.createSubscription(Subscription.create(subscription));
+        Subscription created = eventService.createSubscription(Subscription.create(subscription, userI.getID()));
         return new ResponseEntity<>(created.id(), HttpStatus.CREATED);
 
     }
