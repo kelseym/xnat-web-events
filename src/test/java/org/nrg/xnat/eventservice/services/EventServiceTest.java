@@ -6,11 +6,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xdat.bean.XnatImagesessiondataBean;
 import org.nrg.xdat.model.XnatImagesessiondataI;
+import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.actions.SingleActionProvider;
@@ -55,6 +57,8 @@ import static reactor.bus.selector.Selectors.type;
 public class EventServiceTest {
     private static final Logger log = LoggerFactory.getLogger(EventServiceTest.class);
 
+    private static final String EVENT_RESOURCE_PATTERN ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
+
     private UserI mockUser;
 
     private final String FAKE_USER = "mockUser";
@@ -71,6 +75,8 @@ public class EventServiceTest {
     @Autowired private ActionManager mockActionManager;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private EventServiceLoggingAction mockEventServiceLoggingAction;
+    @Autowired private UserManagementServiceI mockUserManagementServiceI;
+
 
     private SubscriptionCreator projectCreatedSubscription;
     private Scan mrScan1 = new Scan();
@@ -128,6 +134,10 @@ public class EventServiceTest {
         // Mock the userI
         mockUser = Mockito.mock(UserI.class);
         when(mockUser.getLogin()).thenReturn(FAKE_USER);
+        when(mockUser.getID()).thenReturn(1234);
+
+        // Mock the user management service
+        when(mockUserManagementServiceI.getUser(FAKE_USER)).thenReturn(mockUser);
 
         when(mockComponentManager.getActionProviders()).thenReturn(new ArrayList<>(Arrays.asList(new MockSingleActionProvider())));
 
@@ -135,6 +145,12 @@ public class EventServiceTest {
 
         when(mockComponentManager.getInstalledListeners()).thenReturn(new ArrayList<>(Arrays.asList(new TestListener())));
 
+        // Mock action
+        when(mockEventServiceLoggingAction.getName()).thenReturn("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction");
+        when(mockEventServiceLoggingAction.getDisplayName()).thenReturn("MockEventServiceLoggingAction");
+        when(mockEventServiceLoggingAction.getDescription()).thenReturn("MockEventServiceLoggingAction");
+        when(mockEventServiceLoggingAction.getActions(Matchers.any(UserI.class))).thenReturn(null);
+        when(mockEventServiceLoggingAction.getEvents()).thenReturn(null);
 
 
     }
@@ -203,7 +219,7 @@ public class EventServiceTest {
     @Test
     public void getInstalledEvents() throws Exception {
         List<SimpleEvent> events = eventService.getEvents();
-        Integer eventPropertyFileCount = BasicXnatResourceLocator.getResources("classpath*:META-INF/xnat/eventId/*-xnateventserviceevent.properties").size();
+        Integer eventPropertyFileCount = BasicXnatResourceLocator.getResources(EVENT_RESOURCE_PATTERN).size();
         System.out.println("\nFound " + events.size() + " Event classes:");
         for (SimpleEvent event : events) {
             System.out.println(event.toString());
@@ -404,7 +420,7 @@ public class EventServiceTest {
                                                                      .build();
         assertThat("Json Filtered SubscriptionCreator builder failed :(", subscriptionCreator, notNullValue());
 
-        Subscription subscription = Subscription.create(subscriptionCreator);
+        Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getID());
         assertThat("Json Filtered Subscription creation failed :(", subscription, notNullValue());
 
         Subscription createdSubsciption = eventService.createSubscription(subscription);
@@ -440,6 +456,22 @@ public class EventServiceTest {
         TestAction actionProvider = (TestAction) testAction.provider();
         assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
         assertThat("List of detected events should not be empty.",actionProvider.getDetectedEvents().size(), not(0));
+    }
+
+
+    @Test
+    public void testReactivateAllActive() throws Exception {
+        // Create a working subscription
+        matchMrSubscriptionToMrSession();
+
+        List<Subscription> allSubscriptions = eventSubscriptionEntityService.getAllSubscriptions();
+        assertThat(allSubscriptions.size(), is(1));
+
+        final Subscription subscription = allSubscriptions.get(0);
+        assertThat(subscription.useCounter(), is(1));
+        // reactivate subscription
+        eventSubscriptionEntityService.reactivateAllActive();
+
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.SessionFactory;
 import org.mockito.Mockito;
 import org.nrg.framework.services.ContextService;
+import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.actions.TestAction;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
@@ -62,8 +63,9 @@ public class EventServiceTestConfig {
                                                                    final EventBus eventBus,
                                                                    final ContextService contextService,
                                                                    final ActionManager actionManager,
-                                                                   final EventServiceComponentManager componentManager) {
-        return new EventSubscriptionEntityServiceImpl(eventBus, contextService, actionManager, componentManager, eventService, objectMapper);
+                                                                   final EventServiceComponentManager componentManager,
+                                                                   final UserManagementServiceI userManagementService) {
+        return new EventSubscriptionEntityServiceImpl(eventBus, contextService, actionManager, componentManager, eventService, objectMapper, userManagementService);
     }
 
     @Bean
@@ -133,6 +135,11 @@ public class EventServiceTestConfig {
     public EventServiceComponentManager componentManager(final List<EventServiceListener> eventListeners,
                                                          final List<EventServiceActionProvider> actionProviders) {
         return new EventServiceComponentManagerImpl(eventListeners, actionProviders);
+    }
+
+    @Bean
+    public UserManagementServiceI mockUserManagementServiceI() {
+        return Mockito.mock(UserManagementServiceI.class);
     }
 
 

@@ -23,7 +23,7 @@ import java.util.List;
 @Service
 public class EventServiceComponentManagerImpl implements EventServiceComponentManager {
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
-    private static final String EVENT_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
+    private static final String EVENT_RESOURCE_PATTERN ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
 
     private List<EventServiceListener> installedListeners;
     private List<EventServiceActionProvider> actionProviders;
@@ -85,9 +85,10 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
 
     public List<EventServiceEvent> loadInstalledEvents() throws IOException, NoSuchMethodException {
         List<EventServiceEvent> events = new ArrayList<>();
-        for (final Resource resource : BasicXnatResourceLocator.getResources(EVENT_RESOURCE_PATH)) {
+        for (final Resource resource : BasicXnatResourceLocator.getResources(EVENT_RESOURCE_PATTERN)) {
             try {
-                events.add(CombinedEventServiceEvent.createFromResource(resource));
+                CombinedEventServiceEvent event = CombinedEventServiceEvent.createFromResource(resource);
+                if(event != null) { events.add(event); }
             } catch (IOException |ClassNotFoundException|IllegalAccessException|InvocationTargetException |InstantiationException e) {
                 log.error("Exception loading EventClass from " + resource.toString());
                 log.error("Possible missing Class Definition");

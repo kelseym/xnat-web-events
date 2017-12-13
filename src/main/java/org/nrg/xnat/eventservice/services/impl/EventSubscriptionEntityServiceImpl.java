@@ -38,6 +38,7 @@ import reactor.bus.selector.Selector;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static reactor.bus.selector.Selectors.R;
@@ -74,12 +75,18 @@ public class EventSubscriptionEntityServiceImpl
         this.eventService = eventService;
         this.mapper = mapper;
         this.userManagementService = userManagementService;
-
+        log.debug("EventSubscriptionService started normally.");
     }
 
 
     @Override
     public Subscription validate(Subscription subscription) throws SubscriptionValidationException {
+        UserI actionUser = null;
+        try {
+            actionUser = userManagementService.getUser(subscription.subscriptionOwner());
+        } catch (UserNotFoundException|UserInitException e) {
+            throw new SubscriptionValidationException("Could not load Subscription Owner for userID: " + subscription.subscriptionOwner() != null ? Integer.toString(subscription.subscriptionOwner()) : "null" + "\n" + e.getMessage());
+        }
         Class<?> clazz;
         try {
             clazz = Class.forName(subscription.eventId());
@@ -96,11 +103,11 @@ public class EventSubscriptionEntityServiceImpl
             }
             // Check that Action is valid and service is accessible
 
-            if (! actionManager.validateAction(actionManager.getActionByKey(subscription.actionKey()))) {
+            if (! actionManager.validateAction(actionManager.getActionByKey(subscription.actionKey(), actionUser), actionUser)) {
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException e) {
-            throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context.");
+            throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context. \n" + e.getMessage());
         }
         return subscription;
     }
@@ -127,12 +134,12 @@ public class EventSubscriptionEntityServiceImpl
                     selector = R(subscription.eventFilter().toRegexMatcher());
                 Registration registration = eventBus.on(selector, uniqueListener);
 
-                log.info("Created registrationKey: " + registration.hashCode());
+                log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 subscription = subscription.toBuilder()
-                       .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
-                        .build();
+                                           .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
+                                           .active(true)
+                                           .build();
             } else throw new SubscriptionValidationException("Could not activate subscription. No appropriate listener found.");
-            subscription = save(subscription);
         }
         catch (SubscriptionValidationException | ClassNotFoundException e) {
             log.error("Event subscription failed for " + subscription.toString());
@@ -141,24 +148,32 @@ public class EventSubscriptionEntityServiceImpl
         return subscription;
     }
 
+
+
     @Transactional
     @Override
     public Subscription deactivate(@Nonnull Subscription subscription) throws NotFoundException, EntityNotFoundException{
-        SubscriptionEntity entity;
-/*        if(subscription.id() != null) {
-            entity = retrieve(subscription.id());
-            if(entity != null) {
-
-                Registration registration = entity.getListenerRegistrationKey().pause();
-                entity.setListenerRegistrationKey(registration);
+        Subscription deactivatedSubscription = null;
+        try {
+            if(subscription.id() != null) {
+                throw new NotFoundException("Failed to deactivate subscription - Missing subscription ID");
             }
-            else
+            log.debug("Deactivating subscription:" + Long.toString(subscription.id()));
+            SubscriptionEntity entity = SubscriptionEntity.fromPojo(subscription);
+            if(entity != null) {
+                entity.setActive(false);
+                entity.setListenerRegistrationKey(null);
+                deactivatedSubscription = entity.toPojo();
+                log.debug("Deactivated subscription:" + Long.toString(subscription.id()));
+            }
+            else {
+                log.error("Failed to deactivate subscription - no entity found for id:" + Long.toString(subscription.id()));
                 throw new EntityNotFoundException("Could not retrieve EventSubscriptionEntity from id: " + subscription.id());
-        } else
-            throw new NotFoundException("Invalid or missing subscription ID");
-        return entity.toPojo();*/
-        return null;
-
+            }
+        } catch(NotFoundException|EntityNotFoundException e){
+            log.error(e.getMessage());
+        }
+        return deactivatedSubscription;
     }
 
     @Transactional
@@ -181,17 +196,18 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public Subscription activateAndSave(Subscription subscription) throws SubscriptionValidationException {
-        //subscription = validate(subscription);
+        subscription = validate(subscription);
         subscription = activate(subscription);
+        subscription = save(subscription);
         return subscription;
     }
 
     @Override
     public Subscription update(Subscription subscription) throws SubscriptionValidationException, NotFoundException {
-        subscription = deactivate(subscription);
-        subscription = activate(subscription);
-        update(fromPojoWithTemplate(subscription));
-        return validate(subscription);
+        SubscriptionEntity subscriptionEntity = fromPojoWithTemplate(subscription);
+        validate(toPojo(subscriptionEntity));
+        update(subscriptionEntity);
+        return toPojo(subscriptionEntity);
     }
 
 
@@ -208,6 +224,32 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription getSubscription(Long id) throws NotFoundException {
         return super.get(id).toPojo();
+    }
+
+    @Override
+    public void reactivateAllActive() {
+        List<Subscription> failedReactivations = new ArrayList<>();
+        for (Subscription subscription:getAllSubscriptions()) {
+            if(subscription.active()) {
+                log.debug("Attempting reactivation of subscription: " + Long.toString(subscription.id()));
+                try {
+                    Subscription reactivated = activate(subscription);
+                    reactivated = update(reactivated);
+                    if(reactivated == null || !reactivated.active()){
+                        failedReactivations.add(subscription);
+                    }
+                } catch (SubscriptionValidationException|NotFoundException e) {
+                    log.error("Failed to reactivate subscription: " + Long.toString(subscription.id()));
+                    log.error(e.getMessage());
+                }
+            }
+        }
+        if(!failedReactivations.isEmpty()){
+            log.error("Failed to re-activate %i event subscriptions.", failedReactivations.size());
+            for (Subscription fs:failedReactivations) {
+                log.error("Subscription activation: <" + fs.toString() + "> failed.");
+            }
+        }
     }
 
     @Override

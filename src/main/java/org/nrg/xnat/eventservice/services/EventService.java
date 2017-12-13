@@ -23,8 +23,8 @@ public interface EventService {
     List<Action> getAllActions(UserI user);
     List<Action> getAllActions(String xnatType, UserI user);
     List<Action> getAllActions(String projectId, String xnatType, UserI user);
-
-    List<Action> getActionsByProvider(String actionProvider);
+    List<Action> getActionsByProvider(String actionProvider, UserI user);
+    Action getActionByKey(String actionKey, UserI user);
 
     List<Subscription> getSubscriptions();
     Subscription getSubscription(Long id) throws NotFoundException;
@@ -32,6 +32,8 @@ public interface EventService {
     Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException;
     Subscription updateSubscription(Subscription subscription) throws SubscriptionValidationException, NotFoundException;
     void deleteSubscription(Long id) throws NotFoundException;
+
+    void reactivateAllSubscriptions();
 
     void processEvent(EventServiceListener listener, Event event);
 

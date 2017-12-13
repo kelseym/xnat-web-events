@@ -34,19 +34,23 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
     @Override
     public String getName() { return this.getClass().getName(); }
 
-    @Override
-    public List<Action> getActions(UserI user) {
+    public List<Action> getActions() {
         return new ArrayList<>(Arrays.asList(getAction()));
     }
 
     @Override
+    public List<Action> getActions(UserI user) {
+        return getActions();
+    }
+
+    @Override
     public List<Action> getActions(String xnatType, UserI user) {
-        return getActions(user);
+        return getActions();
     }
 
     @Override
     public List<Action> getActions(String projectId, String xnatType, UserI user) {
-        return getActions(user);
+        return getActions();
     }
 
     public String getActionKey() {
@@ -59,7 +63,5 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
     }
 
     @Override
-    public String actionIdToActionKey(String actionId) {
-        return Joiner.on(':').join(actionId, this.getName() );
-    }
+    public String actionIdToActionKey(String actionId) { return Joiner.on(':').join(this.getName(), actionId); }
 }

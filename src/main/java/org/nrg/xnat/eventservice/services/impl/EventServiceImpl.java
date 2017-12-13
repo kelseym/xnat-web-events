@@ -29,7 +29,6 @@ import java.util.Properties;
 @Service
 public class EventServiceImpl implements EventService {
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
-//    private static final String EVENT_RESOURCE_PATH ="classpath*:META-INF/xnat/event/*-xnateventserviceevent.properties";
 
     private ContextService contextService;
     private EventSubscriptionEntityService subscriptionService;
@@ -147,8 +146,13 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<Action> getActionsByProvider(String actionProvider) {
-        return actionManager.getActionsByProvider(actionProvider);
+    public List<Action> getActionsByProvider(String actionProvider, UserI user) {
+        return actionManager.getActionsByProvider(actionProvider, user);
+    }
+
+    @Override
+    public Action getActionByKey(String actionKey, UserI user) {
+        return actionManager.getActionByKey(actionKey, user);
     }
 
     @Override
@@ -164,6 +168,11 @@ public class EventServiceImpl implements EventService {
     public List<Listener> getInstalledListeners() {
 
         return null;
+    }
+
+    @Override
+    public void reactivateAllSubscriptions() {
+        subscriptionService.reactivateAllActive();
     }
 
 

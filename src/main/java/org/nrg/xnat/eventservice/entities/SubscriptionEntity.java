@@ -155,9 +155,11 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         template.eventServiceFilterEntity = EventServiceFilterEntity.fromPojo(subscription.eventFilter());
         template.actAsEventUser = subscription.actAsEventUser();
         template.ownerId = subscription.subscriptionOwner();
+        template.counter = subscription.useCounter();
         return template;
     }
 
+    @Transient
     public Subscription toPojo() {
         return Subscription.builder()
                            .id(this.getId())
@@ -171,6 +173,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                            .eventFilter(this.eventServiceFilterEntity != null ? this.eventServiceFilterEntity.toPojo() : null)
                            .actAsEventUser(this.actAsEventUser)
                            .subscriptionOwner(this.ownerId)
+                           .useCounter(this.counter)
                            .build();
     }
 

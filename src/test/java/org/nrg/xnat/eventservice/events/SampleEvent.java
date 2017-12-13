@@ -3,7 +3,7 @@ package org.nrg.xnat.eventservice.events;
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 
-@XnatEventServiceEvent
+@XnatEventServiceEvent(name="SampleEvent")
 public class SampleEvent implements EventServiceEvent {
 
     @Override
@@ -43,6 +43,11 @@ public class SampleEvent implements EventServiceEvent {
 
     @Override
     public Boolean isPayloadXsiType() {
+        return null;
+    }
+
+    @Override
+    public Integer getUser() {
         return null;
     }
 }

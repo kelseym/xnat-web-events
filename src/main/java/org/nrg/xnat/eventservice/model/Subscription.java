@@ -25,6 +25,7 @@ public abstract class Subscription {
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
     @JsonProperty("subscription-owner") public abstract Integer subscriptionOwner();
+    @Nullable @JsonProperty("use-counter") public abstract Integer useCounter();
 
     public static Builder builder() {
         return new AutoValue_Subscription.Builder();
@@ -44,7 +45,7 @@ public abstract class Subscription {
                                       @JsonProperty("attributes") final Map<String, String> attributes,
                                       @JsonProperty("eventId-filter") final EventFilter eventFilter,
                                       @JsonProperty("act-as-eventId-user") final Boolean actAsEventUser,
-                                      final Integer subscriptionOwner) {
+                                      @JsonProperty("subscription-owner") final Integer subscriptionOwner) {
         return builder()
                 .id(id)
                 .name(name)
@@ -110,6 +111,8 @@ public abstract class Subscription {
         public abstract Builder actAsEventUser(Boolean actAsEventUser);
 
         public abstract Builder subscriptionOwner(Integer user);
+
+        public abstract Builder useCounter(Integer useCounter);
 
         public abstract Subscription build();
     }

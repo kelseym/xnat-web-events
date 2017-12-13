@@ -23,6 +23,6 @@ public abstract class MultiActionProvider implements EventServiceActionProvider 
 
     @Override
     public String actionIdToActionKey(String actionId) {
-        return Joiner.on(':').join(actionId, this.getName() );
+        return Joiner.on(':').join(this.getName(), actionId);
     }
 }

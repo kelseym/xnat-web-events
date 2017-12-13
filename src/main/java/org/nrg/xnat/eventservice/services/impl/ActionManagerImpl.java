@@ -33,7 +33,7 @@ public class ActionManagerImpl implements ActionManager {
 
     // ** actionKey should be formatted as "actionProvider:actionLabel" ** //
     @Override
-    public Action getActionByKey(String actionKey) {
+    public Action getActionByKey(String actionKey, UserI user) {
         String actionProvider = null;
         String actionId = null;
         Iterable<String> key = Splitter.on(':')
@@ -47,7 +47,7 @@ public class ActionManagerImpl implements ActionManager {
                 actionId = keyList.get(1);
             }
         }
-        List<Action> actions = getActionsByProvider(actionProvider);
+        List<Action> actions = getActionsByProvider(actionProvider, user);
         for(Action action : actions) {
             if(action.actionKey().contentEquals(actionKey)) {
                 return action;
@@ -60,7 +60,9 @@ public class ActionManagerImpl implements ActionManager {
     public List<Action> getActions(UserI user) {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions(user));
+            List<Action> providerActions = provider.getActions(user);
+            if(providerActions != null)
+                actions.addAll(providerActions);
         }
         return actions;
     }
@@ -84,18 +86,18 @@ public class ActionManagerImpl implements ActionManager {
     }
 
     @Override
-    public List<Action> getActionsByProvider(String providerName) {
+    public List<Action> getActionsByProvider(String providerName, UserI user) {
         for(EventServiceActionProvider provider : componentManager.getActionProviders()){
             if(provider != null && provider.getName() != null && provider.getName().contentEquals(providerName)) {
-                return provider.getActions(null);
+                return provider.getActions(user);
             }
         }
         return new ArrayList<>();
     }
 
     @Override
-    public List<Action> getActionsByProvider(EventServiceActionProvider provider) {
-        return provider.getActions(null);
+    public List<Action> getActionsByProvider(EventServiceActionProvider provider, UserI user) {
+        return provider.getActions(user);
     }
 
     @Override
@@ -124,8 +126,8 @@ public class ActionManagerImpl implements ActionManager {
     }
 
     @Override
-    public boolean validateAction(Action action) {
-        List<Action> actions = getActionsByProvider(action.provider());
+    public boolean validateAction(Action action, UserI user) {
+        List<Action> actions = getActionsByProvider(action.provider(), user);
         if(actions != null && actions.contains(action)) {
             return true;
         }

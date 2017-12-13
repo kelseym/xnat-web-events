@@ -15,7 +15,7 @@ public class TestCombinedEvent extends CombinedEventServiceEvent<TestCombinedEve
     public TestCombinedEvent(){};
 
     public TestCombinedEvent(final XnatImagesessiondataI payload, final UserI user) {
-        super(payload, user);
+        super(payload, user.getID());
     }
 
     @Override

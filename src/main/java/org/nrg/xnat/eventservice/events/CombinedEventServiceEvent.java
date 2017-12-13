@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.model.XnatImageassessordataI;
+import org.nrg.xdat.model.XnatImagescandataI;
 import org.nrg.xdat.model.XnatImagesessiondataI;
 import org.nrg.xdat.model.XnatSubjectdataI;
 import org.nrg.xdat.om.XnatProjectdata;
@@ -111,9 +112,9 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
         else if(XnatResourcecatalog.class.isAssignableFrom(object.getClass())) {
             return new Resource((XnatResourcecatalog) object);
         }
-//        else if(object.getClass() == XnatImagescandataI.class) {
-//            return new Scan((XnatImagescandataI) object, null, "");
-//        }
+        else if(object.getClass() == XnatImagescandataI.class) {
+            return new Scan((XnatImagescandataI) object, null, "");
+        }
         else if(XnatImagesessiondataI.class.isAssignableFrom(object.getClass())) {
             return new Session((XnatImagesessiondataI) object);
         }
