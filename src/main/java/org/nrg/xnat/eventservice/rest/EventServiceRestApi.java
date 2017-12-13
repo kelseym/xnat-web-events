@@ -56,7 +56,8 @@ public class EventServiceRestApi extends AbstractXapiRestController {
 
     @XapiRequestMapping(value = "/reactivate", method = POST)
     @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
-    public ResponseEntity<Void> reactivateSubscriptions(){
+    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
+        checkCreateOrThrow();
         eventService.reactivateAllSubscriptions();
         return ResponseEntity.ok().build();
 
@@ -99,12 +100,14 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     @XapiRequestMapping(value = {"/subscription/{id}"}, method = GET, produces = JSON)
     @ApiOperation(value = "Get a Subscription by ID")
     @ResponseBody
-    public Subscription retrieveSubscription(final @PathVariable long id) throws NotFoundException {
+    public Subscription retrieveSubscription(final @PathVariable long id) throws NotFoundException, UnauthorizedException {
+        checkCreateOrThrow();
         return eventService.getSubscription(id);
     }
 
     @XapiRequestMapping(value = "/subscription/{id}", method = DELETE, restrictTo = Admin)
-    public ResponseEntity<Void> delete(final @PathVariable long id) throws NotFoundException {
+    public ResponseEntity<Void> delete(final @PathVariable long id) throws NotFoundException, UnauthorizedException {
+        checkCreateOrThrow();
         eventService.deleteSubscription(id);
         return ResponseEntity.noContent().build();
     }
@@ -168,7 +171,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     @XapiRequestMapping(value = {"/action"}, params = "actionkey", method = GET)
     @ApiOperation(value = "Get a actions by key in the form of \"ProviderID:ActionID\"")
     @ResponseBody
-    public Action getAction(final @PathVariable String actionkey)
+    public Action getAction(final @RequestParam String actionkey)
             throws NrgServiceRuntimeException, UnauthorizedException {
         final UserI user = XDAT.getUserDetails();
         checkCreateOrThrow(user);
