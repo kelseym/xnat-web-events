@@ -139,7 +139,10 @@ public class EventSubscriptionEntityServiceImpl
                                            .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
                                            .active(true)
                                            .build();
-            } else throw new SubscriptionValidationException("Could not activate subscription. No appropriate listener found.");
+            } else {
+                log.error("Could not activate subscription:" + Long.toString(subscription.id()) + ". No appropriate listener found.");
+                throw new SubscriptionValidationException("Could not activate subscription. No appropriate listener found.");
+            }
         }
         catch (SubscriptionValidationException | ClassNotFoundException e) {
             log.error("Event subscription failed for " + subscription.toString());
@@ -179,34 +182,60 @@ public class EventSubscriptionEntityServiceImpl
     @Transactional
     @Override
     public Subscription save(@Nonnull Subscription subscription) {
-        return toPojo(create(fromPojo(subscription)));
+        Subscription saved = toPojo(create(fromPojo(subscription)));
+        log.debug("Saved subscription with ID:" + Long.toString(saved.id()));
+        return saved;
     }
 
     @Transactional
-    public void delete(@Nonnull Subscription subscription) throws NotFoundException, Exception{
-        if(subscription.id() != null) {
-            SubscriptionEntity entity = retrieve(subscription.id());
-            if(entity.getActive() == false)
+    @Override
+    public void delete(@Nonnull Long subscriptionId) throws NotFoundException {
+        if(subscriptionId != null) {
+            Subscription subscription = getSubscription(subscriptionId);
+            deactivate(subscription);
+            SubscriptionEntity entity = retrieve(subscriptionId);
+            if(entity.getActive() == false) {
                 delete(entity);
-            else
-                throw new Exception("Cannot delete an active subscription. Deactivate first.");
-        } else
-            throw new NotFoundException("Invalid or missing subsription.ID");
+            }
+            else {
+                deactivate(subscription);
+                delete(entity);
+            }
+            log.debug("Deleted subscription:" + Long.toString(subscription.id()));
+        } else {
+            log.error("Failed to delete subscription. Invalid or missing subscription ID.");
+            throw new NotFoundException("Failed to delete subscription. Invalid or missing subscription ID");
+        }
     }
 
     @Override
-    public Subscription activateAndSave(Subscription subscription) throws SubscriptionValidationException {
+    public Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException {
+        log.debug("Validating subscription: " + subscription.name());
         subscription = validate(subscription);
-        subscription = activate(subscription);
+        if(subscription.active()) {
+            log.debug("Activating subscription: " + subscription.name());
+            subscription = activate(subscription);
+        }
+        else {
+            log.debug("Subscription set to not active. Skipping activation.");
+        }
+        log.debug("Saving subscription: " + subscription.name());
         subscription = save(subscription);
         return subscription;
     }
 
     @Override
     public Subscription update(Subscription subscription) throws SubscriptionValidationException, NotFoundException {
+        SubscriptionEntity storedEntity = retrieve(subscription.id());
         SubscriptionEntity subscriptionEntity = fromPojoWithTemplate(subscription);
-        validate(toPojo(subscriptionEntity));
+        Subscription vSubscription = validate(toPojo(subscriptionEntity));
+        if(storedEntity.getActive() && !subscription.active()){
+            deactivate(subscription);
+        } else if(!storedEntity.getActive() && subscription.active()){
+            activate(subscription);
+        }
         update(subscriptionEntity);
+        log.debug("Updated subscription: " + subscription.name());
         return toPojo(subscriptionEntity);
     }
 
@@ -218,6 +247,7 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public List<Subscription> getSubscriptionsByKey(String key) throws NotFoundException {
+        List<SubscriptionEntity> subscriptionEntities = getDao().findByKey(key);
         return SubscriptionEntity.toPojo(getDao().findByKey(key));
     }
 
@@ -227,7 +257,7 @@ public class EventSubscriptionEntityServiceImpl
     }
 
     @Override
-    public void reactivateAllActive() {
+    public void reregisterAllActive() {
         List<Subscription> failedReactivations = new ArrayList<>();
         for (Subscription subscription:getAllSubscriptions()) {
             if(subscription.active()) {
@@ -266,18 +296,25 @@ public class EventSubscriptionEntityServiceImpl
                         log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
                         return;
                     }
-                    XnatModelObject modelObject = esEvent.getModelObject();
-                    if(modelObject != null && mapper.canSerialize(modelObject.getClass())) {
+                    log.debug("Resolving action user (subscription owner or event user).");
+                    UserI actionUser = subscription.actAsEventUser() ?
+                            userManagementService.getUser(esEvent.getUser()) :
+                            userManagementService.getUser(subscription.subscriptionOwner());
+                    log.debug("Action User: " + actionUser.getUsername());
 
+                    XnatModelObject modelObject = componentManager.getModelObject(esEvent.getObject(), actionUser);
+                    if(modelObject != null && mapper.canSerialize(modelObject.getClass())) {
                         // Serialize data object
-                        jsonObject = mapper.writeValueAsString(esEvent.getModelObject());
+                        log.debug("Serializing event object as known Model Object.");
+                        jsonObject = mapper.writeValueAsString(modelObject);
                     } else if(esEvent.getObject() != null && mapper.canSerialize(esEvent.getObject().getClass())) {
+                        log.debug("Serializing event object as unknown object type.");
                         jsonObject = mapper.writeValueAsString(esEvent.getObject());
                     } else {
                         log.error("Could not serialize event object in: " + esEvent.toString());
                         return;
                     }
-                    log.error("Serialized Object: " + jsonObject);
+                    log.debug("Serialized Object: " + jsonObject);
 
                     //Filter on data object (if filter exists)
                     if( subscription.eventFilter() != null && subscription.eventFilter().jsonPathFilter() != null ) {
@@ -285,19 +322,21 @@ public class EventSubscriptionEntityServiceImpl
                         Configuration conf = Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST);
                         List<String> filterResult =  JsonPath.using(conf).parse(jsonObject).read(jsonFilter);
                         if(filterResult.isEmpty()){
-                            log.error("Serialized event:\n" + jsonObject + "\ndidn't match JsonPath Filter:\n" + jsonFilter);
+                            log.debug("Aborting event pipeline - Serialized event:\n" + jsonObject + "\ndidn't match JSONPath Filter:\n" + jsonFilter);
                             return;
+                        } else {
+                            log.debug("JSONPath Filter Match - Serialized event:\n" + jsonObject + "\nJSONPath Filter:\n" + jsonFilter);
                         }
+
                     }
                     // call Action Manager with payload
                     SubscriptionEntity subscriptionEntity = super.get(subscription.id());
 
-                    UserI user = subscription.actAsEventUser() ?
-                            userManagementService.getUser(esEvent.getUser()) :
-                            userManagementService.getUser(subscription.subscriptionOwner());
-                    actionManager.processEvent(subscriptionEntity, esEvent, user);
+                    actionManager.processEvent(subscriptionEntity, esEvent, actionUser);
                     subscriptionEntity.incCounter();
                 } catch (JsonProcessingException|UserNotFoundException|UserInitException e) {
+                    log.error("Failed to process subscription:" + subscription.name());
+                    log.error(e.getMessage());
                     e.printStackTrace();
                 }
             }

@@ -2,7 +2,7 @@ package org.nrg.xnat.eventservice.events;
 
 
 import org.nrg.framework.event.XnatEventServiceEvent;
-import org.nrg.xdat.om.XnatImagescandata;
+import org.nrg.xdat.model.XnatImagescandataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +15,12 @@ import org.springframework.stereotype.Service;
                 description="Session Archive Event",
                 object = "Scan",
                 operation = "Archived")
-public class ScanArchiveEvent extends CombinedEventServiceEvent<ScanArchiveEvent, XnatImagescandata>  {
+public class ScanArchiveEvent extends CombinedEventServiceEvent<ScanArchiveEvent, XnatImagescandataI>  {
     private static final Logger log = LoggerFactory.getLogger(ScanArchiveEvent.class);
 
     public ScanArchiveEvent(){};
 
-    public ScanArchiveEvent(final XnatImagescandata payload, final Integer eventUserId) {
+    public ScanArchiveEvent(final XnatImagescandataI payload, final Integer eventUserId) {
         super(payload, eventUserId);
     }
 

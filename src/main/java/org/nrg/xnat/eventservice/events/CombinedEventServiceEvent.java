@@ -1,14 +1,7 @@
 package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
-import org.nrg.xdat.model.XnatImageassessordataI;
-import org.nrg.xdat.model.XnatImagescandataI;
-import org.nrg.xdat.model.XnatImagesessiondataI;
-import org.nrg.xdat.model.XnatSubjectdataI;
-import org.nrg.xdat.om.XnatProjectdata;
-import org.nrg.xdat.om.XnatResourcecatalog;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
-import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -99,32 +92,5 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
         }
         return event;
     }
-
-    @Override
-    public XnatModelObject getModelObject() {
-
-        if(XnatImageassessordataI.class.isAssignableFrom(object.getClass())) {
-            return new Assessor((XnatImageassessordataI) object);
-        }
-        else if(XnatProjectdata.class.isAssignableFrom(object.getClass())) {
-            return new Project((XnatProjectdata) object);
-        }
-        else if(XnatResourcecatalog.class.isAssignableFrom(object.getClass())) {
-            return new Resource((XnatResourcecatalog) object);
-        }
-        else if(object.getClass() == XnatImagescandataI.class) {
-            return new Scan((XnatImagescandataI) object, null, "");
-        }
-        else if(XnatImagesessiondataI.class.isAssignableFrom(object.getClass())) {
-            return new Session((XnatImagesessiondataI) object);
-        }
-        else if(XnatSubjectdataI.class.isAssignableFrom(object.getClass())) {
-            return new Subject((XnatSubjectdataI) object);
-        }
-        return null;
-    }
-
-
-
 
 }

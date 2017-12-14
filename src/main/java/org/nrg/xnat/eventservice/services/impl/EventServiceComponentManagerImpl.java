@@ -1,9 +1,17 @@
 package org.nrg.xnat.eventservice.services.impl;
 
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
-import org.nrg.xnat.eventservice.events.EventServiceEvent;
+import org.nrg.xdat.model.XnatImageassessordataI;
+import org.nrg.xdat.model.XnatImagescandataI;
+import org.nrg.xdat.model.XnatImagesessiondataI;
+import org.nrg.xdat.model.XnatSubjectdataI;
+import org.nrg.xdat.om.XnatProjectdata;
+import org.nrg.xdat.om.XnatResourcecatalog;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.CombinedEventServiceEvent;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
 import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
@@ -97,5 +105,39 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
         }
         return events;
     }
+
+    @Override
+    public XnatModelObject getModelObject(Object object, UserI user) {
+
+        if(XnatImageassessordataI.class.isAssignableFrom(object.getClass())) {
+            return new Assessor((XnatImageassessordataI) object);
+        }
+        else if(XnatProjectdata.class.isAssignableFrom(object.getClass())) {
+            return new Project((XnatProjectdata) object);
+        }
+        else if(XnatResourcecatalog.class.isAssignableFrom(object.getClass())) {
+            return new org.nrg.xnat.eventservice.model.xnat.Resource((XnatResourcecatalog) object);
+        }
+        else if(object.getClass() == XnatImagescandataI.class) {
+            String imageSessionId = ((XnatImagescandataI) object).getImageSessionId();
+            Session session = new Session(imageSessionId, user);
+            if(session == null) {
+                log.error("User:" + user.getLogin() + " could not load Scan parent Session:" + imageSessionId);
+            }
+            String sessionUri = session.getUri();
+            return new Scan((XnatImagescandataI) object, sessionUri, null);
+        }
+        else if(XnatImagesessiondataI.class.isAssignableFrom(object.getClass())) {
+            return new Session((XnatImagesessiondataI) object);
+        }
+        else if(XnatSubjectdataI.class.isAssignableFrom(object.getClass())) {
+            return new Subject((XnatSubjectdataI) object);
+        }
+        return null;
+    }
+
+
+
+
 
 }

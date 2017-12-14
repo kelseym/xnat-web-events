@@ -25,8 +25,8 @@ public class InitializeSubscriptions extends AbstractInitializingTask {
     @Override
     protected void callImpl() throws InitializingTaskException {
 
-        log.debug("Registering active event subscriptions from SubscriptionEntity table to Reactor.EventBus.");
-        eventSubscriptionEntityService.reactivateAllActive();
+        log.debug("Registering all active event subscriptions from SubscriptionEntity table to Reactor.EventBus.");
+        eventSubscriptionEntityService.reregisterAllActive();
 
     }
 }

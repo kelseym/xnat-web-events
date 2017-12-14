@@ -178,10 +178,12 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     }
 
     @Nonnull
-    static public List<Subscription> toPojo(@Nonnull final List<SubscriptionEntity> subscriptionEntities) {
+    static public List<Subscription> toPojo(final List<SubscriptionEntity> subscriptionEntities) {
         List<Subscription> subscriptions = new ArrayList<>();
-        for (SubscriptionEntity subscriptionEntity : subscriptionEntities) {
-            subscriptions.add(subscriptionEntity.toPojo());
+        if(subscriptionEntities!= null) {
+            for (SubscriptionEntity subscriptionEntity : subscriptionEntities) {
+                subscriptions.add(subscriptionEntity.toPojo());
+            }
         }
         return subscriptions;
     }

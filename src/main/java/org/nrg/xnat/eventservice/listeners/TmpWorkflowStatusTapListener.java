@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.listeners;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nrg.framework.services.NrgEventService;
+import org.nrg.xdat.model.XnatImagescandataI;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
@@ -11,6 +12,7 @@ import org.nrg.xdat.security.user.exceptions.UserNotFoundException;
 import org.nrg.xft.event.entities.WorkflowStatusEvent;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
+import org.nrg.xnat.eventservice.events.ScanArchiveEvent;
 import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
 import org.nrg.xnat.eventservice.events.SubjectCreatedEvent;
 import org.nrg.xnat.eventservice.model.EventFilter;
@@ -51,9 +53,14 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
 
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
-                String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
-                nrgEventService.triggerEvent(filter, new SessionArchiveEvent(session, user.getID()), false);
-                log.error("Firing SessionArchiveEvent for EventLabel: " + filter);
+                String regexKey = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
+                nrgEventService.triggerEvent(regexKey, new SessionArchiveEvent(session, user.getID()), false);
+                log.debug("Firing SessionArchiveEvent for EventLabel: " + regexKey);
+                // Firing ScanArchiveEvent for each contained scan
+                for (final XnatImagescandataI scan : session.getScans_scan()) {
+                    nrgEventService.triggerEvent(regexKey, new ScanArchiveEvent(scan, user.getID()), false);
+                    log.debug("Firing ScanArchiveEvent for EventLabel: " + regexKey);
+                }
 
 
             } catch (UserNotFoundException e) {
@@ -70,7 +77,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
                 nrgEventService.triggerEvent(filter, new SessionArchiveEvent(session, user.getID()), false);
-                log.error("Firing SessionArchiveEvent for EventLabel: " + filter);
+                log.debug("Firing SessionArchiveEvent for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {
@@ -88,7 +95,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(projectId).build().toRegexKey();
                 nrgEventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user.getID()), false);
-                log.error("Firing New Project for EventLabel: " + filter);
+                log.debug("Firing New Project for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {
@@ -108,7 +115,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(projectId).build().toRegexKey();
                 nrgEventService.triggerEvent(filter, new SubjectCreatedEvent(subjectdata, user.getID()), false);
-                log.error("Firing New Project for EventLabel: " + filter);
+                log.debug("Firing New Project for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {

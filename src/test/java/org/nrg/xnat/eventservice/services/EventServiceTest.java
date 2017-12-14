@@ -304,11 +304,11 @@ public class EventServiceTest {
 
     @Test
     public void activateAndSaveSubscriptions() throws Exception {
-        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
+        Subscription subscription1 = eventSubscriptionEntityService.createSubscription(Subscription.create(projectCreatedSubscription));
         assertThat(subscription1, not(nullValue()));
         assertThat(subscription1.listenerRegistrationKey(), not(nullValue()));
 
-        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
+        Subscription subscription2 = eventSubscriptionEntityService.createSubscription(Subscription.create(projectCreatedSubscription));
         assertThat("Subscription 2 needs a non-null ID", subscription2.id(), not(nullValue()));
         assertThat("Subscription 1 and 2 need unique IDs", subscription2.id(), not(is(subscription1.id())));
         assertThat("Subscription 1 and 2 should have unique registration keys.", subscription2.listenerRegistrationKey().toString(), not(containsString(subscription1.listenerRegistrationKey().toString())));
@@ -316,11 +316,11 @@ public class EventServiceTest {
 
     @Test
     public void deleteSubscriptionEntity() throws Exception {
-        Subscription subscription1 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
-        Subscription subscription2 = eventSubscriptionEntityService.activateAndSave(Subscription.create(projectCreatedSubscription));
+        Subscription subscription1 = eventSubscriptionEntityService.createSubscription(Subscription.create(projectCreatedSubscription));
+        Subscription subscription2 = eventSubscriptionEntityService.createSubscription(Subscription.create(projectCreatedSubscription));
         assertThat("Expected two subscriptions in database.", eventSubscriptionEntityService.getAll().size(), equalTo(2));
 
-        eventSubscriptionEntityService.delete(subscription1);
+        eventSubscriptionEntityService.delete(subscription1.id());
         assertThat("Expected one subscription in database after deleting one.", eventSubscriptionEntityService.getAll().size(), equalTo(1));
         assertThat("Expected remaining subscription ID to match entity not deleted.", eventSubscriptionEntityService.get(subscription2.id()).getId(), equalTo(subscription2.id()));
     }
@@ -435,7 +435,7 @@ public class EventServiceTest {
         registerMrSessionSubscription();
 
         // Test MR Project 1 session - match
-        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction");
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction", mockUser);
         assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
 
 
@@ -470,7 +470,7 @@ public class EventServiceTest {
         final Subscription subscription = allSubscriptions.get(0);
         assertThat(subscription.useCounter(), is(1));
         // reactivate subscription
-        eventSubscriptionEntityService.reactivateAllActive();
+        eventSubscriptionEntityService.reregisterAllActive();
 
     }
 
@@ -479,7 +479,7 @@ public class EventServiceTest {
         registerMrSessionSubscription();
 
         // Test CT Project 1 session - match
-        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction");
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction", mockUser);
         assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
 
 

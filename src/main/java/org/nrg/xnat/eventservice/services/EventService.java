@@ -31,7 +31,7 @@ public interface EventService {
     Subscription validateSubscription(Subscription subscription) throws SubscriptionValidationException;
     Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException;
     Subscription updateSubscription(Subscription subscription) throws SubscriptionValidationException, NotFoundException;
-    void deleteSubscription(Long id) throws NotFoundException;
+    void deleteSubscription(Long id) throws Exception;
 
     void reactivateAllSubscriptions();
 

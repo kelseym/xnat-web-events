@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException {
 
-        return subscriptionService.activateAndSave(subscription);
+        return subscriptionService.createSubscription(subscription);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public void deleteSubscription(Long id) throws NotFoundException{
+    public void deleteSubscription(Long id) throws Exception {
         subscriptionService.delete(id);
     }
 
@@ -172,16 +172,17 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public void reactivateAllSubscriptions() {
-        subscriptionService.reactivateAllActive();
+        subscriptionService.reregisterAllActive();
     }
 
 
     @Override
     public void processEvent(EventServiceListener listener, Event event) {
-        log.debug("SessionArchiveEvent noticed by EventService: " + event.toString());
         try {
+            log.debug("Event noticed by EventService: " + event.getClass().getSimpleName());
             subscriptionService.processEvent(listener, event);
         } catch (NotFoundException e) {
+            log.error("Failed to processEvent with subscription service.\n" + e.getMessage());
             e.printStackTrace();
         }
     }

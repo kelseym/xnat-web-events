@@ -106,7 +106,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     }
 
     @XapiRequestMapping(value = "/subscription/{id}", method = DELETE, restrictTo = Admin)
-    public ResponseEntity<Void> delete(final @PathVariable long id) throws NotFoundException, UnauthorizedException {
+    public ResponseEntity<Void> delete(final @PathVariable long id) throws Exception {
         checkCreateOrThrow();
         eventService.deleteSubscription(id);
         return ResponseEntity.noContent().build();
