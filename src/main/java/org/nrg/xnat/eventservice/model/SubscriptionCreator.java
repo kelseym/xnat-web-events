@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.model;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
@@ -19,7 +20,7 @@ public abstract class SubscriptionCreator {
     @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @JsonProperty("event-id") public abstract String eventId();
-    @Nullable @JsonProperty("custom-listener-id") public abstract String customListenerId();
+    @JsonIgnore public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();

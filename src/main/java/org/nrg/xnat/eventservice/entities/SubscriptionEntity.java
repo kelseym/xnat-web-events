@@ -81,6 +81,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     }
 
 
+    @Column(unique = true)
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }

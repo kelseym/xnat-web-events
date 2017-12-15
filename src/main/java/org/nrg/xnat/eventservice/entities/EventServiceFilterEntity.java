@@ -75,6 +75,7 @@ public class EventServiceFilterEntity {
         this.id = id;
     }
 
+    @Column(unique = true)
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }

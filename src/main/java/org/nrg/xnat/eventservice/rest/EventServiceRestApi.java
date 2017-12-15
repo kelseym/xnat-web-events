@@ -32,7 +32,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-@Api(description = "The (new) XNAT Event Handler API")
+@Api(description = "API for the XNAT Event Event Service")
 @XapiRestController
 @RequestMapping(value = "/events")
 public class EventServiceRestApi extends AbstractXapiRestController {
@@ -54,14 +54,13 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         this.eventService = eventService;
     }
 
-    @XapiRequestMapping(value = "/reactivate", method = POST)
-    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
-    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
-        checkCreateOrThrow();
-        eventService.reactivateAllSubscriptions();
-        return ResponseEntity.ok().build();
-
-    }
+//    @XapiRequestMapping(value = "/reactivate", method = POST)
+//    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
+//    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
+//        checkCreateOrThrow();
+//        eventService.reactivateAllSubscriptions();
+//        return ResponseEntity.ok().build();
+//    }
 
     @XapiRequestMapping(value = "/subscription", method = POST)
     @ApiOperation(value = "Create a Subscription", code = 201)
@@ -74,7 +73,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
 
     }
 
-    @XapiRequestMapping(value = "/subscription{id}", method = POST)
+    @XapiRequestMapping(value = "/subscription/{id}", method = POST)
     @ApiOperation(value = "Update an existing Subscription")
     public ResponseEntity<Void> updateSubscription(final @PathVariable long id, final @RequestBody Subscription subscription)
             throws NrgServiceRuntimeException, UnauthorizedException, SubscriptionValidationException, NotFoundException {
@@ -106,6 +105,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     }
 
     @XapiRequestMapping(value = "/subscription/{id}", method = DELETE, restrictTo = Admin)
+    @ApiOperation(value="Deactivate and delete a subscription by ID", code = 204)
     public ResponseEntity<Void> delete(final @PathVariable long id) throws Exception {
         checkCreateOrThrow();
         eventService.deleteSubscription(id);
@@ -120,16 +120,6 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         checkCreateOrThrow(userI);
         return eventService.getEvents();
     }
-
-//    @Deprecated
-//    @XapiRequestMapping(value = "/listeners", method = GET)
-//    @ResponseBody
-//    public List<Listener> getInstalledListeners()
-//            throws NrgServiceRuntimeException, UnauthorizedException {
-//        final UserI userI = XDAT.getUserDetails();
-//        checkCreateOrThrow(userI);
-//        return eventService.getInstalledListeners();
-//    }
 
 
     @XapiRequestMapping(value = "/actionproviders", method = GET)
