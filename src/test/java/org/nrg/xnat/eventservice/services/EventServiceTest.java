@@ -520,11 +520,6 @@ public class EventServiceTest {
         }
 
         @Override
-        public List<String> getEvents() {
-            return null;
-        }
-
-        @Override
         public void processEvent(EventServiceEvent event, SubscriptionEntity subscription, UserI user) {
 
         }

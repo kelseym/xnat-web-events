@@ -40,9 +40,6 @@ public class TestAction extends SingleActionProvider {
     public String getDescription() { return description; }
 
     @Override
-    public List<String> getEvents() { return events; }
-
-    @Override
     public List<String> getAttributeKeys() { return null; }
 
     @Override

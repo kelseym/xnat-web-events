@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.google.common.collect.Lists;
 import javassist.Modifier;
+import org.h2.util.StringUtils;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
@@ -146,6 +147,20 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<Action> getActionsByEvent(String eventId, String projectId, UserI user) {
+        List<Action> actions = new ArrayList<>();
+        EventServiceEvent event = componentManager.getEvent(eventId);
+        if(event != null && !StringUtils.isNullOrEmpty(event.getPayloadXnatType())){
+            if(StringUtils.isNullOrEmpty(projectId)){
+                actions = getAllActions(event.getPayloadXnatType(), user);
+            } else {
+                actions = getAllActions(projectId, event.getPayloadXnatType(), user);
+            }
+        }
+        return actions;
+    }
+
+    @Override
     public List<Action> getActionsByProvider(String actionProvider, UserI user) {
         return actionManager.getActionsByProvider(actionProvider, user);
     }
@@ -208,7 +223,6 @@ public class EventServiceImpl implements EventService {
                 .displayName((actionProvider.getDisplayName()))
                 .description(actionProvider.getDescription())
                 .actions(actionProvider.getActions(null))
-                .events(actionProvider.getEvents())
                 .build();
     }
 

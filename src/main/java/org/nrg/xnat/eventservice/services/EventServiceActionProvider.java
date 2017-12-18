@@ -28,6 +28,5 @@ public interface EventServiceActionProvider {
     String actionIdToActionKey(String actionId);
 
 
-    List<String> getEvents();
     void processEvent(final EventServiceEvent event, SubscriptionEntity subscription, final UserI user);
 }

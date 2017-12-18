@@ -18,7 +18,6 @@ public class EventServiceLoggingAction extends SingleActionProvider {
 
     private String displayName = "Logging Action";
     private String description = "Logging action for EventService Event";
-    private List<String> events;
     private Map<String, String> attributes;
     private Boolean enabled = true;
 
@@ -32,8 +31,6 @@ public class EventServiceLoggingAction extends SingleActionProvider {
     @Override
     public String getDescription() { return description; }
 
-    @Override
-    public List<String> getEvents() { return events; }
 
     @Override
     public List<String> getAttributeKeys() { return null; }

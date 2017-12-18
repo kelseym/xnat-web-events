@@ -23,16 +23,14 @@ public abstract class Action {
     @JsonProperty("provider") public abstract EventServiceActionProvider provider();
     @Nullable
     @JsonProperty("attributes") public abstract List<String> attributes();
-    @Nullable
-    @JsonProperty("events") public abstract List<String> events();
+
 
     public static Action create(String id,
                                 String actionKey,
                                 String displayName,
                                 String description,
                                 EventServiceActionProvider provider,
-                                List<String> attributes,
-                                List<String> events) {
+                                List<String> attributes) {
         return builder()
                 .id(id)
                 .actionKey(actionKey)
@@ -40,7 +38,6 @@ public abstract class Action {
                 .description(description)
                 .provider(provider)
                 .attributes(attributes)
-                .events(events)
                 .build();
     }
 
@@ -63,8 +60,6 @@ public abstract class Action {
         public abstract Builder provider(EventServiceActionProvider provider);
 
         public abstract Builder attributes(List<String> attributes);
-
-        public abstract Builder events(List<String> events);
 
         public abstract Action build();
     }

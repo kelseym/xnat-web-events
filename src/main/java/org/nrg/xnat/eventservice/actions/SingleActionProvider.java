@@ -25,7 +25,6 @@ public abstract class SingleActionProvider implements  EventServiceActionProvide
                         .displayName(getDisplayName())
                         .description(getDescription())
                         .provider(this)
-                        .events(getEvents())
                         .attributes(getAttributeKeys())
                         .build();
 

@@ -132,7 +132,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         return eventService.getActionProviders();
     }
 
-    @XapiRequestMapping(value = "/actions", method = GET)
+    @XapiRequestMapping(value = "/actions", method = GET, params = {"!event-id"})
     @ResponseBody
     public List<Action> getAllActions(final @RequestParam(value = "projectid", required = false) String projectId,
                                       final @RequestParam(value = "xnattype", required = false) String xnatType)
@@ -147,6 +147,17 @@ public class EventServiceRestApi extends AbstractXapiRestController {
             return eventService.getAllActions(user);
             
     }
+
+    @XapiRequestMapping(value = "/actionsbyevent", method = GET, params = {"!xnattype"})
+    @ApiOperation(value="Get actions that can act on a particular Event type")
+    public List<Action> getActionsByEvent(final @RequestParam(value = "event-id", required = true) String eventId,
+                                          final @RequestParam(value = "projectid", required = false) String projectId)
+            throws NrgServiceRuntimeException, UnauthorizedException {
+        final UserI user = XDAT.getUserDetails();
+        checkCreateOrThrow(user);
+        return eventService.getActionsByEvent(eventId, projectId, user);
+    }
+
 
     @XapiRequestMapping(value = "/actions/{provider}", method = GET)
     @ApiOperation(value = "Get a actions by provider")
