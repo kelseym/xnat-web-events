@@ -35,7 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
+import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
+import reactor.fn.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
@@ -253,6 +255,7 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public List<Subscription> getAllSubscriptions() {
+        Registry<Object, Consumer<? extends Event<?>>> consumerRegistry = eventBus.getConsumerRegistry();
         return SubscriptionEntity.toPojo(super.getAll());
     }
 

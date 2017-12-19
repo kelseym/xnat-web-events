@@ -72,12 +72,11 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
             try {
                 final UserI user = Users.getUser(wfsEvent.getUserId());
                 final XnatImagesessiondata session = XnatImagesessiondata.getXnatImagesessiondatasById(wfsEvent.getEntityId(), user, true);
-
-                // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
+                // Trigger Scan Archived Lifecycle event from here until we figure out where to launch the event.
                 // Manually build event label
                 String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
-                nrgEventService.triggerEvent(filter, new SessionArchiveEvent(session, user.getID()), false);
-                log.debug("Firing SessionArchiveEvent for EventLabel: " + filter);
+//                nrgEventService.triggerEvent(filter, new ScanArchiveEvent(scan, user.getID()), false);
+//                log.debug("Firing ScanArchiveEvent for EventLabel: " + filter);
 
 
             } catch (UserNotFoundException e) {

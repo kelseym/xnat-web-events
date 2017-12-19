@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @XnatEventServiceEvent(
                 name="ScanArchiveEvent",
                 displayName = "Scan Archived",
-                description="Session Archive Event",
+                description="Scan Archive Event",
                 object = "Scan",
                 operation = "Archived")
 public class ScanArchiveEvent extends CombinedEventServiceEvent<ScanArchiveEvent, XnatImagescandataI>  {
@@ -31,7 +31,7 @@ public class ScanArchiveEvent extends CombinedEventServiceEvent<ScanArchiveEvent
 
     @Override
     public String getDescription() {
-        return "Session Archive Event";
+        return "Scan Archive Event";
     }
 
     @Override
