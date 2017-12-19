@@ -28,9 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import static org.nrg.xdat.security.helpers.AccessLevel.Admin;
-import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @Api(description = "API for the XNAT Event Event Service")
 @XapiRestController
@@ -111,6 +109,26 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         eventService.deleteSubscription(id);
         return ResponseEntity.noContent().build();
     }
+
+//    //**  Project Scoped Subscription Endpoints **//
+//    @ApiOperation(value="Gets project-specific Event Service subscriptions.")
+//    @ApiResponses({@ApiResponse(code = 200, message = "Successfully retrieved project subscriptions."),
+//            @ApiResponse(code = 403, message = "Insufficient permissions to view project subscriptions."),
+//            @ApiResponse(code = 404, message = "The specified project wasn't found."),
+//            @ApiResponse(code = 500, message = "An unexpected error occurred.")})
+//    @XapiRequestMapping(value = "/subscriptions/{projectId}", consumes = MediaType.TEXT_PLAIN_VALUE, method = RequestMethod.PUT, restrictTo = Delete)
+//    @ResponseBody
+//    public List<Subscription> getAllSubscriptions(@ApiParam(value = "Indicates the ID of the project to be checked for subscriptions.", required = true)
+//                                                  @PathVariable("projectId")  @ProjectId final String projectId)
+//            throws NrgServiceRuntimeException, UnauthorizedException{
+//        final UserI userI = XDAT.getUserDetails();
+//        checkCreateOrThrow(userI);
+//        return  eventService.getSubscriptions(projectId, userI);
+//    }
+
+
+
+
 
 
     @XapiRequestMapping(value = "/events", method = GET)

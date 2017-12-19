@@ -18,6 +18,7 @@ import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.model.Subscription;
 import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 import org.nrg.xnat.eventservice.services.ActionManager;
@@ -85,28 +86,38 @@ public class EventSubscriptionEntityServiceImpl
         try {
             actionUser = userManagementService.getUser(subscription.subscriptionOwner());
         } catch (UserNotFoundException|UserInitException e) {
+            log.error("Could not load Subscription Owner for userID: " + subscription.subscriptionOwner() != null ? Integer.toString(subscription.subscriptionOwner()) : "null" + "\n" + e.getMessage());
             throw new SubscriptionValidationException("Could not load Subscription Owner for userID: " + subscription.subscriptionOwner() != null ? Integer.toString(subscription.subscriptionOwner()) : "null" + "\n" + e.getMessage());
         }
         Class<?> clazz;
         try {
             clazz = Class.forName(subscription.eventId());
             if (clazz == null || !EventServiceEvent.class.isAssignableFrom(clazz)) {
+                log.error("Event class does not have a default listener: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
                 throw new SubscriptionValidationException("Event class does not have a default listener: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException|ClassNotFoundException e) {
+            log.error("Could not load Event class: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + "\n" + e.getMessage());
             throw new SubscriptionValidationException("Could not load Event class: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
         }
         try {
             // Check that event class has a default listener loaded into the application context
             if(!EventServiceListener.class.isAssignableFrom(clazz) || contextService.getBean(clazz) == null){
+                log.error("Could not load Bean of type " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context.");
                 throw new NoSuchBeanDefinitionException("Could not load Bean of type " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context.");
             }
             // Check that Action is valid and service is accessible
-
-            if (! actionManager.validateAction(actionManager.getActionByKey(subscription.actionKey(), actionUser), actionUser)) {
+            Action action = actionManager.getActionByKey(subscription.actionKey(), actionUser);
+            if(action == null){
+                log.error("Could not load Action for key:" + subscription.actionKey() + "  User:" + actionUser.getUsername());
+                throw new SubscriptionValidationException("Could not load Action for key:" + subscription.actionKey() + "  User:" + actionUser.getUsername());
+            }
+            if (! actionManager.validateAction(action, actionUser)) {
+                log.error("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException e) {
+            log.error("Could not load default Listener/Consumer: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context. \n" + e.getMessage());
             throw new SubscriptionValidationException("Could not load default Listener/Consumer: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + ", from application context. \n" + e.getMessage());
         }
         return subscription;
@@ -302,20 +313,25 @@ public class EventSubscriptionEntityServiceImpl
                             userManagementService.getUser(subscription.subscriptionOwner());
                     log.debug("Action User: " + actionUser.getUsername());
 
-                    XnatModelObject modelObject = componentManager.getModelObject(esEvent.getObject(), actionUser);
-                    if(modelObject != null && mapper.canSerialize(modelObject.getClass())) {
-                        // Serialize data object
-                        log.debug("Serializing event object as known Model Object.");
-                        jsonObject = mapper.writeValueAsString(modelObject);
-                    } else if(esEvent.getObject() != null && mapper.canSerialize(esEvent.getObject().getClass())) {
-                        log.debug("Serializing event object as unknown object type.");
-                        jsonObject = mapper.writeValueAsString(esEvent.getObject());
-                    } else {
-                        log.error("Could not serialize event object in: " + esEvent.toString());
+                    try {
+                        XnatModelObject modelObject = componentManager.getModelObject(esEvent.getObject(), actionUser);
+                        if (modelObject != null && mapper.canSerialize(modelObject.getClass())) {
+                            // Serialize data object
+                            log.debug("Serializing event object as known Model Object.");
+                            jsonObject = mapper.writeValueAsString(modelObject);
+                        } else if (esEvent.getObject() != null && mapper.canSerialize(esEvent.getObject().getClass())) {
+                            log.debug("Serializing event object as unknown object type.");
+                            jsonObject = mapper.writeValueAsString(esEvent.getObject());
+                        } else {
+                            log.error("Could not serialize event object in: " + esEvent.toString());
+                            return;
+                        }
+                        log.debug("Serialized Object: " + jsonObject);
+                    }catch(JsonProcessingException e){
+                        log.error("Aborting Event Service processEvent. Exception serializing event object: " + esEvent.getObjectClass());
+                        log.error(e.getMessage());
                         return;
                     }
-                    log.debug("Serialized Object: " + jsonObject);
-
                     //Filter on data object (if filter exists)
                     if( subscription.eventFilter() != null && subscription.eventFilter().jsonPathFilter() != null ) {
                         String jsonFilter = subscription.eventFilter().jsonPathFilter();
@@ -334,7 +350,7 @@ public class EventSubscriptionEntityServiceImpl
 
                     actionManager.processEvent(subscriptionEntity, esEvent, actionUser);
                     subscriptionEntity.incCounter();
-                } catch (JsonProcessingException|UserNotFoundException|UserInitException e) {
+                } catch (UserNotFoundException|UserInitException e) {
                     log.error("Failed to process subscription:" + subscription.name());
                     log.error(e.getMessage());
                     e.printStackTrace();

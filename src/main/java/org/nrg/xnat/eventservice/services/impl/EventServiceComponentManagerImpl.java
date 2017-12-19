@@ -5,6 +5,7 @@ import org.nrg.xdat.model.XnatImageassessordataI;
 import org.nrg.xdat.model.XnatImagescandataI;
 import org.nrg.xdat.model.XnatImagesessiondataI;
 import org.nrg.xdat.model.XnatSubjectdataI;
+import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatResourcecatalog;
 import org.nrg.xft.security.UserI;
@@ -118,7 +119,7 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
         else if(XnatResourcecatalog.class.isAssignableFrom(object.getClass())) {
             return new org.nrg.xnat.eventservice.model.xnat.Resource((XnatResourcecatalog) object);
         }
-        else if(object.getClass() == XnatImagescandataI.class) {
+        else if(XnatImagescandata.class.isAssignableFrom(object.getClass())) {
             String imageSessionId = ((XnatImagescandataI) object).getImageSessionId();
             Session session = new Session(imageSessionId, user);
             if(session == null) {

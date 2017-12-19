@@ -20,7 +20,7 @@ public abstract class SubscriptionCreator {
     @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @JsonProperty("event-id") public abstract String eventId();
-    @JsonIgnore public abstract String customListenerId();
+    @Nullable @JsonIgnore public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
@@ -36,7 +36,7 @@ public abstract class SubscriptionCreator {
     public static SubscriptionCreator create(@Nonnull @JsonProperty("name") final String name,
                                              @JsonProperty("active") final Boolean active,
                                              @Nonnull @JsonProperty("event-id") final String eventId,
-                                             @JsonProperty("custom-listener-id") final String customListenerId,
+                                             @Nullable @JsonProperty("custom-listener-id") final String customListenerId,
                                              @Nonnull @JsonProperty("action-key") final String actionKey,
                                              @JsonProperty("attributes") final Map<String, String> attributes,
                                              @JsonProperty("event-filter") final EventFilter eventFilter,

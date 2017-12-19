@@ -24,7 +24,7 @@ public abstract class Subscription {
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
     @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
-    @JsonProperty("subscription-owner") public abstract Integer subscriptionOwner();
+    @Nullable @JsonProperty("subscription-owner") public abstract Integer subscriptionOwner();
     @Nullable @JsonProperty("use-counter") public abstract Integer useCounter();
 
     public static Builder builder() {
@@ -40,7 +40,7 @@ public abstract class Subscription {
                                       @JsonProperty("active") final Boolean active,
                                       @JsonProperty("registration-key") final String listenerRegistrationKey,
                                       @JsonProperty("event-id") final String eventId,
-                                      @JsonProperty("custom-listener-id") String customListenerId,
+                                      @Nullable @JsonProperty("custom-listener-id") String customListenerId,
                                       @JsonProperty("action-key") final String actionKey,
                                       @JsonProperty("attributes") final Map<String, String> attributes,
                                       @JsonProperty("eventId-filter") final EventFilter eventFilter,

@@ -8,7 +8,7 @@
     "project-ids": [
       "ABC123"
     ],
-    "json-path-filter": "$[?(@.modality == \"MR\")]"
+    "json-path-filter": "$[?(@.xsiType == \"xnat:mrScanData\")]"
   },
   "act-as-event-user": false
 }

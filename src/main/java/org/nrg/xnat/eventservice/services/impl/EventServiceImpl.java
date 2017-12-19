@@ -73,9 +73,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<Subscription> getSubscriptions(String projectId, UserI userI) {
+        return null;
+    }
+
+    @Override
     public Subscription getSubscription(Long id) throws NotFoundException {
         return subscriptionService.getSubscription(id);
     }
+
 
     @Override
     public Subscription validateSubscription(Subscription subscription) throws SubscriptionValidationException {
