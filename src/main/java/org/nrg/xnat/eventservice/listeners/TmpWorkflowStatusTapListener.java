@@ -1,7 +1,6 @@
 package org.nrg.xnat.eventservice.listeners;
 
 import org.apache.commons.lang3.StringUtils;
-import org.nrg.framework.services.NrgEventService;
 import org.nrg.xdat.model.XnatImagescandataI;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
@@ -15,7 +14,7 @@ import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
 import org.nrg.xnat.eventservice.events.ScanArchiveEvent;
 import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
 import org.nrg.xnat.eventservice.events.SubjectCreatedEvent;
-import org.nrg.xnat.eventservice.model.EventFilter;
+import org.nrg.xnat.eventservice.services.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +30,12 @@ import static reactor.bus.selector.Selectors.type;
 public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStatusEvent>> {
     private static final Logger log = LoggerFactory.getLogger(TmpWorkflowStatusTapListener.class);
 
-    private final NrgEventService nrgEventService;
+    private final EventService eventService;
 
     @Autowired
-    public TmpWorkflowStatusTapListener(final EventBus eventBus, final NrgEventService nrgEventService) {
+    public TmpWorkflowStatusTapListener(final EventBus eventBus, final EventService eventService) {
         eventBus.on(type(WorkflowStatusEvent.class), this);
-        this.nrgEventService = nrgEventService;
+        this.eventService = eventService;
     }
 
     //*
@@ -50,16 +49,12 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
             try {
                 final UserI user = Users.getUser(wfsEvent.getUserId());
                 final XnatImagesessiondata session = XnatImagesessiondata.getXnatImagesessiondatasById(wfsEvent.getEntityId(), user, true);
-
+                String projectId = session.getProject();
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
-                // Manually build event label
-                String regexKey = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
-                nrgEventService.triggerEvent(regexKey, new SessionArchiveEvent(session, user.getID()), false);
-                log.debug("Firing SessionArchiveEvent for EventLabel: " + regexKey);
+                eventService.triggerEvent(new SessionArchiveEvent(session, user.getID()), projectId);
                 // Firing ScanArchiveEvent for each contained scan
                 for (final XnatImagescandataI scan : session.getScans_scan()) {
-                    nrgEventService.triggerEvent(regexKey, new ScanArchiveEvent(scan, user.getID()), false);
-                    log.debug("Firing ScanArchiveEvent for EventLabel: " + regexKey);
+                    eventService.triggerEvent(new ScanArchiveEvent(scan, user.getID()), projectId);
                 }
 
 
@@ -73,8 +68,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 final UserI user = Users.getUser(wfsEvent.getUserId());
                 final XnatImagesessiondata session = XnatImagesessiondata.getXnatImagesessiondatasById(wfsEvent.getEntityId(), user, true);
                 // Trigger Scan Archived Lifecycle event from here until we figure out where to launch the event.
-                // Manually build event label
-                String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
+//                String filter = EventFilter.builder().addProjectId(session.getProject()).build().toRegexKey();
 //                nrgEventService.triggerEvent(filter, new ScanArchiveEvent(scan, user.getID()), false);
 //                log.debug("Firing ScanArchiveEvent for EventLabel: " + filter);
 
@@ -91,12 +85,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 final XnatProjectdata projectData = XnatProjectdata.getProjectByIDorAlias(projectId, user, false);
 
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
-                // Manually build event label
-                String filter = EventFilter.builder().addProjectId(projectId).build().toRegexKey();
-                nrgEventService.triggerEvent(filter, new ProjectCreatedEvent(projectData, user.getID()), false);
-                log.debug("Firing New Project for EventLabel: " + filter);
-
-
+                eventService.triggerEvent(new ProjectCreatedEvent(projectData, user.getID()), projectId);
             } catch (UserNotFoundException e) {
                 log.warn("The specified user was not found: {}", wfsEvent.getUserId());
             } catch (UserInitException e) {
@@ -111,11 +100,7 @@ public class TmpWorkflowStatusTapListener implements Consumer<Event<WorkflowStat
                 String projectId = subjectdata.getFirstProject().getId();
 
                 // Trigger Session Archived Lifecycle event from here until we figure out where to launch the event.
-                // Manually build event label
-                String filter = EventFilter.builder().addProjectId(projectId).build().toRegexKey();
-                nrgEventService.triggerEvent(filter, new SubjectCreatedEvent(subjectdata, user.getID()), false);
-                log.debug("Firing New Project for EventLabel: " + filter);
-
+                eventService.triggerEvent(new SubjectCreatedEvent(subjectdata, user.getID()), projectId);
 
             } catch (UserNotFoundException e) {
                 log.warn("The specified user was not found: {}", wfsEvent.getUserId());

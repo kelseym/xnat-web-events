@@ -19,6 +19,7 @@ import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.Action;
+import org.nrg.xnat.eventservice.model.EventFilter;
 import org.nrg.xnat.eventservice.model.Subscription;
 import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 import org.nrg.xnat.eventservice.services.ActionManager;
@@ -45,7 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static reactor.bus.selector.Selectors.R;
-import static reactor.bus.selector.Selectors.T;
 
 @Service
 @Transactional
@@ -115,7 +115,7 @@ public class EventSubscriptionEntityServiceImpl
                 throw new SubscriptionValidationException("Could not load Action for key:" + subscription.actionKey() + "  User:" + actionUser.getUsername());
             }
             if (! actionManager.validateAction(action, actionUser)) {
-                log.error("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
+                log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown"));
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
         } catch (NoSuchBeanDefinitionException e) {
@@ -142,11 +142,15 @@ public class EventSubscriptionEntityServiceImpl
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
-                Selector selector = T(eventClazz);
-                if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().toRegexMatcher()))
-                    selector = R(subscription.eventFilter().toRegexMatcher());
+                String eventFilterRegexMatcher;
+                if(subscription.eventFilter() == null){
+                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName());
+                } else {
+                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName());
+                }
+                Selector selector = R(eventFilterRegexMatcher);
+                log.debug("Building Reactor RegEx Selector on matcher: " + eventFilterRegexMatcher);
                 Registration registration = eventBus.on(selector, uniqueListener);
-
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 subscription = subscription.toBuilder()
                                            .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())

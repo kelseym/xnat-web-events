@@ -186,6 +186,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Deprecated
     public List<Listener> getInstalledListeners() {
 
         return null;
@@ -194,6 +195,28 @@ public class EventServiceImpl implements EventService {
     @Override
     public void reactivateAllSubscriptions() {
         subscriptionService.reregisterAllActive();
+    }
+
+    @Override
+    public void triggerEvent(EventServiceEvent event) {
+        // TODO: Extract project id from event payload
+        triggerEvent(event, null);
+    }
+
+    @Override
+    public void triggerEvent(EventServiceEvent event, String projectId) {
+        log.debug("Firing EventService Event.");
+        // Manually build event label
+        EventFilter filter;
+        if(StringUtils.isNullOrEmpty(projectId)){
+            filter = EventFilter.builder().addProjectId(projectId).build();
+        }
+        else {
+            filter = EventFilter.builder().addProjectId(projectId).build();
+        }
+        String regexKey = filter.toRegexKey(event.getClass().getName());
+        eventBus.notify(regexKey, Event.wrap(event));
+        log.debug("Fired EventService Event for Label: " + regexKey);
     }
 
 

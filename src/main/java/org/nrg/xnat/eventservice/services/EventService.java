@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.services;
 
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.*;
@@ -36,6 +37,10 @@ public interface EventService {
     void deleteSubscription(Long id) throws Exception;
 
     void reactivateAllSubscriptions();
+
+    void triggerEvent(EventServiceEvent event);
+    void triggerEvent(EventServiceEvent event, String projectId);
+
 
     void processEvent(EventServiceListener listener, Event event);
 
