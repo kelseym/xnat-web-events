@@ -7,6 +7,8 @@ import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public abstract class MultiActionProvider implements EventServiceActionProvider {
 
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
@@ -18,7 +20,14 @@ public abstract class MultiActionProvider implements EventServiceActionProvider 
 
     @Override
     public String actionKeyToActionId(String actionKey) {
-        return Splitter.on(':').splitToList(actionKey).get(0);
+
+        List<String> keys = Splitter.on(':').splitToList(actionKey);
+        if(keys.size()>1) {
+            return keys.get(1);
+        }else{
+            log.error("ActionKey: " + actionKey + " does not have enough components. Cannot extract actionId.");
+        }
+        return null;
     }
 
     @Override
