@@ -49,9 +49,9 @@ public abstract class EventFilter {
 
 
     public String toRegexMatcher(String eventType) {
-        String pattern = "(" + eventType + ")";
+        String pattern = ".*(?:" + eventType + ")";
         if (projectIds() != null && !projectIds().isEmpty()) {
-            pattern = "project-id:(" + Joiner.on('|').join(projectIds()) + ")";
+            pattern += ".*(?:" + Joiner.on('|').join(projectIds()) + ")";
         }
         return pattern;
     }

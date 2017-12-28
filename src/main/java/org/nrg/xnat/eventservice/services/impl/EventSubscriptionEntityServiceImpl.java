@@ -42,7 +42,6 @@ import reactor.fn.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static reactor.bus.selector.Selectors.R;
@@ -125,7 +124,6 @@ public class EventSubscriptionEntityServiceImpl
         return subscription;
     }
 
-    @Transactional
     @Override
     public Subscription activate(Subscription subscription) {
         try {
@@ -229,33 +227,32 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription createSubscription(Subscription subscription) throws SubscriptionValidationException {
         log.debug("Validating subscription: " + subscription.name());
         subscription = validate(subscription);
-        if(subscription.active()) {
-            log.debug("Activating subscription: " + subscription.name());
-            subscription = activate(subscription);
+        try {
+            log.debug("Saving subscription: " + subscription.name());
+            subscription = save(subscription);
+            if (subscription.active()) {
+                subscription = activate(subscription);
+                log.debug("Activated subscription: " + subscription.name());
+                subscription = update(subscription);
+                log.debug("Updated subscription: " + subscription.name() + " with registration key: " + subscription.listenerRegistrationKey());
+            } else {
+                log.debug("Subscription set to not active. Skipping activation.");
+            }
+        }catch (Exception e){
+            log.error("Failed to save, activate & update new subscription: " + subscription.name());
+            log.error(e.getMessage());
+            return null;
         }
-        else {
-            log.debug("Subscription set to not active. Skipping activation.");
-        }
-        log.debug("Saving subscription: " + subscription.name());
-        subscription = save(subscription);
         return subscription;
     }
 
     @Override
-    public Subscription update(Subscription subscription) throws SubscriptionValidationException, NotFoundException {
-        SubscriptionEntity storedEntity = retrieve(subscription.id());
-        SubscriptionEntity subscriptionEntity = fromPojoWithTemplate(subscription);
-        Subscription vSubscription = validate(toPojo(subscriptionEntity));
-        if(storedEntity.getActive() && !subscription.active()){
-            deactivate(subscription);
-        } else if(!storedEntity.getActive() && subscription.active()){
-            activate(subscription);
-        }
-        update(subscriptionEntity);
-        log.debug("Updated subscription: " + subscription.name());
+    public Subscription update(Subscription subscription) throws NotFoundException {
+        SubscriptionEntity subscriptionEntity = retrieve(subscription.id());
+        subscriptionEntity.update(subscription);
+        super.update(subscriptionEntity);
         return toPojo(subscriptionEntity);
     }
-
 
     @Override
     public List<Subscription> getAllSubscriptions() {
@@ -272,32 +269,6 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription getSubscription(Long id) throws NotFoundException {
         return super.get(id).toPojo();
-    }
-
-    @Override
-    public void reregisterAllActive() {
-        List<Subscription> failedReactivations = new ArrayList<>();
-        for (Subscription subscription:getAllSubscriptions()) {
-            if(subscription.active()) {
-                log.debug("Attempting reactivation of subscription: " + Long.toString(subscription.id()));
-                try {
-                    Subscription reactivated = activate(subscription);
-                    reactivated = update(reactivated);
-                    if(reactivated == null || !reactivated.active()){
-                        failedReactivations.add(subscription);
-                    }
-                } catch (SubscriptionValidationException|NotFoundException e) {
-                    log.error("Failed to reactivate subscription: " + Long.toString(subscription.id()));
-                    log.error(e.getMessage());
-                }
-            }
-        }
-        if(!failedReactivations.isEmpty()){
-            log.error("Failed to re-activate %i event subscriptions.", failedReactivations.size());
-            for (Subscription fs:failedReactivations) {
-                log.error("Subscription activation: <" + fs.toString() + "> failed.");
-            }
-        }
     }
 
     @Override

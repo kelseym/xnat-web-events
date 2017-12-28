@@ -16,7 +16,10 @@ import java.util.Map;
 
 
 @Entity
-@Table(uniqueConstraints=@UniqueConstraint(columnNames={"name", "listenerRegistrationKey"}))
+@Table(uniqueConstraints= {
+        @UniqueConstraint(columnNames="name"),
+        @UniqueConstraint(columnNames = "listenerRegistrationKey")
+})
 public class SubscriptionEntity extends AbstractHibernateEntity {
 
     public SubscriptionEntity() {}
@@ -81,7 +84,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     }
 
 
-    @Column(unique = true)
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }
@@ -106,7 +108,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
             Maps.<String, String>newHashMap() :
                 attributes; }
 
-    @ManyToOne(cascade=CascadeType.ALL)
+    @OneToOne(cascade=CascadeType.ALL)
     public EventServiceFilterEntity getEventServiceFilterEntity() { return eventServiceFilterEntity; }
 
     public void setEventServiceFilterEntity(EventServiceFilterEntity eventServiceFilterEntity) { this.eventServiceFilterEntity = eventServiceFilterEntity; }
@@ -146,17 +148,17 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         if(template==null) {
             return fromPojo(subscription);
         }
-        template.name = subscription.name();
-        template.active = subscription.active();
-        template.listenerRegistrationKey = subscription.listenerRegistrationKey();
-        template.eventType = subscription.eventId();
-        template.customListenerId = subscription.customListenerId();
-        template.actionKey = subscription.actionKey();
-        template.attributes = subscription.attributes();
-        template.eventServiceFilterEntity = EventServiceFilterEntity.fromPojo(subscription.eventFilter());
-        template.actAsEventUser = subscription.actAsEventUser();
-        template.ownerId = subscription.subscriptionOwner();
-        template.counter = subscription.useCounter();
+        template.name = subscription.name() != null ? subscription.name() : template.name;
+        template.active = subscription.active() != null ? subscription.active() : template.active;
+        template.listenerRegistrationKey = subscription.listenerRegistrationKey() != null ? subscription.listenerRegistrationKey() : template.listenerRegistrationKey;
+        template.eventType = subscription.eventId() != null ? subscription.eventId() : template.eventType;
+        template.customListenerId = subscription.customListenerId() != null ? subscription.customListenerId() : template.customListenerId;
+        template.actionKey = subscription.actionKey() != null ? subscription.actionKey() :template.actionKey;
+        template.attributes = subscription.attributes() != null ? subscription.attributes() : template.attributes;
+        template.eventServiceFilterEntity = subscription.eventFilter() != null ? EventServiceFilterEntity.fromPojo(subscription.eventFilter()) : template.eventServiceFilterEntity;
+        template.actAsEventUser = subscription.actAsEventUser() != null ? subscription.actAsEventUser() : template.actAsEventUser;
+        template.ownerId = subscription.subscriptionOwner() != null ? subscription.subscriptionOwner() : template.ownerId;
+        template.counter = subscription.useCounter() != null ? subscription.useCounter() : template.counter;
         return template;
     }
 
@@ -179,6 +181,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     }
 
     @Nonnull
+    @Transient
     static public List<Subscription> toPojo(final List<SubscriptionEntity> subscriptionEntities) {
         List<Subscription> subscriptions = new ArrayList<>();
         if(subscriptionEntities!= null) {

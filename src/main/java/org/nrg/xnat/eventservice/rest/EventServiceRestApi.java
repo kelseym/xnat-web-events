@@ -4,6 +4,7 @@ package org.nrg.xnat.eventservice.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.h2.util.StringUtils;
 import org.nrg.framework.annotations.XapiRestController;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.exceptions.NrgServiceRuntimeException;
@@ -52,22 +53,25 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         this.eventService = eventService;
     }
 
-//    @XapiRequestMapping(value = "/reactivate", method = POST)
-//    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
-//    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
-//        checkCreateOrThrow();
-//        eventService.reactivateAllSubscriptions();
-//        return ResponseEntity.ok().build();
-//    }
+    @XapiRequestMapping(value = "/reactivate", method = POST)
+    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
+    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
+        checkCreateOrThrow();
+        eventService.reactivateAllSubscriptions();
+        return ResponseEntity.ok().build();
+    }
 
     @XapiRequestMapping(value = "/subscription", method = POST)
     @ApiOperation(value = "Create a Subscription", code = 201)
-    public ResponseEntity<Long> createSubscription(final @RequestBody SubscriptionCreator subscription)
+    public ResponseEntity<String> createSubscription(final @RequestBody SubscriptionCreator subscription)
             throws NrgServiceRuntimeException, UnauthorizedException, SubscriptionValidationException, JsonProcessingException {
         final UserI userI = XDAT.getUserDetails();
         checkCreateOrThrow(userI);
         Subscription created = eventService.createSubscription(Subscription.create(subscription, userI.getID()));
-        return new ResponseEntity<>(created.id(), HttpStatus.CREATED);
+        if(created == null || StringUtils.isNullOrEmpty(created.listenerRegistrationKey())){
+            return new ResponseEntity<>("Failed to create subscription.",HttpStatus.FAILED_DEPENDENCY);
+        }
+        return new ResponseEntity<>(created.name() + ":" + Long.toString(created.id()), HttpStatus.CREATED);
 
     }
 

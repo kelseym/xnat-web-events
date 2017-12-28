@@ -194,7 +194,32 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public void reactivateAllSubscriptions() {
-        subscriptionService.reregisterAllActive();
+
+        List<Subscription> failedReactivations = new ArrayList<>();
+        for (Subscription subscription:subscriptionService.getAllSubscriptions()) {
+            if(subscription.active()) {
+                log.debug("Reactivating of subscription: " + Long.toString(subscription.id()));
+                try {
+                    Subscription active = subscriptionService.activate(subscription);
+                    if(active == null || !active.active()){
+                        failedReactivations.add(subscription);
+                    }else {
+                        subscriptionService.update(active);
+                        log.debug("Updated subscription: " + subscription.name());
+                    }
+
+                } catch (Exception e) {
+                    log.error("Failed to reactivate and update subscription: " + Long.toString(subscription.id()));
+                    log.error(e.getMessage());
+                }
+            }
+        }
+        if(!failedReactivations.isEmpty()){
+            log.error("Failed to re-activate %i event subscriptions.", failedReactivations.size());
+            for (Subscription fs:failedReactivations) {
+                log.error("Subscription activation: <" + fs.toString() + "> failed.");
+            }
+        }
     }
 
     @Override

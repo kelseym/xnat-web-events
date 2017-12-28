@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.entities;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 import org.nrg.xnat.eventservice.model.EventFilter;
 
 import javax.persistence.*;
@@ -18,7 +17,6 @@ public class EventServiceFilterEntity {
     private String name;
     private List<String> projectIds;
     private String jsonPathFilter;
-    private List<SubscriptionEntity> eventSubscriptionEntities = Lists.newArrayList();
 
 
     @Override
@@ -39,13 +37,12 @@ public class EventServiceFilterEntity {
         return id == that.id &&
                 Objects.equal(name, that.name) &&
                 Objects.equal(jsonPathFilter, that.jsonPathFilter) &&
-                Objects.equal(projectIds, that.projectIds) &&
-                Objects.equal(eventSubscriptionEntities, that.eventSubscriptionEntities);
+                Objects.equal(projectIds, that.projectIds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id, name, jsonPathFilter, projectIds, eventSubscriptionEntities);
+        return Objects.hashCode(id, name, jsonPathFilter, projectIds);
     }
 
     public EventServiceFilterEntity(String name, List<String> projectIds, String jsonPathFilter) {
@@ -75,7 +72,6 @@ public class EventServiceFilterEntity {
         this.id = id;
     }
 
-    @Column(unique = true)
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }
@@ -84,13 +80,6 @@ public class EventServiceFilterEntity {
     public List<String> getProjectIds() { return projectIds; }
 
     public void setProjectIds(List<String> projectIds) { this.projectIds = projectIds; }
-
-    @OneToMany(mappedBy = "eventServiceFilterEntity", cascade= CascadeType.ALL)
-    public List<SubscriptionEntity> getEventSubscriptionEntities() { return eventSubscriptionEntities; }
-
-    public void setEventSubscriptionEntities(List<SubscriptionEntity> eventSubscriptionEntities) {
-        this.eventSubscriptionEntities = eventSubscriptionEntities;
-    }
 
     public EventFilter toPojo() {
         return EventFilter.builder()

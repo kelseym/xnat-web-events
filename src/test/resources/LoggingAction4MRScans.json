@@ -1,8 +1,8 @@
 {
-  "name": "Dcm2Nii for MR Scans",
+  "name": "Logging action for MR Scans",
   "active": true,
   "event-id": "org.nrg.xnat.eventservice.events.ScanArchiveEvent",
-  "action-key": "org.nrg.containers.services.CommandActionProvider:1",
+  "action-key": "org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction",
   "event-filter": {
     "name": "Project ABC123 MR Scans",
     "project-ids": [
