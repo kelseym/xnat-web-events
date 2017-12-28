@@ -173,15 +173,16 @@ public class EventSubscriptionEntityServiceImpl
     public Subscription deactivate(@Nonnull Subscription subscription) throws NotFoundException, EntityNotFoundException{
         Subscription deactivatedSubscription = null;
         try {
-            if(subscription.id() != null) {
+            if(subscription.id() == null) {
                 throw new NotFoundException("Failed to deactivate subscription - Missing subscription ID");
             }
             log.debug("Deactivating subscription:" + Long.toString(subscription.id()));
-            SubscriptionEntity entity = SubscriptionEntity.fromPojo(subscription);
-            if(entity != null) {
+            SubscriptionEntity entity = fromPojoWithTemplate(subscription);
+            if(entity != null && entity.getId() != 0) {
                 entity.setActive(false);
                 entity.setListenerRegistrationKey(null);
                 deactivatedSubscription = entity.toPojo();
+                update(entity);
                 log.debug("Deactivated subscription:" + Long.toString(subscription.id()));
             }
             else {
@@ -189,7 +190,8 @@ public class EventSubscriptionEntityServiceImpl
                 throw new EntityNotFoundException("Could not retrieve EventSubscriptionEntity from id: " + subscription.id());
             }
         } catch(NotFoundException|EntityNotFoundException e){
-            log.error(e.getMessage());
+            log.error("Failed to deactivate subscription.\n" + e.getMessage());
+
         }
         return deactivatedSubscription;
     }

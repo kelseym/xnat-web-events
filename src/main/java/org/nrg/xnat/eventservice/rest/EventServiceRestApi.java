@@ -53,13 +53,13 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         this.eventService = eventService;
     }
 
-    @XapiRequestMapping(value = "/reactivate", method = POST)
-    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
-    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
-        checkCreateOrThrow();
-        eventService.reactivateAllSubscriptions();
-        return ResponseEntity.ok().build();
-    }
+//    @XapiRequestMapping(value = "/reactivate", method = POST)
+//    @ApiOperation(value = "Reactivate all active subscriptions", code = 201)
+//    public ResponseEntity<Void> reactivateSubscriptions() throws UnauthorizedException {
+//        checkCreateOrThrow();
+//        eventService.reactivateAllSubscriptions();
+//        return ResponseEntity.ok().build();
+//    }
 
     @XapiRequestMapping(value = "/subscription", method = POST)
     @ApiOperation(value = "Create a Subscription", code = 201)
@@ -86,6 +86,26 @@ public class EventServiceRestApi extends AbstractXapiRestController {
                         ? subscription
                         : subscription.toBuilder().id(id).build();
         eventService.updateSubscription(toUpdate);
+        return ResponseEntity.ok().build();
+    }
+
+    @XapiRequestMapping(value = "/subscription/{id}/activate", method = POST)
+    @ApiOperation(value = "Activate an existing Subscription")
+    public ResponseEntity<Void> activateSubscription(final @PathVariable long id)
+            throws NrgServiceRuntimeException, UnauthorizedException, NotFoundException {
+        final UserI userI = XDAT.getUserDetails();
+        checkCreateOrThrow(userI);
+        eventService.activateSubscription(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @XapiRequestMapping(value = "/subscription/{id}/deactivate", method = POST)
+    @ApiOperation(value = "deactivate an existing Subscription")
+    public ResponseEntity<Void> deactivateSubscription(final @PathVariable long id)
+            throws NrgServiceRuntimeException, UnauthorizedException, NotFoundException {
+        final UserI userI = XDAT.getUserDetails();
+        checkCreateOrThrow(userI);
+        eventService.deactivateSubscription(id);
         return ResponseEntity.ok().build();
     }
 

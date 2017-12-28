@@ -256,6 +256,19 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    @Override
+    public void activateSubscription(long id) throws NotFoundException {
+        Subscription subscription = subscriptionService.getSubscription(id);
+        subscriptionService.activate(subscription);
+    }
+
+
+    @Override
+    public void deactivateSubscription(long id) throws NotFoundException {
+        Subscription subscription = subscriptionService.getSubscription(id);
+        subscriptionService.deactivate(subscription);
+    }
+
     private SimpleEvent toPojo(@Nonnull EventServiceEvent event) {
         return SimpleEvent.builder()
                 .id(event.getId() == null ? "" : event.getId())
