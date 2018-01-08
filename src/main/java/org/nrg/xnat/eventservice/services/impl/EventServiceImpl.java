@@ -74,6 +74,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<Subscription> getSubscriptions(String projectId, UserI userI) {
+        //TODO: Get subscriptions authorized by project scope and userId
         return null;
     }
 
@@ -85,7 +86,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Subscription validateSubscription(Subscription subscription) throws SubscriptionValidationException {
-        return null;
+        return subscriptionService.validate(subscription);
     }
 
     @Deprecated

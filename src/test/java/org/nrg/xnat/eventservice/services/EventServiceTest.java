@@ -26,6 +26,7 @@ import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
 import org.nrg.xnat.eventservice.model.xnat.Scan;
+import org.nrg.xnat.eventservice.model.xnat.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,7 @@ public class EventServiceTest {
     private UserI mockUser;
 
     private final String FAKE_USER = "mockUser";
+    private final Integer FAKE_USER_ID = 1234;
 
     @Autowired private EventBus eventBus;
     @Autowired private TestListener testListener;
@@ -82,6 +84,17 @@ public class EventServiceTest {
     private Scan mrScan1 = new Scan();
     private Scan mrScan2 = new Scan();
     private Scan ctScan1 = new Scan();
+
+    private Session mrSession = new Session();
+    private Session ctSession = new Session();
+
+
+    //private Project project1 = new Project("PROJECTID-1", mockUser);
+    //private Project project2 = new Project("PROJECTID-2", mockUser);
+
+    //private Subject subject1 = new Subject("SUBJECTID-1", mockUser);
+    //private Subject subject2 = new Subject("SUBJECTID-2", mockUser);
+
 
 
     @Before
@@ -134,10 +147,11 @@ public class EventServiceTest {
         // Mock the userI
         mockUser = Mockito.mock(UserI.class);
         when(mockUser.getLogin()).thenReturn(FAKE_USER);
-        when(mockUser.getID()).thenReturn(1234);
+        when(mockUser.getID()).thenReturn(FAKE_USER_ID);
 
         // Mock the user management service
         when(mockUserManagementServiceI.getUser(FAKE_USER)).thenReturn(mockUser);
+        when(mockUserManagementServiceI.getUser(FAKE_USER_ID)).thenReturn(mockUser);
 
         when(mockComponentManager.getActionProviders()).thenReturn(new ArrayList<>(Arrays.asList(new MockSingleActionProvider())));
 
@@ -150,7 +164,6 @@ public class EventServiceTest {
         when(mockEventServiceLoggingAction.getDisplayName()).thenReturn("MockEventServiceLoggingAction");
         when(mockEventServiceLoggingAction.getDescription()).thenReturn("MockEventServiceLoggingAction");
         when(mockEventServiceLoggingAction.getActions(Matchers.any(UserI.class))).thenReturn(null);
-        when(mockEventServiceLoggingAction.getEvents()).thenReturn(null);
 
 
     }
@@ -169,11 +182,6 @@ public class EventServiceTest {
     public void checkDatabaseConnection() throws Exception {
         List<SubscriptionEntity> entities = eventSubscriptionEntityService.getAll();
         assertThat(entities, is(not(nullValue())));
-    }
-
-    @Test
-    public void listSubscriptions() throws Exception {
-
     }
 
     @Test
@@ -275,8 +283,10 @@ public class EventServiceTest {
                                                                      .actAsEventUser(false)
                                                                      .build();
 
-        Subscription subscription = Subscription.create(subscriptionCreator);
+        Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getID());
         assertThat("Created subscription should not be null", subscription, notNullValue());
+
+        eventService.validateSubscription(subscription);
 
         Subscription savedSubscription = mockEventService.createSubscription(subscription);
         assertThat("eventService.createSubscription() should not return null", savedSubscription, notNullValue());
@@ -285,6 +295,16 @@ public class EventServiceTest {
         assertThat("subscription registration key should not be null", savedSubscription.listenerRegistrationKey(), notNullValue());
         assertThat("subscription registration key should not be empty", savedSubscription.listenerRegistrationKey(), not(""));
 
+    }
+
+    @Test
+    public void listSubscriptions() throws Exception {
+        createSubscription();
+        assertThat("No subscriptions found.", eventService.getSubscriptions(), is(not(empty())));
+        for (Subscription subscription:eventService.getSubscriptions()) {
+            assertThat("subscription id is null for " + subscription.name(), subscription.id(), notNullValue());
+            assertThat("subscription id is zero (0) for " + subscription.name(), subscription.id(), not(0));
+        }
     }
 
     @Test
@@ -470,7 +490,7 @@ public class EventServiceTest {
         final Subscription subscription = allSubscriptions.get(0);
         assertThat(subscription.useCounter(), is(1));
         // reactivate subscription
-        eventSubscriptionEntityService.reregisterAllActive();
+        eventService.reactivateAllSubscriptions();
 
     }
 

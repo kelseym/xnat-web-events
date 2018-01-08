@@ -61,6 +61,7 @@ public abstract class Subscription {
                 .build();
     }
 
+    @Deprecated
     public static Subscription create(final SubscriptionCreator creator) {
         return builder()
                 .name(creator.name())

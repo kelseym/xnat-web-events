@@ -1,7 +1,6 @@
 package org.nrg.xnat.eventservice.events;
 
 import org.nrg.framework.event.XnatEventServiceEvent;
-import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 
 @XnatEventServiceEvent(name="SampleEvent")
 public class SampleEvent implements EventServiceEvent {
@@ -23,11 +22,6 @@ public class SampleEvent implements EventServiceEvent {
 
     @Override
     public Object getObject() {
-        return null;
-    }
-
-    @Override
-    public XnatModelObject getModelObject() {
         return null;
     }
 
