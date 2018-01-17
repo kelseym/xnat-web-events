@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -17,6 +18,7 @@ import org.nrg.xdat.security.user.exceptions.UserNotFoundException;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
+import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -39,8 +41,10 @@ import reactor.bus.selector.Selector;
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.*;
 import static reactor.bus.selector.Selectors.R;
 
 @Service
@@ -57,6 +61,7 @@ public class EventSubscriptionEntityServiceImpl
     private EventService eventService;
     private ObjectMapper mapper;
     private UserManagementServiceI userManagementService;
+    private SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
 
 
     @Autowired
@@ -66,7 +71,8 @@ public class EventSubscriptionEntityServiceImpl
                                               final EventServiceComponentManager componentManager,
                                               @Lazy final EventService eventService,
                                               final ObjectMapper mapper,
-                                              final UserManagementServiceI userManagementService) {
+                                              final UserManagementServiceI userManagementService,
+                                              final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
         this.eventBus = eventBus;
         this.contextService = contextService;
         this.actionManager = actionManager;
@@ -74,6 +80,7 @@ public class EventSubscriptionEntityServiceImpl
         this.eventService = eventService;
         this.mapper = mapper;
         this.userManagementService = userManagementService;
+        this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
         log.debug("EventSubscriptionService started normally.");
     }
 
@@ -326,10 +333,21 @@ public class EventSubscriptionEntityServiceImpl
             EventServiceEvent esEvent = (EventServiceEvent) event.getData();
             for (Subscription subscription : getSubscriptionsByKey(listener.getInstanceId().toString())) {
                 log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
+                // Create subscription delivery entry
+                Long deliveryId = subscriptionDeliveryEntityService.create(fromPojo(subscription),
+                        esEvent,
+                        listener,
+                        subscription.actAsEventUser() ? esEvent.getUser() : subscription.subscriptionOwner(),
+                        subscription.projects() == null ? "" : Joiner.on('|').join(subscription.projects()),
+                        subscription.attributes() == null ? "" : subscription.attributes().toString());
                 try {
+                    subscriptionDeliveryEntityService.addStatus(deliveryId,
+                            new TimedEventStatus(SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started."));
 
                     // Is subscription enabled
                     if (!subscription.active()) {
+                        subscriptionDeliveryEntityService.addStatus(deliveryId,
+                                new TimedEventStatus(SUBSCRIPTION_DISABLED_HALT, new Date(), "Inactive subscription skipped."));
                         log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
                         return;
                     }
@@ -352,7 +370,10 @@ public class EventSubscriptionEntityServiceImpl
                             log.error("Could not serialize event object in: " + esEvent.toString());
                             return;
                         }
-                        log.debug("Serialized Object: " + StringUtils.substring(jsonObject, 0, 60) + "...");
+                        String objectSubString = StringUtils.substring(jsonObject, 0, 60);
+                        log.debug("Serialized Object: " + objectSubString + "...");
+                        subscriptionDeliveryEntityService.addStatus(deliveryId,
+                                new TimedEventStatus(OBJECT_SERIALIZED, new Date(), "Object Serialized: " + objectSubString + "..."));
                     }catch(JsonProcessingException e){
                         log.error("Aborting Event Service processEvent. Exception serializing event object: " + esEvent.getObjectClass());
                         log.error(e.getMessage());
@@ -363,23 +384,29 @@ public class EventSubscriptionEntityServiceImpl
                         String jsonFilter = subscription.eventFilter().jsonPathFilter();
                         Configuration conf = Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST);
                         List<String> filterResult =  JsonPath.using(conf).parse(jsonObject).read(jsonFilter);
+                        String objectSubString = StringUtils.substring(jsonObject, 0, 60);
                         if(filterResult.isEmpty()){
-                            log.debug("Aborting event pipeline - Serialized event:\n" + StringUtils.substring(jsonObject, 0, 60) + "..." + "\ndidn't match JSONPath Filter:\n" + jsonFilter);
+                            log.debug("Aborting event pipeline - Serialized event:\n" + objectSubString + "..." + "\ndidn't match JSONPath Filter:\n" + jsonFilter);
+                            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(OBJECT_FILTER_MISMATCH_HALT, new Date(), "Event objected failed filter test."));
                             return;
                         } else {
-                            log.debug("JSONPath Filter Match - Serialized event:\n" + StringUtils.substring(jsonObject, 0, 60)+ "..." + "\nJSONPath Filter:\n" + jsonFilter);
+                            log.debug("JSONPath Filter Match - Serialized event:\n" + objectSubString + "..." + "\nJSONPath Filter:\n" + jsonFilter);
+                            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(OBJECT_FILTERED, new Date(), "Event objected passed filter test."));
                         }
 
                     }
                     // call Action Manager with payload
                     SubscriptionEntity subscriptionEntity = super.get(subscription.id());
 
-                    actionManager.processEvent(subscriptionEntity, esEvent, actionUser);
+                    actionManager.processEvent(subscriptionEntity, esEvent, actionUser, deliveryId);
                     subscriptionEntity.incCounter();
                 } catch (UserNotFoundException|UserInitException e) {
                     log.error("Failed to process subscription:" + subscription.name());
                     log.error(e.getMessage());
                     e.printStackTrace();
+                    if(deliveryId != null){
+                        subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(FAILED, new Date(), e.getMessage()));
+                    }
                 }
             }
         }

@@ -2,36 +2,44 @@ package org.nrg.xnat.eventservice.entities;
 
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import java.util.Date;
-import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
+//@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"eventUUID", "subscription"})})
 public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
 
     public SubscriptionDeliveryEntity() {}
 
+    private UUID eventUUID;
     private SubscriptionEntity subscription;
     private String eventObject;
-    private String actionUser;
+    private String actionUserLogin;
     private String projectId;
     private String actionInputs;
+    private List<TimedEventStatus> timedEventStatuses = new ArrayList<>();
 
-    public SubscriptionDeliveryEntity(SubscriptionEntity subscription, String eventObject, String actionUser,
-                                      String projectId, String actionInputs,
-                                      Map<TimedStatus, Date> timedStatus) {
+    public SubscriptionDeliveryEntity(@Nonnull SubscriptionEntity subscription, @Nonnull UUID eventUUID, String actionUserLogin,
+                                      String projectId, String actionInputs) {
         this.subscription = subscription;
-        this.eventObject = eventObject;
-        this.actionUser = actionUser;
+        this.eventUUID = eventUUID;
+        this.actionUserLogin = actionUserLogin;
         this.projectId = projectId;
         this.actionInputs = actionInputs;
-        this.timedStatus = timedStatus;
     }
 
-    @ManyToOne
+    public UUID getEventUUID() {
+        return eventUUID;
+    }
+
+    public void setEventUUID(UUID eventUUID) {
+        this.eventUUID = eventUUID;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER)
     public SubscriptionEntity getSubscription() {
         return subscription;
     }
@@ -48,12 +56,12 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.eventObject = eventObject;
     }
 
-    public String getActionUser() {
-        return actionUser;
+    public String getActionUserLogin() {
+        return actionUserLogin;
     }
 
-    public void setActionUser(String actionUser) {
-        this.actionUser = actionUser;
+    public void setActionUserLogin(String actionUserLogin) {
+        this.actionUserLogin = actionUserLogin;
     }
 
     public String getProjectId() {
@@ -72,26 +80,17 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.actionInputs = actionInputs;
     }
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    public Map<TimedStatus, Date> getTimedStatus() {
-        return timedStatus;
+    @OneToMany(mappedBy = "subscriptionDeliveryEntity",cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<TimedEventStatus> getTimedEventStatuses() {
+        return timedEventStatuses;
     }
 
-    public void setTimedStatus(
-            Map<TimedStatus, Date> timedStatus) {
-        this.timedStatus = timedStatus;
+    public void setTimedEventStatuses(List<TimedEventStatus> timedEventStatuses){
+        this.timedEventStatuses = timedEventStatuses;
     }
 
-    private Map<TimedStatus, Date> timedStatus;
-
-    public enum TimedStatus {
-        EVENT_TRIGGERED,
-        EVENT_DETECTED,
-        SUBSCRIPTION_TRIGGERED,
-        OBJECT_SERIALIZED,
-        OBJECT_FILTERED,
-        ACTION_CALLED,
-        COMPLETE,
-        FAILED
+    public void addTimedEventStatus(TimedEventStatus timedEventStatus){
+        timedEventStatuses.add(timedEventStatus);
+        timedEventStatus.setSubscriptionDeliveryEntity(this);
     }
 }
