@@ -16,7 +16,6 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
 
     private UUID eventUUID;
     private SubscriptionEntity subscription;
-    private String eventObject;
     private String actionUserLogin;
     private String projectId;
     private String actionInputs;
@@ -46,14 +45,6 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
 
     public void setSubscription(SubscriptionEntity subscription) {
         this.subscription = subscription;
-    }
-
-    public String getEventObject() {
-        return eventObject;
-    }
-
-    public void setEventObject(String eventObject) {
-        this.eventObject = eventObject;
     }
 
     public String getActionUserLogin() {

@@ -1,5 +1,6 @@
 package org.nrg.xnat.eventservice.services.impl;
 
+import com.google.common.base.Strings;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.nrg.xnat.eventservice.daos.SubscriptionDeliveryEntityDao;
 import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
@@ -11,13 +12,15 @@ import org.nrg.xnat.eventservice.services.SubscriptionDeliveryEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Nonnull;
+import java.util.List;
 
 import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.EVENT_DETECTED;
 import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.EVENT_TRIGGERED;
 
 @Service
+@Transactional
 public class SubscriptionDeliveryEntityServiceImpl
         extends AbstractHibernateEntityService<SubscriptionDeliveryEntity, SubscriptionDeliveryEntityDao>
         implements SubscriptionDeliveryEntityService {
@@ -25,13 +28,14 @@ public class SubscriptionDeliveryEntityServiceImpl
     private static final Logger log = LoggerFactory.getLogger(SubscriptionDeliveryEntityService.class);
 
     @Override
-    public Long create(@Nonnull SubscriptionEntity subscription, @Nonnull EventServiceEvent event, EventServiceListener listener, String actionUserLogin, String projectId,
+    public Long create(SubscriptionEntity subscription, EventServiceEvent event, EventServiceListener listener, String actionUserLogin, String projectId,
                        String actionInputs) {
-        SubscriptionDeliveryEntity delivery = super.create(new SubscriptionDeliveryEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs));
+        SubscriptionDeliveryEntity delivery = new SubscriptionDeliveryEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs);
         if(delivery != null){
             log.debug("Created new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
             addStatus(delivery.getId(), new TimedEventStatus(EVENT_TRIGGERED, event.getEventTimestamp(), "Event triggered."));
             addStatus(delivery.getId(), new TimedEventStatus(EVENT_DETECTED, listener.getDetectedTimestamp(), "Event detected."));
+            update(delivery);
             return delivery.getId();
         }
         log.error("Could not create new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
@@ -47,5 +51,17 @@ public class SubscriptionDeliveryEntityServiceImpl
         } else{
             log.error("Could not find SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, status.toString());
         }
+    }
+
+    @Override
+    public List<SubscriptionDeliveryEntity> get(String projectId, Long subscriptionId) {
+        if(subscriptionId == null){
+            if(Strings.isNullOrEmpty(projectId)){ return getAll(); }
+            else { return getDao().findByProjectId(projectId); }
+        } else {
+            if(Strings.isNullOrEmpty(projectId)){ return getDao().findBySubscriptionId(subscriptionId); }
+            else { return getDao().findByProjectIdAndSubscriptionId(projectId, subscriptionId); }
+            }
+
     }
 }

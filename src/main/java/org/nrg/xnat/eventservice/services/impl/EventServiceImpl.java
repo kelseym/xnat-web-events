@@ -8,6 +8,7 @@ import org.nrg.framework.exceptions.NrgServiceRuntimeException;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -37,18 +38,21 @@ public class EventServiceImpl implements EventService {
     private EventBus eventBus;
     private EventServiceComponentManager componentManager;
     private ActionManager actionManager;
+    private SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
 
     @Autowired
     public EventServiceImpl(final EventSubscriptionEntityService subscriptionService,
                             final EventBus eventBus,
                             final ContextService contextService,
                             final EventServiceComponentManager componentManager,
-                            final ActionManager actionManager) {
+                            final ActionManager actionManager,
+                            final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
         this.subscriptionService = subscriptionService;
         this.eventBus = eventBus;
         this.contextService = contextService;
         this.componentManager = componentManager;
         this.actionManager = actionManager;
+        this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
 
     }
 
@@ -265,6 +269,11 @@ public class EventServiceImpl implements EventService {
     public Subscription deactivateSubscription(long id) throws NotFoundException {
         Subscription subscription = subscriptionService.getSubscription(id);
         return subscriptionService.deactivate(subscription);
+    }
+
+    @Override
+    public List<SubscriptionDeliveryEntity> getSubscriptionDeliveries(String projectId, Long subscriptionId) {
+        return subscriptionDeliveryEntityService.get(projectId, subscriptionId);
     }
 
     private SimpleEvent toPojo(@Nonnull EventServiceEvent event) {

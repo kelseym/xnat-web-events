@@ -4,6 +4,7 @@ package org.nrg.xnat.eventservice.services;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.exceptions.NrgServiceRuntimeException;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -49,4 +50,6 @@ public interface EventService {
 
     Subscription activateSubscription(long id) throws NotFoundException;
     Subscription deactivateSubscription(long id) throws NotFoundException;
+
+    List<SubscriptionDeliveryEntity> getSubscriptionDeliveries(String projectId, Long subscriptionId);
 }
