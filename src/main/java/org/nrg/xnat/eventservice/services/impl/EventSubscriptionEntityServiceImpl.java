@@ -18,7 +18,6 @@ import org.nrg.xdat.security.user.exceptions.UserNotFoundException;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.daos.EventSubscriptionEntityDao;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -341,13 +340,11 @@ public class EventSubscriptionEntityServiceImpl
                         subscription.projects() == null ? "" : Joiner.on('|').join(subscription.projects()),
                         subscription.attributes() == null ? "" : subscription.attributes().toString());
                 try {
-                    subscriptionDeliveryEntityService.addStatus(deliveryId,
-                            new TimedEventStatus(SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started."));
+                    subscriptionDeliveryEntityService.addStatus(deliveryId, SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started.");
 
                     // Is subscription enabled
                     if (!subscription.active()) {
-                        subscriptionDeliveryEntityService.addStatus(deliveryId,
-                                new TimedEventStatus(SUBSCRIPTION_DISABLED_HALT, new Date(), "Inactive subscription skipped."));
+                        subscriptionDeliveryEntityService.addStatus(deliveryId, SUBSCRIPTION_DISABLED_HALT, new Date(), "Inactive subscription skipped.");
                         log.debug("Inactive subscription: " + subscription.name() != null ? subscription.name() : "" + " skipped.");
                         return;
                     }
@@ -372,8 +369,7 @@ public class EventSubscriptionEntityServiceImpl
                         }
                         String objectSubString = StringUtils.substring(jsonObject, 0, 60);
                         log.debug("Serialized Object: " + objectSubString + "...");
-                        subscriptionDeliveryEntityService.addStatus(deliveryId,
-                                new TimedEventStatus(OBJECT_SERIALIZED, new Date(), "Object Serialized: " + objectSubString + "..."));
+                        subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_SERIALIZED, new Date(), "Object Serialized: " + objectSubString + "...");
                     }catch(JsonProcessingException e){
                         log.error("Aborting Event Service processEvent. Exception serializing event object: " + esEvent.getObjectClass());
                         log.error(e.getMessage());
@@ -387,11 +383,11 @@ public class EventSubscriptionEntityServiceImpl
                         String objectSubString = StringUtils.substring(jsonObject, 0, 60);
                         if(filterResult.isEmpty()){
                             log.debug("Aborting event pipeline - Serialized event:\n" + objectSubString + "..." + "\ndidn't match JSONPath Filter:\n" + jsonFilter);
-                            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(OBJECT_FILTER_MISMATCH_HALT, new Date(), "Event objected failed filter test."));
+                            subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_FILTER_MISMATCH_HALT, new Date(), "Event objected failed filter test.");
                             return;
                         } else {
                             log.debug("JSONPath Filter Match - Serialized event:\n" + objectSubString + "..." + "\nJSONPath Filter:\n" + jsonFilter);
-                            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(OBJECT_FILTERED, new Date(), "Event objected passed filter test."));
+                            subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_FILTERED, new Date(), "Event objected passed filter test.");
                         }
 
                     }
@@ -399,13 +395,12 @@ public class EventSubscriptionEntityServiceImpl
                     SubscriptionEntity subscriptionEntity = super.get(subscription.id());
 
                     actionManager.processEvent(subscriptionEntity, esEvent, actionUser, deliveryId);
-                    subscriptionEntity.incCounter();
                 } catch (UserNotFoundException|UserInitException e) {
                     log.error("Failed to process subscription:" + subscription.name());
                     log.error(e.getMessage());
                     e.printStackTrace();
                     if(deliveryId != null){
-                        subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(FAILED, new Date(), e.getMessage()));
+                        subscriptionDeliveryEntityService.addStatus(deliveryId, FAILED, new Date(), e.getMessage());
                     }
                 }
             }

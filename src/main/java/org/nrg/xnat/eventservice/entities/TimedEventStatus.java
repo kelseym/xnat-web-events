@@ -9,10 +9,11 @@ import java.util.Date;
 @Entity
 public class TimedEventStatus extends AbstractHibernateEntity{
 
-    public TimedEventStatus(Status status, Date statusTimestamp, String message) {
+    public TimedEventStatus(Status status, Date statusTimestamp, String message, SubscriptionDeliveryEntity subscriptionDeliveryEntity) {
         this.status = status;
         this.statusTimestamp = statusTimestamp;
         this.message = message;
+        this.subscriptionDeliveryEntity = subscriptionDeliveryEntity;
     }
 
     private Status status;
@@ -20,6 +21,7 @@ public class TimedEventStatus extends AbstractHibernateEntity{
     private String message;
     private SubscriptionDeliveryEntity subscriptionDeliveryEntity;
 
+    @Enumerated(EnumType.STRING)
     public Status getStatus() {
         return status;
     }

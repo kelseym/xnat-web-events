@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 
 import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.EVENT_DETECTED;
@@ -27,27 +28,35 @@ public class SubscriptionDeliveryEntityServiceImpl
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionDeliveryEntityService.class);
 
+    @Transactional
     @Override
     public Long create(SubscriptionEntity subscription, EventServiceEvent event, EventServiceListener listener, String actionUserLogin, String projectId,
                        String actionInputs) {
-        SubscriptionDeliveryEntity delivery = new SubscriptionDeliveryEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs);
-        if(delivery != null){
-            log.debug("Created new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
-            addStatus(delivery.getId(), new TimedEventStatus(EVENT_TRIGGERED, event.getEventTimestamp(), "Event triggered."));
-            addStatus(delivery.getId(), new TimedEventStatus(EVENT_DETECTED, listener.getDetectedTimestamp(), "Event detected."));
-            update(delivery);
-            return delivery.getId();
+        try {
+            SubscriptionDeliveryEntity delivery = newEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs);
+            if (delivery != null) {
+                log.debug("Created new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
+                addStatus(delivery.getId(), EVENT_TRIGGERED, event.getEventTimestamp(), "Event triggered.");
+                addStatus(delivery.getId(), EVENT_DETECTED, listener.getDetectedTimestamp(), "Event detected.");
+                create(delivery);
+                return delivery.getId();
+            }
+        } catch (Exception e) {
+            log.error("Could not create new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
+            log.error(e.getMessage());
         }
-        log.error("Could not create new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
         return null;
     }
 
     @Override
-    public void addStatus(Long deliveryId, TimedEventStatus status) {
+    @Transactional
+    public void addStatus(Long deliveryId, TimedEventStatus.Status status, Date statusTimestamp, String message) {
         SubscriptionDeliveryEntity subscriptionDeliveryEntity = retrieve(deliveryId);
         if(subscriptionDeliveryEntity != null) {
-            subscriptionDeliveryEntity.addTimedEventStatus(status);
-            log.debug("Updated SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, status.getStatus().toString());
+            TimedEventStatus timedEventStatus = new TimedEventStatus(status,statusTimestamp, message, subscriptionDeliveryEntity);
+            subscriptionDeliveryEntity.addTimedEventStatus(timedEventStatus);
+            update(subscriptionDeliveryEntity);
+            log.debug("Updated SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, timedEventStatus.getStatus().toString());
         } else{
             log.error("Could not find SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, status.toString());
         }

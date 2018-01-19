@@ -8,7 +8,6 @@ import org.nrg.xft.event.EventUtils;
 import org.nrg.xft.event.persist.PersistentWorkflowI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.Action;
 import org.nrg.xnat.eventservice.services.*;
@@ -226,7 +225,7 @@ public class ActionManagerImpl implements ActionManager {
         EventServiceActionProvider provider = getActionProviderByKey(subscription.getActionKey());
         if(provider!= null) {
             log.debug("Passing event to Action Provider: " + provider.getName());
-            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(ACTION_CALLED, new Date(), "Event passed to Action Provider: " + provider.getName()));
+            subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_CALLED, new Date(), "Event passed to Action Provider: " + provider.getName());
             provider.processEvent(esEvent, subscription, user);
             if(workflow !=null){
                 try {
@@ -239,7 +238,7 @@ public class ActionManagerImpl implements ActionManager {
             }
         } else {
             String errorMessage = "Could not find Action Provider for ActionKey: " + subscription.getActionKey();
-            subscriptionDeliveryEntityService.addStatus(deliveryId, new TimedEventStatus(FAILED, new Date(), "Could not find Action Provider for ActionKey: " + subscription.getActionKey()));
+            subscriptionDeliveryEntityService.addStatus(deliveryId, FAILED, new Date(), "Could not find Action Provider for ActionKey: " + subscription.getActionKey());
             workflow.setStatus(errorMessage);
             try {
                 WorkflowUtils.fail(workflow, workflow.buildEvent());

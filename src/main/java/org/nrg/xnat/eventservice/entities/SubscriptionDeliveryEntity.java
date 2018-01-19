@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.entities;
 
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
 
-import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
     private String actionInputs;
     private List<TimedEventStatus> timedEventStatuses = new ArrayList<>();
 
-    public SubscriptionDeliveryEntity(@Nonnull SubscriptionEntity subscription, @Nonnull UUID eventUUID, String actionUserLogin,
+    public SubscriptionDeliveryEntity(SubscriptionEntity subscription, UUID eventUUID, String actionUserLogin,
                                       String projectId, String actionInputs) {
         this.subscription = subscription;
         this.eventUUID = eventUUID;
@@ -80,6 +79,7 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.timedEventStatuses = timedEventStatuses;
     }
 
+    @Transient
     public void addTimedEventStatus(TimedEventStatus timedEventStatus){
         timedEventStatuses.add(timedEventStatus);
         timedEventStatus.setSubscriptionDeliveryEntity(this);

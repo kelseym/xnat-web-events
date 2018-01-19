@@ -35,7 +35,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     private EventServiceFilterEntity eventServiceFilterEntity;
     private Boolean actAsEventUser;
     private String subscriptionOwner;
-    private Integer counter;
 
     public SubscriptionEntity(String name, Boolean active, String listenerRegistrationKey, String eventType,
                               String customListenerId, String actionKey, String projectId,
@@ -181,7 +180,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         template.eventServiceFilterEntity = subscription.eventFilter() != null ? EventServiceFilterEntity.fromPojo(subscription.eventFilter()) : template.eventServiceFilterEntity;
         template.actAsEventUser = subscription.actAsEventUser() != null ? subscription.actAsEventUser() : template.actAsEventUser;
         template.subscriptionOwner = subscription.subscriptionOwner() != null ? subscription.subscriptionOwner() : template.subscriptionOwner;
-        template.counter = subscription.useCounter() != null ? subscription.useCounter() : template.counter;
         return template;
     }
 
@@ -200,7 +198,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                            .eventFilter(this.eventServiceFilterEntity != null ? this.eventServiceFilterEntity.toPojo() : null)
                            .actAsEventUser(this.actAsEventUser)
                            .subscriptionOwner(this.subscriptionOwner)
-                           .useCounter(this.counter)
                            .build();
     }
 
@@ -244,9 +241,4 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     public void setSubscriptionOwner(String subscriptionOwner) { this.subscriptionOwner = subscriptionOwner; }
 
-    public Integer getCounter() { return counter; }
-
-    public void setCounter(Integer counter) { this.counter = counter; }
-
-    public void incCounter() {this.counter++;}
 }
