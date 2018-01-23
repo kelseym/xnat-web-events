@@ -1,9 +1,10 @@
 package org.nrg.xnat.eventservice.entities;
 
+import com.google.common.collect.Lists;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
 
 import javax.persistence.*;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
     private String actionUserLogin;
     private String projectId;
     private String actionInputs;
-    private List<TimedEventStatus> timedEventStatuses = new ArrayList<>();
+    private List<TimedEventStatus> timedEventStatuses = Lists.newArrayList();
 
     public SubscriptionDeliveryEntity(SubscriptionEntity subscription, UUID eventUUID, String actionUserLogin,
                                       String projectId, String actionInputs) {
@@ -37,7 +38,7 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.eventUUID = eventUUID;
     }
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     public SubscriptionEntity getSubscription() {
         return subscription;
     }
@@ -79,9 +80,8 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.timedEventStatuses = timedEventStatuses;
     }
 
-    @Transient
-    public void addTimedEventStatus(TimedEventStatus timedEventStatus){
-        timedEventStatuses.add(timedEventStatus);
-        timedEventStatus.setSubscriptionDeliveryEntity(this);
+    public void addTimedEventStatus(TimedEventStatus.Status status, Date statusTimestamp, String message){
+        TimedEventStatus timedEventStatus = new TimedEventStatus(status,statusTimestamp, message, this);
+        this.timedEventStatuses.add(timedEventStatus);
     }
 }

@@ -33,12 +33,12 @@ public class SubscriptionDeliveryEntityServiceImpl
     public Long create(SubscriptionEntity subscription, EventServiceEvent event, EventServiceListener listener, String actionUserLogin, String projectId,
                        String actionInputs) {
         try {
-            SubscriptionDeliveryEntity delivery = newEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs);
+            SubscriptionDeliveryEntity delivery = new SubscriptionDeliveryEntity(subscription, event.getEventUUID(), actionUserLogin, projectId, actionInputs);
             if (delivery != null) {
                 log.debug("Created new SubscriptionDeliveryEntity for subscription: {} and eventUUID {}", subscription.getName(), event.getEventUUID());
+                super.create(delivery);
                 addStatus(delivery.getId(), EVENT_TRIGGERED, event.getEventTimestamp(), "Event triggered.");
                 addStatus(delivery.getId(), EVENT_DETECTED, listener.getDetectedTimestamp(), "Event detected.");
-                create(delivery);
                 return delivery.getId();
             }
         } catch (Exception e) {
@@ -49,14 +49,12 @@ public class SubscriptionDeliveryEntityServiceImpl
     }
 
     @Override
-    @Transactional
     public void addStatus(Long deliveryId, TimedEventStatus.Status status, Date statusTimestamp, String message) {
         SubscriptionDeliveryEntity subscriptionDeliveryEntity = retrieve(deliveryId);
         if(subscriptionDeliveryEntity != null) {
-            TimedEventStatus timedEventStatus = new TimedEventStatus(status,statusTimestamp, message, subscriptionDeliveryEntity);
-            subscriptionDeliveryEntity.addTimedEventStatus(timedEventStatus);
+            subscriptionDeliveryEntity.addTimedEventStatus(status, statusTimestamp, message);
             update(subscriptionDeliveryEntity);
-            log.debug("Updated SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, timedEventStatus.getStatus().toString());
+            log.debug("Updated SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, status.toString());
         } else{
             log.error("Could not find SubscriptionDeliveryEntity: {} to update with status: {}", deliveryId, status.toString());
         }

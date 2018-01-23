@@ -333,7 +333,7 @@ public class EventSubscriptionEntityServiceImpl
             for (Subscription subscription : getSubscriptionsByKey(listener.getInstanceId().toString())) {
                 log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
                 // Create subscription delivery entry
-                Long deliveryId = subscriptionDeliveryEntityService.create(fromPojo(subscription),
+                Long deliveryId = subscriptionDeliveryEntityService.create(fromPojoWithTemplate(subscription),
                         esEvent,
                         listener,
                         subscription.actAsEventUser() ? esEvent.getUser() : subscription.subscriptionOwner(),

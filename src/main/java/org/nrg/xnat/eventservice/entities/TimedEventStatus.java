@@ -1,13 +1,13 @@
 package org.nrg.xnat.eventservice.entities;
 
 import com.google.common.base.Objects;
-import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity
-public class TimedEventStatus extends AbstractHibernateEntity{
+public class TimedEventStatus implements Serializable {
 
     public TimedEventStatus(Status status, Date statusTimestamp, String message, SubscriptionDeliveryEntity subscriptionDeliveryEntity) {
         this.status = status;
@@ -16,10 +16,21 @@ public class TimedEventStatus extends AbstractHibernateEntity{
         this.subscriptionDeliveryEntity = subscriptionDeliveryEntity;
     }
 
+    private long id;
     private Status status;
     private Date statusTimestamp;
     private String message;
     private SubscriptionDeliveryEntity subscriptionDeliveryEntity;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public long getId() {
+        return id;
+    }
+
+    public void setId(final long id) {
+        this.id = id;
+    }
 
     @Enumerated(EnumType.STRING)
     public Status getStatus() {
@@ -47,14 +58,13 @@ public class TimedEventStatus extends AbstractHibernateEntity{
         this.message = message;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscription_delivery_entity_id")
+    @ManyToOne
+    //@JoinColumn(name = "subscription_delivery_entity_id")
     public SubscriptionDeliveryEntity getSubscriptionDeliveryEntity() {
         return subscriptionDeliveryEntity;
     }
 
-    public void setSubscriptionDeliveryEntity(
-            SubscriptionDeliveryEntity subscriptionDeliveryEntity) {
+    public void setSubscriptionDeliveryEntity(SubscriptionDeliveryEntity subscriptionDeliveryEntity) {
         this.subscriptionDeliveryEntity = subscriptionDeliveryEntity;
     }
 
