@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 
@@ -11,7 +12,7 @@ import java.util.List;
 public abstract class SubscriptionDelivery {
 
     @JsonProperty("id") public abstract Long id();
-    @JsonProperty("event") public abstract SimpleEvent event();
+    @Nullable @JsonProperty("event") public abstract SimpleEvent event();
     @JsonProperty("subscription") public abstract Subscription subscription();
     @JsonProperty("user") public abstract String actionUser();
     @JsonProperty("project") public abstract String projectId();
@@ -34,7 +35,7 @@ public abstract class SubscriptionDelivery {
         return new AutoValue_SubscriptionDelivery.Builder();
     }
 
-    public abstract Subscription.Builder toBuilder();
+    public abstract SubscriptionDelivery.Builder toBuilder();
 
     @AutoValue.Builder
     public abstract static class Builder {

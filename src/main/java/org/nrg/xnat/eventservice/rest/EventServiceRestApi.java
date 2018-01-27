@@ -13,7 +13,6 @@ import org.nrg.xdat.XDAT;
 import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xft.security.UserI;
-import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.exceptions.UnauthorizedException;
 import org.nrg.xnat.eventservice.model.*;
@@ -156,7 +155,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
 
     @XapiRequestMapping(value = "/delivered", method = GET)
     @ResponseBody
-    public List<SubscriptionDeliveryEntity> getDeliveredSubscriptions(
+    public List<SubscriptionDelivery> getDeliveredSubscriptions(
             final @RequestParam(value = "projectid", required = false) String projectId,
             final @RequestParam(value = "subscriptionid", required = false) Long subscriptionId)
             throws Exception {

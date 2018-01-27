@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -337,7 +336,7 @@ public class EventSubscriptionEntityServiceImpl
                         esEvent,
                         listener,
                         subscription.actAsEventUser() ? esEvent.getUser() : subscription.subscriptionOwner(),
-                        subscription.projects() == null ? "" : Joiner.on('|').join(subscription.projects()),
+                        subscription.projectId() == null ? "" : subscription.projectId(),
                         subscription.attributes() == null ? "" : subscription.attributes().toString());
                 try {
                     subscriptionDeliveryEntityService.addStatus(deliveryId, SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started.");

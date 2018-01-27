@@ -8,7 +8,6 @@ import org.nrg.framework.exceptions.NrgServiceRuntimeException;
 import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xft.security.UserI;
-import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
@@ -17,6 +16,7 @@ import org.nrg.xnat.eventservice.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 @Service
 public class EventServiceImpl implements EventService {
@@ -46,7 +47,7 @@ public class EventServiceImpl implements EventService {
                             final ContextService contextService,
                             final EventServiceComponentManager componentManager,
                             final ActionManager actionManager,
-                            final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
+                            @Lazy final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
         this.subscriptionService = subscriptionService;
         this.eventBus = eventBus;
         this.contextService = contextService;
@@ -197,6 +198,16 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public SimpleEvent getEvent(UUID uuid) throws Exception {
+        for(EventServiceEvent e :componentManager.getInstalledEvents()){
+            if(e.getEventUUID().equals(uuid)){
+                return toPojo(e);
+            }
+        }
+        return null;
+    }
+
+    @Override
     @Deprecated
     public List<Listener> getInstalledListeners() {
 
@@ -272,7 +283,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<SubscriptionDeliveryEntity> getSubscriptionDeliveries(String projectId, Long subscriptionId) {
+    public List<SubscriptionDelivery> getSubscriptionDeliveries(String projectId, Long subscriptionId) {
         return subscriptionDeliveryEntityService.get(projectId, subscriptionId);
     }
 

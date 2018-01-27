@@ -1,5 +1,6 @@
 package org.nrg.xnat.eventservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
 import javax.persistence.*;
@@ -17,9 +18,9 @@ public class TimedEventStatus implements Serializable {
     }
 
     private long id;
-    private Status status;
-    private Date statusTimestamp;
-    private String message;
+    @JsonProperty("status") private Status status;
+    @JsonProperty("timestamp")  private Date statusTimestamp;
+    @JsonProperty("message") private String message;
     private SubscriptionDeliveryEntity subscriptionDeliveryEntity;
 
     @Id

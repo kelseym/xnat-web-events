@@ -8,12 +8,17 @@ import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.SubscriptionDelivery;
+import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.SubscriptionDeliveryEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,9 +32,16 @@ public class SubscriptionDeliveryEntityServiceImpl
         implements SubscriptionDeliveryEntityService {
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionDeliveryEntityService.class);
+    private EventService eventService;
+
+    @Autowired
+    public SubscriptionDeliveryEntityServiceImpl(@Lazy EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @Transactional
     @Override
+
     public Long create(SubscriptionEntity subscription, EventServiceEvent event, EventServiceListener listener, String actionUserLogin, String projectId,
                        String actionInputs) {
         try {
@@ -61,14 +73,41 @@ public class SubscriptionDeliveryEntityServiceImpl
     }
 
     @Override
-    public List<SubscriptionDeliveryEntity> get(String projectId, Long subscriptionId) {
+    public List<SubscriptionDelivery> get(String projectId, Long subscriptionId) {
         if(subscriptionId == null){
-            if(Strings.isNullOrEmpty(projectId)){ return getAll(); }
-            else { return getDao().findByProjectId(projectId); }
+            if(Strings.isNullOrEmpty(projectId)){ return toPojo(getAll()); }
+            else { return toPojo(getDao().findByProjectId(projectId)); }
         } else {
-            if(Strings.isNullOrEmpty(projectId)){ return getDao().findBySubscriptionId(subscriptionId); }
-            else { return getDao().findByProjectIdAndSubscriptionId(projectId, subscriptionId); }
-            }
-
+            if(Strings.isNullOrEmpty(projectId)){ return toPojo(getDao().findBySubscriptionId(subscriptionId)); }
+            else { return toPojo(getDao().findByProjectIdAndSubscriptionId(projectId, subscriptionId)); }
+        }
     }
+
+    private List<SubscriptionDelivery> toPojo(List<SubscriptionDeliveryEntity> entities){
+        List<SubscriptionDelivery> deliveries = new ArrayList<>();
+        for(SubscriptionDeliveryEntity sde:entities){
+            deliveries.add(toPojo(sde));
+        }
+        return deliveries;
+    }
+
+    private SubscriptionDelivery toPojo(SubscriptionDeliveryEntity entity) {
+        SubscriptionDelivery subscriptionDelivery = SubscriptionDelivery.builder()
+                .id(entity.getId())
+                .actionUser(entity.getActionUserLogin())
+                .projectId(entity.getProjectId())
+                .actionInputs(entity.getActionInputs())
+                .timedEventStatuses(entity.getTimedEventStatuses())
+                .subscription(entity.getSubscription().toPojo())
+                .build();
+        try{
+            subscriptionDelivery = subscriptionDelivery.toBuilder()
+                    .event(eventService.getEvent(entity.getEventUUID()))
+                    .build();
+        } catch (Exception e) {
+            log.error("Exception while attempting to load Event for delivery display. {}" + e.getMessage());
+        }
+        return subscriptionDelivery;
+    }
+
 }

@@ -7,6 +7,7 @@ import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.nrg.xnat.eventservice.model.SubscriptionDelivery;
 
 import java.util.Date;
 import java.util.List;
@@ -17,5 +18,5 @@ public interface SubscriptionDeliveryEntityService extends BaseHibernateService<
                 String actionUserLogin, String projectId, String actionInputs);
     void addStatus(Long deliveryId, TimedEventStatus.Status status, Date statusTimestamp, String message);
 
-    List<SubscriptionDeliveryEntity> get(String projectId, Long subscriptionId);
+    List<SubscriptionDelivery> get(String projectId, Long subscriptionId);
 }

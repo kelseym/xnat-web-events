@@ -68,7 +68,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                 ", eventServiceFilterEntity=" + eventServiceFilterEntity +
                 ", actAsEventUser=" + actAsEventUser +
                 ", subscriptionOwner='" + subscriptionOwner + '\'' +
-                ", counter=" + counter +
                 '}';
     }
 
@@ -88,13 +87,12 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                 Objects.equal(attributes, that.attributes) &&
                 Objects.equal(eventServiceFilterEntity, that.eventServiceFilterEntity) &&
                 Objects.equal(actAsEventUser, that.actAsEventUser) &&
-                Objects.equal(subscriptionOwner, that.subscriptionOwner) &&
-                Objects.equal(counter, that.counter);
+                Objects.equal(subscriptionOwner, that.subscriptionOwner);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), name, active, listenerRegistrationKey, eventType, customListenerId, actionKey, projectId, attributes, eventServiceFilterEntity, actAsEventUser, subscriptionOwner, counter);
+        return Objects.hashCode(super.hashCode(), name, active, listenerRegistrationKey, eventType, customListenerId, actionKey, projectId, attributes, eventServiceFilterEntity, actAsEventUser, subscriptionOwner);
     }
 
     @Transactional
