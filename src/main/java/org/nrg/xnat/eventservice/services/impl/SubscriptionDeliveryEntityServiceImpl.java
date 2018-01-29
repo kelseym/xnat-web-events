@@ -5,7 +5,7 @@ import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.nrg.xnat.eventservice.daos.SubscriptionDeliveryEntityDao;
 import org.nrg.xnat.eventservice.entities.SubscriptionDeliveryEntity;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.entities.TimedEventStatus;
+import org.nrg.xnat.eventservice.entities.TimedEventStatusEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.SubscriptionDelivery;
@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.EVENT_DETECTED;
-import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.EVENT_TRIGGERED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.EVENT_DETECTED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.EVENT_TRIGGERED;
 
 @Service
 @Transactional
@@ -61,7 +61,7 @@ public class SubscriptionDeliveryEntityServiceImpl
     }
 
     @Override
-    public void addStatus(Long deliveryId, TimedEventStatus.Status status, Date statusTimestamp, String message) {
+    public void addStatus(Long deliveryId, TimedEventStatusEntity.Status status, Date statusTimestamp, String message) {
         SubscriptionDeliveryEntity subscriptionDeliveryEntity = retrieve(deliveryId);
         if(subscriptionDeliveryEntity != null) {
             subscriptionDeliveryEntity.addTimedEventStatus(status, statusTimestamp, message);
@@ -97,7 +97,7 @@ public class SubscriptionDeliveryEntityServiceImpl
                 .actionUser(entity.getActionUserLogin())
                 .projectId(entity.getProjectId())
                 .actionInputs(entity.getActionInputs())
-                .timedEventStatuses(entity.getTimedEventStatuses())
+                .timedEventStatuses(TimedEventStatusEntity.toPojo(entity.getTimedEventStatuses()))
                 .subscription(entity.getSubscription().toPojo())
                 .build();
         try{
@@ -109,5 +109,6 @@ public class SubscriptionDeliveryEntityServiceImpl
         }
         return subscriptionDelivery;
     }
+
 
 }

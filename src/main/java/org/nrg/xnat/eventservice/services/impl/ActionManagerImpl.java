@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.ACTION_CALLED;
-import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.FAILED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_CALLED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.FAILED;
 
 @Service
 public class ActionManagerImpl implements ActionManager {

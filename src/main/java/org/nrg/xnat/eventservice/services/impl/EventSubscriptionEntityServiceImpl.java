@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.nrg.xnat.eventservice.entities.TimedEventStatus.Status.*;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.*;
 import static reactor.bus.selector.Selectors.R;
 
 @Service

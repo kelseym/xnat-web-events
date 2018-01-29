@@ -19,7 +19,7 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
     private String actionUserLogin;
     private String projectId;
     private String actionInputs;
-    private List<TimedEventStatus> timedEventStatuses = Lists.newArrayList();
+    private List<TimedEventStatusEntity> timedEventStatuses = Lists.newArrayList();
 
     public SubscriptionDeliveryEntity(SubscriptionEntity subscription, UUID eventUUID, String actionUserLogin,
                                       String projectId, String actionInputs) {
@@ -71,17 +71,17 @@ public class SubscriptionDeliveryEntity extends AbstractHibernateEntity {
         this.actionInputs = actionInputs;
     }
 
-    @OneToMany(mappedBy = "subscriptionDeliveryEntity",cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<TimedEventStatus> getTimedEventStatuses() {
+    @OneToMany(mappedBy = "subscriptionDeliveryEntity", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    public List<TimedEventStatusEntity> getTimedEventStatuses() {
         return timedEventStatuses;
     }
 
-    public void setTimedEventStatuses(List<TimedEventStatus> timedEventStatuses){
+    public void setTimedEventStatuses(List<TimedEventStatusEntity> timedEventStatuses){
         this.timedEventStatuses = timedEventStatuses;
     }
 
-    public void addTimedEventStatus(TimedEventStatus.Status status, Date statusTimestamp, String message){
-        TimedEventStatus timedEventStatus = new TimedEventStatus(status,statusTimestamp, message, this);
+    public void addTimedEventStatus(TimedEventStatusEntity.Status status, Date statusTimestamp, String message){
+        TimedEventStatusEntity timedEventStatus = new TimedEventStatusEntity(status,statusTimestamp, message, this);
         this.timedEventStatuses.add(timedEventStatus);
     }
 }

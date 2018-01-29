@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import org.nrg.xnat.eventservice.entities.TimedEventStatus;
 
 import javax.annotation.Nullable;
 import java.util.List;
