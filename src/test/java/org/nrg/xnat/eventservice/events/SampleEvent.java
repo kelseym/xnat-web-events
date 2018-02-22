@@ -67,4 +67,14 @@ public class SampleEvent implements EventServiceEvent {
     public UUID getEventUUID() {
         return eventUUID;
     }
+
+    @Override
+    public String getTriggeringProjectId() {
+        return null;
+    }
+
+    @Override
+    public String setTriggeringProjectId(String projectId) {
+        return null;
+    }
 }

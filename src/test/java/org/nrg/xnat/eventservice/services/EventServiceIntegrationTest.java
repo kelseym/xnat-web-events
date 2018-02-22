@@ -110,7 +110,7 @@ public class EventServiceIntegrationTest {
         project1CreatedSubscription = SubscriptionCreator.builder()
                                                          .name("TestSubscription")
                                                          .active(true)
-                                                         .projectId("PROJECTID-1")
+                                                         .projectIds(Arrays.asList("PROJECTID-1"))
                                                          .eventId("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
                                                          .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                          .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
@@ -121,7 +121,7 @@ public class EventServiceIntegrationTest {
         project2CreatedSubscription = SubscriptionCreator.builder()
                                                         .name("TestSubscription2")
                                                         .active(true)
-                                                        .projectId("PROJECTID-2")
+                                                        .projectIds(Arrays.asList("PROJECTID-2"))
                                                         .eventId("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
                                                         .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                         .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
@@ -288,7 +288,8 @@ public class EventServiceIntegrationTest {
         Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
         assertThat("Created subscription should not be null", subscription, notNullValue());
 
-        eventService.validateSubscription(subscription);
+        subscription = eventService.validateSubscription(subscription);
+        assertThat("Subscription failed validation", subscription, is(notNullValue()));
 
         Subscription savedSubscription = eventService.createSubscription(subscription);
         assertThat("eventService.createSubscription() should not return null", savedSubscription, notNullValue());
@@ -327,7 +328,7 @@ public class EventServiceIntegrationTest {
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("")
                                                                      .active(true)
-                                                                     .projectId("PROJECTID-1")
+                                                                     .projectIds(Arrays.asList("PROJECTID-1"))
                                                                      .eventId("org.nrg.xnat.eventservice.events.TestCombinedEvent")
                                                                      .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
                                                                      .eventFilter(eventServiceFilterWithJson)
@@ -339,7 +340,7 @@ public class EventServiceIntegrationTest {
         assertThat("Json Filtered Subscription creation failed :(", subscription, notNullValue());
 
         List<String> names = new ArrayList<>();
-        for(int i=1;i<1000;i++){
+        for(int i=1;i<100;i++){
             Subscription createdSubsciption = eventService.createSubscription(subscription);
             assertThat("eventService.createSubscription() returned a null value", createdSubsciption, not(nullValue()));
             assertThat("Expected subscription to have auto-generated name", createdSubsciption.name(), notNullValue());
@@ -525,7 +526,7 @@ public class EventServiceIntegrationTest {
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("FilterTestSubscription")
                                                                      .active(true)
-                                                                     .projectId("PROJECTID-1")
+                                                                     .projectIds(Arrays.asList("PROJECTID-1"))
                                                                      .eventId("org.nrg.xnat.eventservice.events.TestCombinedEvent")
                                                                      .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
                                                                      .eventFilter(eventServiceFilterWithJson)
@@ -666,7 +667,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
+                                                                     .projectIds(Arrays.asList(projectId1))
                                                                      .active(true)
                                                                      .eventId(new SubjectCreatedEvent().getId())
                                                                      .actionKey(testActionKey)
@@ -704,7 +705,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
+                                                                     .projectIds(Arrays.asList(projectId1))
                                                                      .active(true)
                                                                      .eventId(new SubjectCreatedEvent().getId())
                                                                      .actionKey(testActionKey)
@@ -744,7 +745,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId2)
+                                                                     .projectIds(Arrays.asList(projectId2))
                                                                      .active(true)
                                                                      .eventId(new SubjectCreatedEvent().getId())
                                                                      .actionKey(testActionKey)
@@ -780,7 +781,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
+                                                                     .projectIds(Arrays.asList(projectId1))
                                                                      .active(true)
                                                                      .eventId(new SessionArchiveEvent().getId())
                                                                      .actionKey(testActionKey)
@@ -821,7 +822,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
+                                                                     .projectIds(Arrays.asList(projectId1))
                                                                      .active(true)
                                                                      .eventId(new ScanArchiveEvent().getId())
                                                                      .actionKey(testActionKey)
@@ -1184,7 +1185,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
+                                                                     .projectIds(Arrays.asList(projectId))
                                                                      .active(true)
                                                                      .eventFilter(new EventFilter() {
                                                                          @Nullable
@@ -1219,7 +1220,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
+                                                                     .projectIds(Arrays.asList(projectId))
                                                                      .active(true)
                                                                      .eventFilter(new EventFilter() {
                                                                          @Nullable
@@ -1255,7 +1256,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
+                                                                     .projectIds(Arrays.asList(projectId))
                                                                      .active(true)
                                                                      .eventFilter(filter)
                                                                      .eventId(new ProjectCreatedEvent().getId())
@@ -1272,7 +1273,7 @@ public class EventServiceIntegrationTest {
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
+                                                                     .projectIds(Arrays.asList(projectId))
                                                                      .active(true)
                                                                      .eventFilter(new EventFilter() {
                                                                          @Nullable

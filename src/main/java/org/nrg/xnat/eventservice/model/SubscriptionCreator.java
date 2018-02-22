@@ -20,7 +20,7 @@ import java.util.Map;
 public abstract class SubscriptionCreator {
 
     @JsonProperty("name") public abstract String name();
-    @Nullable @JsonProperty("project-id") public abstract String projectId();
+    @Nullable @JsonProperty("project-ids") public abstract List<String> projectIds();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @JsonProperty("event-id") public abstract String eventId();
     @Nullable @JsonIgnore public abstract String customListenerId();
@@ -37,7 +37,7 @@ public abstract class SubscriptionCreator {
 
     @JsonCreator
     public static SubscriptionCreator create(@Nonnull @JsonProperty("name") final String name,
-                                             @Nullable @JsonProperty("project-id")  String projectId,
+                                             @Nullable @JsonProperty("project-ids")  List<String> projectIds,
                                              @JsonProperty("active") final Boolean active,
                                              @Nonnull @JsonProperty("event-id") final String eventId,
                                              @Nullable @JsonProperty("custom-listener-id") final String customListenerId,
@@ -45,13 +45,10 @@ public abstract class SubscriptionCreator {
                                              @JsonProperty("attributes") final Map<String, String> attributes,
                                              @JsonProperty("event-filter") final EventFilter eventFilter,
                                              @JsonProperty("act-as-event-user") final Boolean actAsEventUser) {
-        if(projectId != null && projectId.contentEquals("Any Project")){
-            projectId = "";
-        }
 
         return builder()
                 .name(name)
-                .projectId(projectId)
+                .projectIds(projectIds)
                 .active(active)
                 .eventId(eventId)
                 .customListenerId(customListenerId)
@@ -68,7 +65,7 @@ public abstract class SubscriptionCreator {
 
         public abstract Builder name(String name);
 
-        public abstract Builder projectId(String projectId);
+        public abstract Builder projectIds(List<String> projectIds);
 
         public abstract Builder attributes(Map<String, String> attributes);
 

@@ -169,7 +169,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<SimpleEvent> getEvents() throws Exception {
+    public List<SimpleEvent> getEvents() {
         List<SimpleEvent> events = new ArrayList();
         for(EventServiceEvent e : componentManager.getInstalledEvents()){
             events.add(toPojo(e));
@@ -224,11 +224,18 @@ public class EventServiceImpl implements EventService {
     @Override
     public void triggerEvent(EventServiceEvent event) {
         // TODO: Extract project id from event payload
-        triggerEvent(event, null);
+        if(!Strings.isNullOrEmpty(event.getTriggeringProjectId())) {
+            triggerEvent(event, event.getTriggeringProjectId());
+        } else {
+            triggerEvent(event, null);
+        }
     }
 
     @Override
     public void triggerEvent(EventServiceEvent event, String projectId) {
+        if(Strings.isNullOrEmpty(event.getTriggeringProjectId()) && !Strings.isNullOrEmpty(projectId)){
+            event.setTriggeringProjectId(projectId);
+        }
         // Manually build event label
         EventFilter filter = EventFilter.builder().build();
         String regexKey = filter.toRegexKey(event.getClass().getName(), projectId);
@@ -253,7 +260,7 @@ public class EventServiceImpl implements EventService {
                             esEvent,
                             listener,
                             subscription.actAsEventUser() ? esEvent.getUser() : subscription.subscriptionOwner(),
-                            subscription.projectId() == null ? "" : subscription.projectId(),
+                            esEvent.getTriggeringProjectId() == null ? "" : esEvent.getTriggeringProjectId(),
                             subscription.attributes() == null ? "" : subscription.attributes().toString());
                     try {
                         subscriptionDeliveryEntityService.addStatus(deliveryId, SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started.");

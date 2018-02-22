@@ -29,6 +29,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     Date eventCreatedTimestamp = new Date();
     UUID listenerId = UUID.randomUUID();
     Date eventDetectedTimestamp = null;
+    String triggeringProjectId = null;
 
     private static final Logger log = LoggerFactory.getLogger(CombinedEventServiceEvent.class);
 
@@ -80,6 +81,12 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     public UUID getEventUUID() {
         return eventUUID;
     }
+
+    @Override
+    public String getTriggeringProjectId() { return triggeringProjectId; }
+
+    @Override
+    public String setTriggeringProjectId(String triggeringProjectId) { return this.triggeringProjectId = triggeringProjectId; }
 
     @Override
     public Date getDetectedTimestamp() {

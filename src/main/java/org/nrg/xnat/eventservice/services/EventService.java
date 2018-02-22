@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EventService {
-    List<SimpleEvent> getEvents() throws Exception;
+    List<SimpleEvent> getEvents();
     SimpleEvent getEvent(UUID uuid) throws Exception;
 
     @Deprecated

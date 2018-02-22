@@ -17,4 +17,6 @@ public interface EventServiceEvent<ObjectT> extends EventI {
     String getUser();
     Date getEventTimestamp();
     UUID getEventUUID();
+    String getTriggeringProjectId();
+    String setTriggeringProjectId(String projectId);
 }

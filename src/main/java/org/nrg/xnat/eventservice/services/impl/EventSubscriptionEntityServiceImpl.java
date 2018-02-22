@@ -142,9 +142,19 @@ public class EventSubscriptionEntityServiceImpl
                 log.error("Could not load Action Provider for key:" + subscription.actionKey());
                 throw new SubscriptionValidationException("Could not load Action Provider for key:" + subscription.actionKey());
             }
-            if (!actionManager.validateAction(subscription.actionKey(), subscription.projectId(), null, actionUser)) {
-                log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + "for user:" + actionUser.getLogin());
-                throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
+            // Validate for all included projectIds
+            if(subscription.projectIds() == null || subscription.projectIds().isEmpty()){
+                if (!actionManager.validateAction(subscription.actionKey(), "", null, actionUser)) {
+                    log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + "for user:" + actionUser.getLogin());
+                    throw new SubscriptionValidationException("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + " at Site level.") ;
+                }
+            } else {
+                for (String projectId : subscription.projectIds()) {
+                    if (!actionManager.validateAction(subscription.actionKey(), projectId, null, actionUser)) {
+                        log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + "for user:" + actionUser.getLogin() + " for Project: " + projectId);
+                        throw new SubscriptionValidationException("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + " for Project: " + projectId);
+                    }
+                }
             }
         } catch (Exception e){
             log.error("Could not validate Action: {} \n {}", subscription.actionKey(), e.getMessage());
@@ -171,9 +181,9 @@ public class EventSubscriptionEntityServiceImpl
                 uniqueListener.setEventService(eventService);
                 String eventFilterRegexMatcher;
                 if(subscription.eventFilter() == null){
-                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), subscription.projectId());
+                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), subscription.projectIds());
                 } else {
-                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), subscription.projectId());
+                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), subscription.projectIds());
                 }
                 Selector selector = R(eventFilterRegexMatcher);
                 log.debug("Building Reactor RegEx Selector on matcher: " + eventFilterRegexMatcher);
@@ -339,7 +349,14 @@ public class EventSubscriptionEntityServiceImpl
             String actionName = actionManager.getActionByKey(subscription.actionKey(), actionUser) != null ?
                     actionManager.getActionByKey(subscription.actionKey(), actionUser).displayName() : "Action";
             String eventName = componentManager.getEvent(subscription.eventId()).getDisplayName();
-            String forProject = Strings.isNullOrEmpty(subscription.projectId()) ? "Site" : subscription.projectId();
+            String forProject;
+            if(subscription.projectIds() == null || subscription.projectIds().isEmpty() || Strings.isNullOrEmpty(subscription.projectIds().get(0))){
+                forProject = "Site";
+            } else if(subscription.projectIds().size() == 1){
+                forProject = subscription.projectIds().get(0);
+            } else {
+                forProject = "Multiple";
+            }
             uniqueName += Strings.isNullOrEmpty(actionName) ? "Action" : actionName;
             uniqueName += " on ";
             uniqueName += Strings.isNullOrEmpty(eventName) ? "Event" : eventName;
