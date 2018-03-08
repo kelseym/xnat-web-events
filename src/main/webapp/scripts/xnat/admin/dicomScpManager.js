@@ -132,6 +132,7 @@ var XNAT = getObject(XNAT || {});
         var doWhat = !item ? 'New' : 'Edit';
         var oldPort = item && item.port ? item.port : null;
         var oldTitle = item && item.aeTitle ? item.aeTitle : null;
+        var oldCustProc = item && item.customProcessing ? true : false;
         var modalDimensions = (Object.keys(dicomScpManager.identifiers).length > 1) ? { height: '320', width: '600'} : { height: '250', width: '350' };
         isNew = firstDefined(isNew, doWhat === 'New');
         console.log(isNew);
@@ -171,6 +172,7 @@ var XNAT = getObject(XNAT || {});
                 var $form = obj.$modal.find('#dicom-scp-editor-panel');
                 var $title = $form.find('#scp-title');
                 var $port = $form.find('#scp-port');
+                var $customProcessing = $form.find('#scp-customProcessing');
                 console.log(item.id);
                 $form.submitJSON({
                     method: isNew ? 'POST' : 'PUT',
@@ -196,6 +198,9 @@ var XNAT = getObject(XNAT || {});
 
                         var newTitle = $title.val();
                         console.log(newTitle);
+
+                        var newCustomProcessing = $customProcessing.val();
+                        console.log(newCustomProcessing);
 
                         var newAeTitleAndPort = formatAeTitleAndPort(newTitle, newPort);
 

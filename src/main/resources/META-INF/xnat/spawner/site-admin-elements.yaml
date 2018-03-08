@@ -1289,6 +1289,12 @@ dicomScpReceivers:
                             label: Port
 #                            description: Port for DICOM Receiver
                             validation: integer
+                        customProcessing:
+                            kind: panel.input.switchbox
+                            id: scp-customProcessing
+                            name: customProcessing
+                            label: Custom Processing
+#                            description: Custom Processing for DICOM Receiver
                         identifier:
                             kind: panel.select.single
                             id: scp-identifier
