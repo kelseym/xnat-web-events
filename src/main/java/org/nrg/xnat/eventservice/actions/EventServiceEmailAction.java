@@ -6,6 +6,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.nrg.mail.api.MailMessage;
 import org.nrg.mail.services.MailService;
+import org.nrg.xdat.security.helpers.Users;
+import org.nrg.xft.search.ItemSearch;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
@@ -18,12 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_COMPLETE;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_ERROR;
 import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_FAILED;
 
 @Service
@@ -65,7 +65,8 @@ public class EventServiceEmailAction extends SingleActionProvider {
                 ActionAttributeConfiguration.builder()
                                             .description("Email originator.")
                                             .type("string")
-                                            .defaultValue("")
+                                            .defaultValue(getActionOwnerEmail())
+                                            .userSettable(false)
                                             .required(true)
                                             .build());
 
@@ -75,6 +76,7 @@ public class EventServiceEmailAction extends SingleActionProvider {
                                             .type("string")
                                             .defaultValue("")
                                             .required(true)
+
                                             .build());
 
         attributeConfigurationMap.put(CC_KEY,
@@ -176,8 +178,38 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
     }
 
-    void failWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
+    private void failWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
         subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_FAILED, new Date(), "Email action failed: " + message);
+    }
+
+    private void errorWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
+        subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_ERROR, new Date(), "Email action error: " + message);
+    }
+
+    private String getActionOwnerEmail(){
+        return null;
+    }
+
+    private List<String> matchAllowedRecipients(List<String>, UserI user){
+        List<String> allowedEmails = new ArrayList<>();
+
+        return allowedEmails;
+    }
+
+    private List<String> getAllowedRecipients(String projectId, UserI user) throws Exception {
+        if(Strings.isNullOrEmpty(projectId)) {
+
+        }
+
+
+        return null;
+    }
+
+    private Boolean isEmailRecipientAllowed(String email, UserI user){
+        return null;
+    }
+    private Boolean areEmailRecipientsAllowed(List<String> emails, UserI user){
+        return null;
     }
 
 }
