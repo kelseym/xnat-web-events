@@ -178,7 +178,16 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
     }
 
-    private void failWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
+
+    // Get allowed emails and context
+    Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> getEmailList(UserI user, String projectId){
+        Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> emails = new HashMap<>();
+
+
+        return emails;
+    }
+
+    void failWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
         subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_FAILED, new Date(), "Email action failed: " + message);
     }
 
