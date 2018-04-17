@@ -6,8 +6,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.nrg.mail.api.MailMessage;
 import org.nrg.mail.services.MailService;
-import org.nrg.xdat.security.helpers.Users;
-import org.nrg.xft.search.ItemSearch;
+import org.nrg.xapi.model.users.User;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
@@ -17,14 +16,16 @@ import org.nrg.xnat.eventservice.services.SubscriptionDeliveryEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
-import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_COMPLETE;
-import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_ERROR;
-import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.ACTION_FAILED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.*;
 
 @Service
 public class EventServiceEmailAction extends SingleActionProvider {
@@ -44,11 +45,13 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
     private MailService mailService;
     private SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Autowired
-    public EventServiceEmailAction(MailService mailService, SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
+    public EventServiceEmailAction(MailService mailService, SubscriptionDeliveryEntityService subscriptionDeliveryEntityService, final NamedParameterJdbcTemplate jdbcTemplate) {
         this.mailService = mailService;
         this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
 
@@ -180,9 +183,20 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
 
     // Get allowed emails and context
-    Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> getEmailList(UserI user, String projectId){
+    Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> getEmailList(String projectId){
         Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> emails = new HashMap<>();
-
+        List<User> allowedRecipients = getAllowedRecipients(projectId);
+        for(User user : allowedRecipients){
+            if(user.isEnabled() && user.isVerified()) {
+                String email = user.getEmail();
+                List<ActionAttributeConfiguration.AttributeContextValue> contextList = new ArrayList<>();
+                String fullName = user.getFullName();
+                contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("Name").type("string").value(fullName).build());
+                String username = user.getUsername();
+                contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("User").type("string").value(username).build());
+                emails.put(email, contextList);
+            }
+        }
 
         return emails;
     }
@@ -199,19 +213,20 @@ public class EventServiceEmailAction extends SingleActionProvider {
         return null;
     }
 
-    private List<String> matchAllowedRecipients(List<String>, UserI user){
+    private List<String> matchAllowedRecipients(List<String> emails, UserI user){
         List<String> allowedEmails = new ArrayList<>();
 
         return allowedEmails;
     }
 
-    private List<String> getAllowedRecipients(String projectId, UserI user) throws Exception {
-        if(Strings.isNullOrEmpty(projectId)) {
 
-        }
+    private List<User> getAllowedRecipients(String projectId) {
+        String QUERY = "select * from xdat_user where xdat_user_id IN\n" +
+                "            (select groups_groupid_xdat_user_xdat_user_id from xdat_user_groupid where groupid IN\n" +
+                "                (select id from xdat_usergroup where xdat_usergroup_id IN\n" +
+                "                    (select xdat_usergroup_id from xdat_usergroup where tag = '" + projectId+ "')))";
 
-
-        return null;
+        return jdbcTemplate.query(QUERY, USER_ROW_MAPPER);
     }
 
     private Boolean isEmailRecipientAllowed(String email, UserI user){
@@ -220,5 +235,19 @@ public class EventServiceEmailAction extends SingleActionProvider {
     private Boolean areEmailRecipientsAllowed(List<String> emails, UserI user){
         return null;
     }
+
+    public static final RowMapper<User> USER_ROW_MAPPER = new RowMapper<User>() {
+        @Override
+        public User mapRow(final ResultSet resultSet, final int index) throws SQLException {
+            final int       userId                  = resultSet.getInt("xdat_user_id");
+            final String    username                = resultSet.getString("login");
+            final String    firstName               = resultSet.getString("firstname");
+            final String    lastName                = resultSet.getString("lastname");
+            final String    email                   = resultSet.getString("email");
+            final boolean   enabled                 = resultSet.getInt("enabled") == 1;
+            final boolean   verified                = resultSet.getInt("verified") == 1;
+            return new User(userId, username, firstName, lastName, email, null, null, null, true, null, null, enabled, verified, null);
+        }
+    };
 
 }
