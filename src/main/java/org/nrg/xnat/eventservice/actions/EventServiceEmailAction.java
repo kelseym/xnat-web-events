@@ -7,6 +7,11 @@ import com.google.common.collect.Maps;
 import org.nrg.mail.api.MailMessage;
 import org.nrg.mail.services.MailService;
 import org.nrg.xapi.model.users.User;
+import org.nrg.xdat.security.XDATSearchHelperService;
+import org.nrg.xdat.security.XDATUser;
+import org.nrg.xdat.security.XDATUserHelperService;
+import org.nrg.xdat.security.services.RoleHolder;
+import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
@@ -46,12 +51,16 @@ public class EventServiceEmailAction extends SingleActionProvider {
     private MailService mailService;
     private SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final RoleHolder roleHolder;
+    private final XDATUserHelperService userHelperService;
 
     @Autowired
-    public EventServiceEmailAction(MailService mailService, SubscriptionDeliveryEntityService subscriptionDeliveryEntityService, final NamedParameterJdbcTemplate jdbcTemplate) {
+    public EventServiceEmailAction(MailService mailService, SubscriptionDeliveryEntityService subscriptionDeliveryEntityService, final NamedParameterJdbcTemplate jdbcTemplate, final RoleHolder roleHolder, final XDATUserHelperService userHelperService) {
         this.mailService = mailService;
         this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
         this.jdbcTemplate = jdbcTemplate;
+        this.roleHolder = roleHolder;
+        this.userHelperService = userHelperService;
     }
 
 
@@ -224,9 +233,11 @@ public class EventServiceEmailAction extends SingleActionProvider {
         subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_ERROR, new Date(), "Email action error: " + message);
     }
 
-    private List<String> matchAllowedRecipients(List<String> emails, UserI user){
-        List<String> allowedEmails = new ArrayList<>();
-
+    private List<UserI> matchAllowedRecipients(List<UserI> recipients, String projectID, UserI user){
+        List<UserI> allowedEmails = new ArrayList<>();
+        //if(Strings.isNullOrEmpty(projectID)) && user.{
+//
+        //}
         return allowedEmails;
     }
 
@@ -237,6 +248,15 @@ public class EventServiceEmailAction extends SingleActionProvider {
     private Boolean areEmailRecipientsAllowed(List<String> emails, UserI user){
         return null;
     }
+
+    private Boolean isUserAdmin(UserI user){
+        return roleHolder.isSiteAdmin(user);
+    }
+
+    private Boolean isUserOwner(UserI user, String projectId){
+        userHelperService.isOwner()
+            return ((XDATUser)user).isOwner(projectId);
+        }
 
     public static final RowMapper<User> USER_ROW_MAPPER = new RowMapper<User>() {
         @Override
