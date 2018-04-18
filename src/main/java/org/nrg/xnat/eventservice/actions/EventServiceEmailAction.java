@@ -62,13 +62,13 @@ public class EventServiceEmailAction extends SingleActionProvider {
     public String getDescription() { return description; }
 
     @Override
-    public Map<String, ActionAttributeConfiguration> getAttributes() {
+    public Map<String, ActionAttributeConfiguration> getAttributes(String projectId, String xnatType, UserI user) {
         Map<String, ActionAttributeConfiguration> attributeConfigurationMap = new HashMap<>();
         attributeConfigurationMap.put(FROM_KEY,
                 ActionAttributeConfiguration.builder()
                                             .description("Email originator.")
                                             .type("string")
-                                            .defaultValue(getActionOwnerEmail())
+                                            .defaultValue(user.getEmail())
                                             .userSettable(false)
                                             .required(true)
                                             .build());
@@ -78,8 +78,8 @@ public class EventServiceEmailAction extends SingleActionProvider {
                                             .description("Comma separated list of email recipients.")
                                             .type("string")
                                             .defaultValue("")
+                                            .restrictTo(getEmailList(projectId))
                                             .required(true)
-
                                             .build());
 
         attributeConfigurationMap.put(CC_KEY,
@@ -87,6 +87,7 @@ public class EventServiceEmailAction extends SingleActionProvider {
                                             .description("Comma separated list of email recipients.")
                                             .type("string")
                                             .defaultValue("")
+                                            .restrictTo(getEmailList(projectId))
                                             .required(false)
                                             .build());
 
@@ -95,6 +96,7 @@ public class EventServiceEmailAction extends SingleActionProvider {
                                             .description("Comma separated list of email recipients.")
                                             .type("string")
                                             .defaultValue("")
+                                            .restrictTo(getEmailList(projectId))
                                             .required(false)
                                             .build());
 
@@ -182,23 +184,36 @@ public class EventServiceEmailAction extends SingleActionProvider {
     }
 
 
-    // Get allowed emails and context
+    /* Get allowed emails and context */
     Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> getEmailList(String projectId){
         Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> emails = new HashMap<>();
         List<User> allowedRecipients = getAllowedRecipients(projectId);
-        for(User user : allowedRecipients){
-            if(user.isEnabled() && user.isVerified()) {
-                String email = user.getEmail();
-                List<ActionAttributeConfiguration.AttributeContextValue> contextList = new ArrayList<>();
-                String fullName = user.getFullName();
-                contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("Name").type("string").value(fullName).build());
-                String username = user.getUsername();
-                contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("User").type("string").value(username).build());
-                emails.put(email, contextList);
+        if(allowedRecipients == null || allowedRecipients.isEmpty()){
+            emails.put("", null);
+        }else{
+            for(User user : allowedRecipients) {
+                if (user.isEnabled() && user.isVerified()) {
+                    String email = user.getEmail();
+                    List<ActionAttributeConfiguration.AttributeContextValue> contextList = new ArrayList<>();
+                    String fullName = user.getFullName();
+                    contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("Name").type("string").value(fullName).build());
+                    String username = user.getUsername();
+                    contextList.add(ActionAttributeConfiguration.AttributeContextValue.builder().label("User").type("string").value(username).build());
+                    emails.put(email, contextList);
+                }
             }
         }
 
         return emails;
+    }
+
+    private List<User> getAllowedRecipients(String projectId) {
+        String QUERY = "select * from xdat_user where xdat_user_id IN\n" +
+                "            (select groups_groupid_xdat_user_xdat_user_id from xdat_user_groupid where groupid IN\n" +
+                "                (select id from xdat_usergroup where xdat_usergroup_id IN\n" +
+                "                    (select xdat_usergroup_id from xdat_usergroup where tag = '" + projectId+ "')))";
+
+        return jdbcTemplate.query(QUERY, USER_ROW_MAPPER);
     }
 
     void failWithMessage(SubscriptionEntity subscription, Long deliveryId, String message){
@@ -209,25 +224,12 @@ public class EventServiceEmailAction extends SingleActionProvider {
         subscriptionDeliveryEntityService.addStatus(deliveryId, ACTION_ERROR, new Date(), "Email action error: " + message);
     }
 
-    private String getActionOwnerEmail(){
-        return null;
-    }
-
     private List<String> matchAllowedRecipients(List<String> emails, UserI user){
         List<String> allowedEmails = new ArrayList<>();
 
         return allowedEmails;
     }
 
-
-    private List<User> getAllowedRecipients(String projectId) {
-        String QUERY = "select * from xdat_user where xdat_user_id IN\n" +
-                "            (select groups_groupid_xdat_user_xdat_user_id from xdat_user_groupid where groupid IN\n" +
-                "                (select id from xdat_usergroup where xdat_usergroup_id IN\n" +
-                "                    (select xdat_usergroup_id from xdat_usergroup where tag = '" + projectId+ "')))";
-
-        return jdbcTemplate.query(QUERY, USER_ROW_MAPPER);
-    }
 
     private Boolean isEmailRecipientAllowed(String email, UserI user){
         return null;
