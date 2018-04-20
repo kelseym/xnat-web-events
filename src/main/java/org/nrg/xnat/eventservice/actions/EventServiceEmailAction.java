@@ -91,14 +91,14 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
         Map<String, ActionAttributeConfiguration> attributeConfigurationMap = new HashMap<>();
         Map<String, List<ActionAttributeConfiguration.AttributeContextValue>> emailList = getRecipientsListAsAttributes(projectId);
-        attributeConfigurationMap.put(FROM_KEY,
-                ActionAttributeConfiguration.builder()
-                                            .description("Email originator.")
-                                            .type("string")
-                                            .defaultValue(user.getEmail())
-                                            .userSettable(false)
-                                            .required(true)
-                                            .build());
+        //attributeConfigurationMap.put(FROM_KEY,
+        //        ActionAttributeConfiguration.builder()
+        //                                    .description("Email originator.")
+        //                                    .type("string")
+        //                                    .defaultValue(user.getEmail())
+        //                                    .userSettable(false)
+        //                                    .required(true)
+        //                                    .build());
 
         attributeConfigurationMap.put(TO_KEY,
                 ActionAttributeConfiguration.builder()
@@ -154,7 +154,10 @@ public class EventServiceEmailAction extends SingleActionProvider {
 
         MailMessage mailMessage = new MailMessage();
 
-        String from = inputValues.get(FROM_KEY);
+
+        // String from = inputValues.get(FROM_KEY);
+        String from = user.getEmail();
+
         List<String> toUsersList = Splitter.on(CharMatcher.anyOf(";:, "))
                 .trimResults().omitEmptyStrings()
                 .splitToList(inputValues.get(TO_KEY) != null ? inputValues.get(TO_KEY) : "");
@@ -165,11 +168,15 @@ public class EventServiceEmailAction extends SingleActionProvider {
                 .trimResults().omitEmptyStrings()
                 .splitToList(inputValues.get(BCC_KEY) != null ? inputValues.get(BCC_KEY) : "");
 
-        List<String> allRecipients = toUsersList;
-        allRecipients.addAll(ccUsersList);
-        allRecipients.addAll(bccUsersList);
-        if(!areRecipientsAllowed(allRecipients, subscription.getProjectId(), user)){
-            failWithMessage(deliveryId, "Recipients are not allowed for User: " + user.getLogin());
+
+        if(!areRecipientsAllowed(toUsersList, subscription.getProjectId(), user)){
+            failWithMessage(deliveryId, "TO: Recipients are not allowed for User: " + user.getLogin());
+            return;
+        }else if(!ccUsersList.isEmpty() && !areRecipientsAllowed(ccUsersList, subscription.getProjectId(), user)){
+            failWithMessage(deliveryId, "CC: Recipients are not allowed for User: " + user.getLogin());
+            return;
+        }else if(!bccUsersList.isEmpty() && !areRecipientsAllowed(bccUsersList, subscription.getProjectId(), user)){
+            failWithMessage(deliveryId, "BCC: Recipients are not allowed for User: " + user.getLogin());
             return;
         }
 
@@ -201,7 +208,7 @@ public class EventServiceEmailAction extends SingleActionProvider {
             mailMessage.setBccs(bccEmailList);
         }
 
-        if(Strings.isNullOrEmpty(inputValues.get(SUBJECT_KEY))) {
+        if(!Strings.isNullOrEmpty(inputValues.get(SUBJECT_KEY))) {
             String subject = inputValues.get(SUBJECT_KEY);
             mailMessage.setSubject(subject);
         }
@@ -252,11 +259,12 @@ public class EventServiceEmailAction extends SingleActionProvider {
     }
 
     private List<String> getEmailList(List<String> usernameList){
-        List<String> toEmailList = usernameList.stream().map(usr -> {
-            try { return userManagementService.getUser(usr).getEmail();
-            } catch (UserNotFoundException | UserInitException e) { log.error("Could not load user: " + usr + "\n" + e.getStackTrace());            }
-            return null;
-        } ).collect(Collectors.toList());
+        List<String> toEmailList = new ArrayList<>();
+        for(String userName : usernameList){
+            try {
+                toEmailList.add(userManagementService.getUser(userName).getEmail());
+            } catch (UserNotFoundException | UserInitException e) { log.error("Could not load user: " + userName + "\n" + e.getStackTrace());            }
+        }
         return toEmailList;
     }
 
