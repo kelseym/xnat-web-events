@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.services.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
 import org.nrg.xdat.model.*;
@@ -10,7 +11,7 @@ import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
 import org.nrg.xnat.eventservice.model.xnat.*;
-import org.nrg.xnat.eventservice.services.EventFilterService;
+import org.nrg.xnat.eventservice.services.EventPropertyService;
 import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,18 +23,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.fasterxml.jackson.databind.node.JsonNodeType.*;
+
 @Service
-public class EventFilterServiceImpl implements EventFilterService {
-    private static final Logger log = LoggerFactory.getLogger(EventFilterService.class);
+public class EventPropertyServiceImpl implements EventPropertyService {
+    private static final Logger log = LoggerFactory.getLogger(EventPropertyService.class);
 
     private EventServiceComponentManager componentManager;
     private ObjectMapper mapper;
 
     @Autowired
-    public EventFilterServiceImpl(EventServiceComponentManager componentManager,
-                                  ObjectMapper mapper) {
+    public EventPropertyServiceImpl(EventServiceComponentManager componentManager,
+                                    ObjectMapper mapper) {
         this.componentManager = componentManager;
         this.mapper = mapper;
+        this.mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
     }
 
     @Override
@@ -50,7 +54,7 @@ public class EventFilterServiceImpl implements EventFilterService {
                 // Serialize data object
                 log.debug("Serializing event object as known Model Object.");
                 jsonObject = mapper.writeValueAsString(modelObject);
-            } else if (eventPayloadObject != null && mapper.canSerialize(eventPayloadObject.getClass())) {
+            } else if (eventPayloadObject != null && mapper.canDeserialize(mapper.getTypeFactory().constructType(eventPayloadObject.getClass()))) {
                 log.debug("Serializing event object as unknown object type.");
                 jsonObject = mapper.writeValueAsString(eventPayloadObject);
             } else {
@@ -60,6 +64,45 @@ public class EventFilterServiceImpl implements EventFilterService {
             log.error("Exception attempting to serialize: {}", eventPayloadObject != null ? eventPayloadObject.getClass().getCanonicalName() : "null", e);
         }
         return jsonObject;
+    }
+
+    @Override
+    public Map<String, String> generateEventPropertyNodes(Object eventPayloadObject, UserI user) {
+        Map properties = new HashMap<String,String>();
+        JsonNode jsonNode = null;
+        try {
+            // If this is a known object type - convert it to model object, then serialize
+            XnatModelObject modelObject = componentManager.getModelObject(eventPayloadObject, user);
+            if (modelObject != null && mapper.canSerialize(modelObject.getClass())) {
+                // Serialize data object
+                log.debug("Mapping event object as known Model Object.");
+
+                jsonNode = mapper.valueToTree(modelObject);
+            // Otherwise, attempt to convert the original object
+            } else if (eventPayloadObject != null && mapper.canSerialize(eventPayloadObject.getClass())) {
+                log.debug("Mapping event object as unknown object type.");
+                jsonNode = mapper.valueToTree(eventPayloadObject);
+            } else {
+                log.debug("Could not map event object in: " + eventPayloadObject.toString());
+            }
+        } catch (Throwable e) {
+            log.error("Exception attempting to node-map: {}", eventPayloadObject != null ? eventPayloadObject.getClass().getCanonicalName() : "null", e);
+        }
+
+        if(jsonNode != null){
+            Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
+            while(fields.hasNext()) {
+                Map.Entry<String, JsonNode> next = fields.next();
+                JsonNode value = next.getValue();
+                if (value.isValueNode()) {
+                    String key = next.getKey();
+                    if (!Strings.isNullOrEmpty(key) && (value.getNodeType() == STRING || value.getNodeType() == NUMBER || value.getNodeType() == BOOLEAN)) {
+                        properties.put(key, value.asText());
+                    }
+                }
+            }
+        }
+        return properties;
     }
 
     @Override
@@ -126,10 +169,11 @@ public class EventFilterServiceImpl implements EventFilterService {
                 }
             }
         } catch (Throwable e){
-            log.error("Exception caught while attemping to generateEventFilterNodes. ", e.getMessage(), e);
+            log.error("Exception caught while attempting to generateEventFilterNodes. ", e.getMessage(), e);
         }
         return filterNodes;
     }
+
 
     @Override
     public String generateJsonPathFilter(Map<String, JsonPathFilterNode> filterNodeMap) {

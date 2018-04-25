@@ -1,17 +1,25 @@
 package org.nrg.xnat.eventservice.services;
 
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.nrg.xdat.model.*;
+import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatResourcecatalog;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
+import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
 import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
 import org.nrg.xnat.eventservice.model.xnat.Scan;
+import org.nrg.xnat.eventservice.model.xnat.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,21 +35,28 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @Transactional
 @ContextConfiguration(classes = EventServiceTestConfig.class)
-public class EventFilterServiceTest {
-    private static final Logger log = LoggerFactory.getLogger(EventFilterServiceTest.class);
+public class EventPropertyServiceTest {
+    private static final Logger log = LoggerFactory.getLogger(EventPropertyServiceTest.class);
 
     @Autowired private EventServiceComponentManager componentManager;
-    @Autowired private EventFilterService eventFilterService;
+    @Autowired private EventPropertyService eventPropertyService;
     @Autowired private ObjectMapper objectMapper;
 
 
     private Scan mrScan1 = new Scan();
     private Scan mrScan2 = new Scan();
     private Scan ctScan1 = new Scan();
+    XnatImagesessiondataI xnatMrSession = new XnatImagesessiondata();
+
+
+    private UserI mockUser;
+    private final String FAKE_USER = "mockUser";
+    private final Integer FAKE_USER_ID = 1234;
 
 
     @Before
@@ -73,8 +88,35 @@ public class EventFilterServiceTest {
         ctScan1.setProjectId("PROJECTID-1");
         ctScan1.setSeriesDescription("This is the description of a series which is this one.");
 
+        xnatMrSession.setModality("MR");
+        xnatMrSession.setId("1234");
+        xnatMrSession.setLabel("TestLabel");
+
+        // Mock the userI
+        mockUser = Mockito.mock(UserI.class);
+        when(mockUser.getLogin()).thenReturn(FAKE_USER);
+        when(mockUser.getID()).thenReturn(FAKE_USER_ID);
     }
 
+    @Test
+    public void generateEventPropertyNodes() throws Exception {
+        SessionArchiveEvent sessionArchiveEvent = new SessionArchiveEvent(xnatMrSession, mockUser.getLogin());
+        Map<String, String> eventPropertyNodes =
+                eventPropertyService.generateEventPropertyNodes(sessionArchiveEvent.getObject(), mockUser);
+
+        // Construct a Jackson JavaType for your class
+        JavaType javaType = objectMapper.getTypeFactory().constructType(Session.class);
+
+        // Introspect the given type
+        BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
+
+        // Find properties
+        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
+
+        for(BeanPropertyDefinition beanProperty : properties){
+            String name = beanProperty.getName();
+        }
+    }
 
     @Test
     public void filterSerializedModelObjects() throws Exception {
@@ -121,7 +163,7 @@ public class EventFilterServiceTest {
     @Test
     public void generateEventFilterNodes() throws Exception{
         Class testClass = XnatImagesessiondataI.class;
-        Map<String, JsonPathFilterNode> nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        Map<String, JsonPathFilterNode> nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
@@ -129,42 +171,42 @@ public class EventFilterServiceTest {
 
 
         testClass = XnatProjectdata.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
 
         testClass = XnatResourcecatalog.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
 
         testClass = XnatImagescandataI.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
 
         testClass = XnatImagesessiondataI.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
 
         testClass = XnatSubjectdataI.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
         assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
 
         testClass = Date.class;
-        nodeMap = eventFilterService.generateEventFilterNodes(testClass);
+        nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
         assertThat("EventFilterNodes expected to be empty for " + testClass.getSimpleName(), nodeMap.size(), is(0));
 
@@ -173,7 +215,7 @@ public class EventFilterServiceTest {
     @Test
     public void generateEventFilterNodesByEvent() throws Exception {
         for(EventServiceEvent event : componentManager.getInstalledEvents()) {
-            Map<String, JsonPathFilterNode> nodeMap = eventFilterService.generateEventFilterNodes(event);
+            Map<String, JsonPathFilterNode> nodeMap = eventPropertyService.generateEventFilterNodes(event);
             assertThat("EventFilterNodes for " + event.getObjectClass().getSimpleName() + " should not be null.", nodeMap, notNullValue());
 
             if(     event.getObjectClass().isAssignableFrom(XnatProjectdataI.class) ||
@@ -193,7 +235,7 @@ public class EventFilterServiceTest {
 
         String scanJson = objectMapper.writeValueAsString(Scan.populateSample());
 
-        Map<String, JsonPathFilterNode> nodeMap = eventFilterService.generateEventFilterNodes(XnatImagescandataI.class);
+        Map<String, JsonPathFilterNode> nodeMap = eventPropertyService.generateEventFilterNodes(XnatImagescandataI.class);
         // ** set values to sample values ** //
         for (String nodeKey : nodeMap.keySet()){
             String sampleValue = nodeMap.get(nodeKey).sampleValue();
@@ -204,7 +246,7 @@ public class EventFilterServiceTest {
         }
 
 
-        String jsonPathFilter = eventFilterService.generateJsonPathFilter(nodeMap);
+        String jsonPathFilter = eventPropertyService.generateJsonPathFilter(nodeMap);
 
         assertThat(jsonPathFilter, notNullValue());
     }

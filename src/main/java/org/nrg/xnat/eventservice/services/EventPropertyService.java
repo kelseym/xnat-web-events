@@ -6,7 +6,7 @@ import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
 
 import java.util.Map;
 
-public interface EventFilterService {
+public interface EventPropertyService {
 
     Boolean matchFilter(Object eventPayloadObject, String jsonPathFilter);
 
@@ -14,6 +14,7 @@ public interface EventFilterService {
 
     Map<String, JsonPathFilterNode> generateEventFilterNodes(EventServiceEvent eventServiceEvent);
     Map<String, JsonPathFilterNode> generateEventFilterNodes(Class eventPayloadClass);
+    Map<String, String> generateEventPropertyNodes(Object eventPayloadObject, UserI user);
 
     String generateJsonPathFilter(Map<String, JsonPathFilterNode> filterNodeMap);
 

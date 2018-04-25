@@ -43,7 +43,7 @@ public class EventServiceImpl implements EventService {
     private ActionManager actionManager;
     private SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
     private UserManagementServiceI userManagementService;
-    private EventFilterService eventFilterService;
+    private EventPropertyService eventFilterService;
     private ObjectMapper mapper;
 
     @Autowired
@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
                             ActionManager actionManager,
                             SubscriptionDeliveryEntityService subscriptionDeliveryEntityService,
                             UserManagementServiceI userManagementService,
-                            EventFilterService eventFilterService,
+                            EventPropertyService eventFilterService,
                             ObjectMapper mapper) {
         this.contextService = contextService;
         this.subscriptionService = subscriptionService;
@@ -184,6 +184,7 @@ public class EventServiceImpl implements EventService {
             if(eventFilterNodes != null && eventFilterNodes.size()>0){
                 simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
             }
+
             events.add(simpleEvent);
         }
         return events;

@@ -43,7 +43,7 @@ public class EventServiceTestConfig {
                                      ActionManager actionManager,
                                      SubscriptionDeliveryEntityService subscriptionDeliveryEntityService,
                                      UserManagementServiceI userManagementService,
-                                     EventFilterService eventFilterService,
+                                     EventPropertyService eventFilterService,
                                      ObjectMapper mapper){
         return new EventServiceImpl(contextService, subscriptionService, eventBus, componentManager, actionManager, subscriptionDeliveryEntityService, userManagementService, eventFilterService, mapper);
     }
@@ -55,7 +55,7 @@ public class EventServiceTestConfig {
                                          ActionManager actionManager,
                                          SubscriptionDeliveryEntityService mockSubscriptionDeliveryEntityService,
                                          UserManagementServiceI userManagementService,
-                                         EventFilterService eventFilterService,
+                                         EventPropertyService eventFilterService,
                                          ObjectMapper mapper){
         return new EventServiceImpl(contextService, subscriptionService, eventBus, componentManager, actionManager, mockSubscriptionDeliveryEntityService, userManagementService, eventFilterService, mapper);
     }
@@ -162,7 +162,7 @@ public class EventServiceTestConfig {
     }
 
     @Bean
-    public EventFilterService eventFilterService(EventServiceComponentManager componentManager, ObjectMapper mapper){return new EventFilterServiceImpl(componentManager, mapper);}
+    public EventPropertyService eventFilterService(EventServiceComponentManager componentManager, ObjectMapper mapper){return new EventPropertyServiceImpl(componentManager, mapper);}
 
     //** Combined Events/Listener **//
     @Bean
