@@ -1,10 +1,7 @@
 package org.nrg.xnat.eventservice.model.xnat;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.MoreObjects;
 import org.nrg.xft.XFTItem;
 import org.nrg.xft.security.UserI;
@@ -25,7 +22,7 @@ import java.util.Objects;
 public abstract class XnatModelObject {
     protected String id;
     protected String label;
-    protected String xsiType;
+    @JsonProperty("xsi-type") protected String xsiType;
     protected String uri;
 
     public String getId() {

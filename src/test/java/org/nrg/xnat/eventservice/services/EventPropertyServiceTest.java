@@ -1,9 +1,6 @@
 package org.nrg.xnat.eventservice.services;
 
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,10 +13,8 @@ import org.nrg.xdat.om.XnatResourcecatalog;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
-import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
 import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
 import org.nrg.xnat.eventservice.model.xnat.Scan;
-import org.nrg.xnat.eventservice.model.xnat.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,22 +94,10 @@ public class EventPropertyServiceTest {
     }
 
     @Test
-    public void generateEventPropertyNodes() throws Exception {
-        SessionArchiveEvent sessionArchiveEvent = new SessionArchiveEvent(xnatMrSession, mockUser.getLogin());
-        Map<String, String> eventPropertyNodes =
-                eventPropertyService.generateEventPropertyNodes(sessionArchiveEvent.getObject(), mockUser);
-
-        // Construct a Jackson JavaType for your class
-        JavaType javaType = objectMapper.getTypeFactory().constructType(Session.class);
-
-        // Introspect the given type
-        BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
-
-        // Find properties
-        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
-
-        for(BeanPropertyDefinition beanProperty : properties){
-            String name = beanProperty.getName();
+    public void generateEventPropertyKeys() throws Exception {
+        for(EventServiceEvent event : componentManager.getInstalledEvents()) {
+            assertThat("Null eventProperties value returned for event: " + event.getClass().getName() , eventPropertyService.generateEventPropertyKeys(event), notNullValue());
+            assertThat("Empty eventProperties value returned for event: " + event.getClass().getName() , eventPropertyService.generateEventPropertyKeys(event).isEmpty(), is(false));
         }
     }
 

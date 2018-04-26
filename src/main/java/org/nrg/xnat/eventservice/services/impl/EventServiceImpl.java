@@ -176,6 +176,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public Map<String, EventPropertyNode> getEventPropertyNodes(String eventId) {
+        EventServiceEvent event = componentManager.getEvent(eventId);
+        if(event != null && !StringUtils.isNullOrEmpty(event.getPayloadXnatType())) {
+            return eventFilterService.generateEventPropertyKeys(event);
+        }
+        return null;
+    }
+
+    @Override
     public List<SimpleEvent> getEvents() throws Exception {
         List<SimpleEvent> events = new ArrayList();
         for(EventServiceEvent e : componentManager.getInstalledEvents()){
