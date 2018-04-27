@@ -186,28 +186,37 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<SimpleEvent> getEvents() throws Exception {
+        return getEvents(false);
+    }
+
+    @Override
+    public List<SimpleEvent> getEvents(Boolean loadDetails) throws Exception {
         List<SimpleEvent> events = new ArrayList();
         for(EventServiceEvent e : componentManager.getInstalledEvents()){
-            SimpleEvent simpleEvent = toPojo(e);
-            Map<String, JsonPathFilterNode> eventFilterNodes = getEventFilterNodes(simpleEvent.id());
-            if(eventFilterNodes != null && eventFilterNodes.size()>0){
-                simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
+            SimpleEvent simpleEvent = getEvent(e.getEventUUID(), loadDetails);
+            if(simpleEvent != null) {
+                events.add(simpleEvent);
             }
-            Map<String, EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
-            if(eventPropertyNodes != null && !eventPropertyNodes.isEmpty()){
-                simpleEvent = simpleEvent.toBuilder().eventProperties(eventPropertyNodes).build();
-            }
-
-            events.add(simpleEvent);
         }
         return events;
     }
 
     @Override
-    public SimpleEvent getEvent(UUID uuid) throws Exception {
+    public SimpleEvent getEvent(UUID uuid, Boolean loadDetails) throws Exception {
         for(EventServiceEvent e :componentManager.getInstalledEvents()){
             if(e.getEventUUID().equals(uuid)){
-                return toPojo(e);
+                SimpleEvent simpleEvent = toPojo(e);
+                if(loadDetails){
+                    Map<String, JsonPathFilterNode> eventFilterNodes = getEventFilterNodes(simpleEvent.id());
+                    if(eventFilterNodes != null && eventFilterNodes.size()>0){
+                        simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
+                    }
+                    Map<String, EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
+                    if(eventPropertyNodes != null && !eventPropertyNodes.isEmpty()){
+                        simpleEvent = simpleEvent.toBuilder().eventProperties(eventPropertyNodes).build();
+                    }
+                }
+                return simpleEvent;
             }
         }
         return null;

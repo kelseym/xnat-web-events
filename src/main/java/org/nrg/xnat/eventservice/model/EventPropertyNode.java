@@ -9,18 +9,25 @@ import javax.annotation.Nullable;
 @AutoValue
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public abstract class EventPropertyNode {
-    @Nullable
-    @JsonProperty("value")          public abstract String  value();
-    @JsonProperty("type")           public abstract String  type();
+    @JsonProperty("name") public abstract String  name();
+    @JsonProperty("replacement-key") public abstract String  replacementKey();
+    @JsonProperty("type") public abstract String  type();
+    @Nullable @JsonProperty("value") public abstract String  value();
 
-    public abstract Builder toBuilder();
+    abstract Builder toBuilder();
 
-    public static EventPropertyNode create(@Nullable @JsonProperty("value")       String value,
-                                           @JsonProperty("type")                  String type) {
+    public static EventPropertyNode create( @JsonProperty("name")               String name,
+                                            @Nullable @JsonProperty("value")    String value,
+                                            @JsonProperty("type")               String type) {
         return builder()
                 .value(value)
                 .type(type)
+
                 .build();
+    }
+
+    public EventPropertyNode withName(String name, String type){
+        return toBuilder().name(name).replacementKey("#" + name + "#").type(type).build();
     }
 
     public static Builder builder() {return new AutoValue_EventPropertyNode.Builder();}
@@ -28,6 +35,11 @@ public abstract class EventPropertyNode {
 
     @AutoValue.Builder
     public abstract static class Builder {
+
+        public abstract Builder name(String name);
+
+        public abstract Builder replacementKey(String replacementKey);
+
         public abstract Builder value(String value);
 
         public abstract Builder type(String type);

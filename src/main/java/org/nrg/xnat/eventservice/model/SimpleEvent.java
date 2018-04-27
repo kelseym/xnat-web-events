@@ -20,7 +20,7 @@ public abstract class SimpleEvent {
     @JsonProperty("payload") public abstract String payloadClass();
     @JsonProperty("xnat-type") public abstract String xnatType();
     @JsonProperty("is-xsi-type") public abstract boolean isXsiType();
-    @Nullable @JsonProperty("node-filters") public abstract Map<String, JsonPathFilterNode> nodeFilters();
+    @Nullable @JsonProperty("filter-nodes") public abstract Map<String, JsonPathFilterNode> nodeFilters();
     @Nullable @JsonProperty("event-properties") public abstract Map<String, EventPropertyNode> eventProperties();
 
 

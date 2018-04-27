@@ -148,45 +148,45 @@ public class EventPropertyServiceTest {
         Class testClass = XnatImagesessiondataI.class;
         Map<String, JsonPathFilterNode> nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
 
         testClass = XnatProjectdata.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
         testClass = XnatResourcecatalog.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
         testClass = XnatImagescandataI.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
         testClass = XnatImagesessiondataI.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
         testClass = XnatSubjectdataI.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
         assertThat("EventFilterNodes for " + testClass.getSimpleName() + " should not be null.", nodeMap, notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsiType"), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), notNullValue());
-        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsiType").sampleValue(), is(not("")));
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should exist", nodeMap.get("xsi-type"), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), notNullValue());
+        assertThat("xsiType filter node for " + testClass.getSimpleName() + "should have a sample value", nodeMap.get("xsi-type").sampleValue(), is(not("")));
 
         testClass = Date.class;
         nodeMap = eventPropertyService.generateEventFilterNodes(testClass);
