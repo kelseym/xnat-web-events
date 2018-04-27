@@ -70,9 +70,9 @@ public class EventPropertyServiceImpl implements EventPropertyService {
     @Override
     public Map<String, EventPropertyNode> generateEventPropertyKeys(EventServiceEvent event){
         Map eventProperties = new HashMap<String,EventPropertyNode>();
-        eventProperties.put("event-id", event.getId());
-        eventProperties.put("event-display-name", event.getDisplayName());
-        eventProperties.put("event-description", event.getDescription());
+        eventProperties.put("event-id", EventPropertyNode.builder().value(event.getId()).type("string").build());
+        eventProperties.put("event-display-name", EventPropertyNode.builder().value(event.getDisplayName()).type("string").build());
+        eventProperties.put("event-description", EventPropertyNode.builder().value(event.getDescription()).type("string").build());
 
         Map payloadProperties = generateEventPropertyKeys(event.getObjectClass());
         if(payloadProperties != null && !payloadProperties.isEmpty()){

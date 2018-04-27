@@ -21,6 +21,7 @@ public abstract class SimpleEvent {
     @JsonProperty("xnat-type") public abstract String xnatType();
     @JsonProperty("is-xsi-type") public abstract boolean isXsiType();
     @Nullable @JsonProperty("node-filters") public abstract Map<String, JsonPathFilterNode> nodeFilters();
+    @Nullable @JsonProperty("event-properties") public abstract Map<String, EventPropertyNode> eventProperties();
 
 
     public static SimpleEvent create( @JsonProperty("id") String id,
@@ -64,6 +65,8 @@ public abstract class SimpleEvent {
         public abstract Builder isXsiType(boolean isXsiType);
 
         public abstract Builder nodeFilters(Map<String, JsonPathFilterNode> nodeFilters);
+
+        public abstract Builder eventProperties(Map<String, EventPropertyNode> eventProperties);
 
         public abstract SimpleEvent build();
     }

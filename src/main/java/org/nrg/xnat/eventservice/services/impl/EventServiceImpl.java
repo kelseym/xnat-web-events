@@ -193,6 +193,10 @@ public class EventServiceImpl implements EventService {
             if(eventFilterNodes != null && eventFilterNodes.size()>0){
                 simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
             }
+            Map<String, EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
+            if(eventPropertyNodes != null && !eventPropertyNodes.isEmpty()){
+                simpleEvent = simpleEvent.toBuilder().eventProperties(eventPropertyNodes).build();
+            }
 
             events.add(simpleEvent);
         }
