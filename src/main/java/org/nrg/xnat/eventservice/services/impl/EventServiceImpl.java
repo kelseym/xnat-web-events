@@ -176,7 +176,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Map<String, EventPropertyNode> getEventPropertyNodes(String eventId) {
+    public List<EventPropertyNode> getEventPropertyNodes(String eventId) {
         EventServiceEvent event = componentManager.getEvent(eventId);
         if(event != null && !StringUtils.isNullOrEmpty(event.getPayloadXnatType())) {
             return eventFilterService.generateEventPropertyKeys(event);
@@ -211,7 +211,7 @@ public class EventServiceImpl implements EventService {
                     if(eventFilterNodes != null && eventFilterNodes.size()>0){
                         simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
                     }
-                    Map<String, EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
+                    List<EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
                     if(eventPropertyNodes != null && !eventPropertyNodes.isEmpty()){
                         simpleEvent = simpleEvent.toBuilder().eventProperties(eventPropertyNodes).build();
                     }

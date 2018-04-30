@@ -36,7 +36,7 @@ public interface EventService {
     Action getActionByKey(String actionKey, UserI user);
 
     Map<String, JsonPathFilterNode> getEventFilterNodes(String eventId);
-    Map<String, EventPropertyNode> getEventPropertyNodes(String eventId);
+    List<EventPropertyNode> getEventPropertyNodes(String eventId);
 
     List<Subscription> getSubscriptions();
     Subscription getSubscription(Long id) throws NotFoundException;

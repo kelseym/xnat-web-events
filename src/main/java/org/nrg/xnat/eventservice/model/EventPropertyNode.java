@@ -30,7 +30,7 @@ public abstract class EventPropertyNode {
         return toBuilder().name(name).replacementKey("#" + name + "#").type(type).build();
     }
 
-    public static Builder builder() {return new AutoValue_EventPropertyNode.Builder();}
+    private static Builder builder() {return new AutoValue_EventPropertyNode.Builder();}
 
 
     @AutoValue.Builder

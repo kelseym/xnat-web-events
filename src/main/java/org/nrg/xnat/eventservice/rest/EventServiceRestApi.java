@@ -95,7 +95,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     @XapiRequestMapping(restrictTo = Admin, value = {"/events/event/properties/{event-id}"}, method = GET, produces = JSON)
     @ApiOperation(value = "Get a event properties for a given Event ID")
     @ResponseBody
-    public Map<String, EventPropertyNode> retrieveEventProperties(final @PathVariable(name="event-id") String eventId) {
+    public List<EventPropertyNode> retrieveEventProperties(final @PathVariable(name="event-id") String eventId) {
         return eventService.getEventPropertyNodes(eventId);
     }
 
