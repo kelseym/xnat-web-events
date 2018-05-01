@@ -65,9 +65,9 @@ public class EventPropertyServiceImpl implements EventPropertyService {
     @Override
     public List<EventPropertyNode> generateEventPropertyKeys(EventServiceEvent event){
         List eventProperties = new ArrayList<EventPropertyNode>();
-        eventProperties.add(EventPropertyNode.create("event-id", event.getId(), "string"));
-        eventProperties.add(EventPropertyNode.create("event-display-name", event.getDisplayName(),"string"));
-        eventProperties.add(EventPropertyNode.create("event-description", event.getDescription(), "string"));
+        eventProperties.add(EventPropertyNode.withName("event-id", "string").withValue( event.getId()));
+        eventProperties.add(EventPropertyNode.withName("event-display-name", "string").withValue(event.getDisplayName()));
+        eventProperties.add(EventPropertyNode.withName("event-description", "string").withValue(event.getDescription()));
 
         List payloadProperties = generateEventPropertyKeys(event.getObjectClass());
         if(payloadProperties != null && !payloadProperties.isEmpty()){
@@ -99,11 +99,11 @@ public class EventPropertyServiceImpl implements EventPropertyService {
                 for(BeanPropertyDefinition beanProperty : properties){
                     Class<?> returnType = beanProperty.hasGetter() ? beanProperty.getGetter().getMember().getReturnType() : null;
                     if(returnType != null && String.class.isAssignableFrom(returnType)) {
-                        payloadProperties.add(EventPropertyNode.create(beanProperty.getName(), null, "string"));
+                        payloadProperties.add(EventPropertyNode.withName(beanProperty.getName(), "string"));
                     }else if(returnType != null && Boolean.class.isAssignableFrom(returnType)){
-                        payloadProperties.add(EventPropertyNode.create(beanProperty.getName(), null, "boolean"));
+                        payloadProperties.add(EventPropertyNode.withName(beanProperty.getName(), "boolean"));
                     }else if(returnType != null && Number.class.isAssignableFrom(returnType)){
-                        payloadProperties.add(EventPropertyNode.create(beanProperty.getName(), null, "number"));
+                        payloadProperties.add(EventPropertyNode.withName(beanProperty.getName(), "number"));
                     }
                     else{
                         log.debug("Skipping property: " + beanProperty.getName() + " in  " + payloadClass.getName() + ", because it is not a string|boolean|number type.");

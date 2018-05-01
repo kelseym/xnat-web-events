@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -16,18 +17,13 @@ public abstract class EventPropertyNode {
 
     abstract Builder toBuilder();
 
-    public static EventPropertyNode create( @JsonProperty("name")               String name,
-                                            @Nullable @JsonProperty("value")    String value,
-                                            @JsonProperty("type")               String type) {
-        return builder()
-                .value(value)
-                .type(type)
-
-                .build();
+    public static EventPropertyNode withName(@Nonnull String name, String type){
+        return EventPropertyNode.builder().name(name).replacementKey("#" + name + "#").type(type).build();
     }
 
-    public EventPropertyNode withName(String name, String type){
-        return toBuilder().name(name).replacementKey("#" + name + "#").type(type).build();
+    public EventPropertyNode withValue(@Nonnull String value){
+        return this.toBuilder().value(value).build();
+
     }
 
     private static Builder builder() {return new AutoValue_EventPropertyNode.Builder();}
