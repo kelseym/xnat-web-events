@@ -16,6 +16,7 @@ import org.gradle.internal.jvm.Jvm
 
 buildscript {
     ext {
+        vXnatDemo = "1.7.5-DEMO-SNAPSHOT"
         vXnatDev = "1.7.5-RC1-SNAPSHOT"
         vXnat = "1.7.5-SNAPSHOT"
     }
@@ -50,7 +51,7 @@ buildscript {
 }
 
 group "org.nrg.xnat"
-version = vXnatDev
+version = vXnatDemo
 
 apply plugin: "com.bmuschko.cargo"
 apply plugin: "com.bmuschko.tomcat"
@@ -85,8 +86,8 @@ repositories {
     }
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 def javaVersion = Jvm.current().javaVersion
 if (javaVersion.java8Compatible || javaVersion.java9Compatible) {
@@ -211,8 +212,8 @@ dependencies {
     implementation("org.nrg.xnat:xnat-data-models:${vXnatDev}") {
         transitive = false
     }
-    implementation "org.nrg.xdat:core:${vXnatDev}"
-    implementation "org.nrg:framework"
+    implementation "org.nrg.xdat:core:${vXnatDemo}"
+    implementation "org.nrg:framework:${vXnatDemo}"
     implementation "org.nrg:transaction"
     implementation "org.nrg:prefs"
     implementation "org.nrg:config"
