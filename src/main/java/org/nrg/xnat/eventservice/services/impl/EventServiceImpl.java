@@ -280,7 +280,7 @@ public class EventServiceImpl implements EventService {
             XnatModelObject modelObject = null;
             if(event.getData() instanceof EventServiceEvent) {
                 EventServiceEvent esEvent = (EventServiceEvent) event.getData();
-                for (Subscription subscription : subscriptionService.getSubscriptionsByKey(listener.getInstanceId().toString())) {
+                for (final Subscription subscription : subscriptionService.getSubscriptionsByKey(listener.getInstanceId().toString())) {
                     log.debug("RegKey matched for " + subscription.listenerRegistrationKey() + "  " + subscription.name());
                     // Create subscription delivery entry
                     Long deliveryId = subscriptionDeliveryEntityService.create(
@@ -356,10 +356,8 @@ public class EventServiceImpl implements EventService {
                         } catch (Throwable e){
                             log.error("Could not build TriggeringEventEntity ", e.getMessage(), e);
                         }
-                        // call Action Manager with payload
-                        SubscriptionEntity subscriptionEntity = subscriptionService.get(subscription.id());
 
-                        actionManager.processEvent(subscriptionEntity, esEvent, actionUser, deliveryId);
+                        actionManager.processEvent(subscription, esEvent, actionUser, deliveryId);
                     } catch (UserNotFoundException |UserInitException e) {
                         log.error("Failed to process subscription:" + subscription.name());
                         log.error(e.getMessage());

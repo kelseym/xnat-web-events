@@ -10,6 +10,7 @@ import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.EventPropertyNode;
 import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
+import org.nrg.xnat.eventservice.model.Subscription;
 import org.nrg.xnat.eventservice.model.xnat.*;
 import org.nrg.xnat.eventservice.services.EventPropertyService;
 import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class EventPropertyServiceImpl implements EventPropertyService {
@@ -120,45 +123,67 @@ public class EventPropertyServiceImpl implements EventPropertyService {
         return payloadProperties;
     }
 
+    @Override
+    public Subscription resolveEventPropertyVariables(final Subscription subscription, final EventServiceEvent esEvent,
+                                                      final UserI user, final Long deliveryId) {
+        Subscription resolvedSubscription = subscription;
+        Map<String, String> attributes = subscription.attributes();
+        if(attributes != null && !attributes.isEmpty()) {
+            Pattern REGEX = Pattern.compile(".*#(\\S+)#.*");
+            List<Map.Entry<String, String>> resolvableAttributes = attributes.entrySet().stream()
+                                                                             .filter(entry -> REGEX.matcher(entry.getValue()).matches())
+                                                                             .collect(Collectors.toList());
+            if(resolvableAttributes != null && !resolvableAttributes.isEmpty()){
 
-//    @Deprecated
-//    private List<EventPropertyNode> generatePayloadPropertyValues(Object eventPayloadObject, UserI user) {
-//        List properties = new ArrayList<EventPropertyNode>();
-//        JsonNode jsonNode = null;
-//        try {
-//            // If this is a known object type - convert it to model object, then serialize
-//            XnatModelObject modelObject = componentManager.getModelObject(eventPayloadObject, user);
-//            if (modelObject != null && mapper.canSerialize(modelObject.getClass())) {
-//                // Serialize data object
-//                log.debug("Mapping event object as known Model Object.");
-//
-//                jsonNode = mapper.valueToTree(modelObject);
-//            // Otherwise, attempt to convert the original object
-//            } else if (eventPayloadObject != null && mapper.canSerialize(eventPayloadObject.getClass())) {
-//                log.debug("Mapping event object as unknown object type.");
-//                jsonNode = mapper.valueToTree(eventPayloadObject);
-//            } else {
-//                log.debug("Could not map event object in: " + eventPayloadObject.toString());
-//            }
-//        } catch (Throwable e) {
-//            log.error("Exception attempting to node-map: {}", eventPayloadObject != null ? eventPayloadObject.getClass().getCanonicalName() : "null", e);
-//        }
-//
-//        if(jsonNode != null){
-//            Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
-//            while(fields.hasNext()) {
-//                Map.Entry<String, JsonNode> next = fields.next();
-//                JsonNode value = next.getValue();
-//                if (value.isValueNode()) {
-//                    String key = next.getKey();
-//                    if (!Strings.isNullOrEmpty(key) && (value.getNodeType() == STRING || value.getNodeType() == NUMBER || value.getNodeType() == BOOLEAN)) {
-//                        properties.put(key, value.asText());
-//                    }
-//                }
-//            }
-//        }
-//        return properties;
-//    }
+                for(Map.Entry<String, String> attribute : resolvableAttributes){
+
+
+                }
+            }
+
+
+        }
+        return resolvedSubscription;
+    }
+
+
+    private List<EventPropertyNode> generatePayloadPropertyValues(Object eventPayloadObject, UserI user) {
+        List properties = new ArrayList<EventPropertyNode>();
+        JsonNode jsonNode = null;
+        try {
+            // If this is a known object type - convert it to model object, then serialize
+            XnatModelObject modelObject = componentManager.getModelObject(eventPayloadObject, user);
+            if (modelObject != null && mapper.canSerialize(modelObject.getClass())) {
+                // Serialize data object
+                log.debug("Mapping event object as known Model Object.");
+
+                jsonNode = mapper.valueToTree(modelObject);
+            // Otherwise, attempt to convert the original object
+            } else if (eventPayloadObject != null && mapper.canSerialize(eventPayloadObject.getClass())) {
+                log.debug("Mapping event object as unknown object type.");
+                jsonNode = mapper.valueToTree(eventPayloadObject);
+            } else {
+                log.debug("Could not map event object in: " + eventPayloadObject.toString());
+            }
+        } catch (Throwable e) {
+            log.error("Exception attempting to node-map: {}", eventPayloadObject != null ? eventPayloadObject.getClass().getCanonicalName() : "null", e);
+        }
+
+        if(jsonNode != null){
+            Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
+            while(fields.hasNext()) {
+                Map.Entry<String, JsonNode> next = fields.next();
+                JsonNode value = next.getValue();
+                if (value.isValueNode()) {
+                    String key = next.getKey();
+                    if (!Strings.isNullOrEmpty(key) && (value.getNodeType() == STRING || value.getNodeType() == NUMBER || value.getNodeType() == BOOLEAN)) {
+                        properties.put(key, value.asText());
+                    }
+                }
+            }
+        }
+        return properties;
+    }
 
     @Override
     public Map<String, JsonPathFilterNode> generateEventFilterNodes(@Nonnull EventServiceEvent eventServiceEvent) {

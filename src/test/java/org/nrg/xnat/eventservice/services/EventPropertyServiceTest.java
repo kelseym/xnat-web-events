@@ -23,8 +23,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.empty;
@@ -233,4 +236,19 @@ public class EventPropertyServiceTest {
 
         assertThat(jsonPathFilter, notNullValue());
     }
+
+    @Test
+    public void resolveEventPropertyVariables() throws Exception {
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("one","one");
+        attributes.put("two", "#two");
+        attributes.put("three", "three#");
+        attributes.put("four", "#four#");
+        Pattern REGEX = Pattern.compile(".*#(\\S+)#.*");
+        List<Map.Entry<String, String>> resolvableAttributes = attributes.entrySet().stream()
+                                                                         .filter(entry -> REGEX.matcher(entry.getValue()).matches())
+                                                                         .collect(Collectors.toList());
+
+    }
+
 }

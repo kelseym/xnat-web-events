@@ -4,6 +4,7 @@ import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.model.EventPropertyNode;
 import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
+import org.nrg.xnat.eventservice.model.Subscription;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -18,6 +19,8 @@ public interface EventPropertyService {
     Map<String, JsonPathFilterNode> generateEventFilterNodes(EventServiceEvent event);
 
     List<EventPropertyNode> generateEventPropertyKeys(EventServiceEvent event);
+
+    Subscription resolveEventPropertyVariables(Subscription subscription, EventServiceEvent esEvent, UserI user, Long deliveryId);
 
     Map<String, JsonPathFilterNode> generateEventFilterNodes(@Nonnull Class eventPayloadClass);
 
