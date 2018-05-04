@@ -24,6 +24,10 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.fasterxml.jackson.databind.node.JsonNodeType.BOOLEAN;
+import static com.fasterxml.jackson.databind.node.JsonNodeType.NUMBER;
+import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
+
 @Service
 public class EventPropertyServiceImpl implements EventPropertyService {
     private static final Logger log = LoggerFactory.getLogger(EventPropertyService.class);
@@ -177,7 +181,7 @@ public class EventPropertyServiceImpl implements EventPropertyService {
                 if (value.isValueNode()) {
                     String key = next.getKey();
                     if (!Strings.isNullOrEmpty(key) && (value.getNodeType() == STRING || value.getNodeType() == NUMBER || value.getNodeType() == BOOLEAN)) {
-                        properties.put(key, value.asText());
+                        properties.add(EventPropertyNode.withName(key, value.getNodeType().toString().toLowerCase()).withValue(value.asText()));
                     }
                 }
             }
