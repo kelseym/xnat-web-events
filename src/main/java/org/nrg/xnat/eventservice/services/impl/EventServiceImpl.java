@@ -223,6 +223,27 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public SimpleEvent getEvent(@Nonnull final String eventId, Boolean loadDetails) throws Exception {
+        for(EventServiceEvent e : componentManager.getInstalledEvents()){
+            if(eventId.contentEquals(e.getId())){
+                SimpleEvent simpleEvent = toPojo(e);
+                if(loadDetails){
+                    Map<String, JsonPathFilterNode> eventFilterNodes = getEventFilterNodes(simpleEvent.id());
+                    if(eventFilterNodes != null && eventFilterNodes.size()>0){
+                        simpleEvent = simpleEvent.toBuilder().nodeFilters(eventFilterNodes).build();
+                    }
+                    List<EventPropertyNode> eventPropertyNodes = getEventPropertyNodes(simpleEvent.id());
+                    if(eventPropertyNodes != null && !eventPropertyNodes.isEmpty()){
+                        simpleEvent = simpleEvent.toBuilder().eventProperties(eventPropertyNodes).build();
+                    }
+                }
+                return simpleEvent;
+            }
+        }
+        return null;
+    }
+
+    @Override
     @Deprecated
     public List<Listener> getInstalledListeners() {
 

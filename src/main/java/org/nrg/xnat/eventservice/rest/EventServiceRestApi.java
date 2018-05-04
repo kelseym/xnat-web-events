@@ -249,6 +249,16 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         }
     }
 
+    @XapiRequestMapping(restrictTo = Authenticated, value = "/events/event", method = GET, params = {"event-id"})
+    @ResponseBody
+    public SimpleEvent getEvent(final @RequestParam(value = "event-id", required = true) String eventId,
+                                      final @RequestParam(value = "load-details", required = false) Boolean loadDetails) throws Exception {
+        if(loadDetails != null) {
+            return eventService.getEvent(eventId, loadDetails);
+        }else{
+            return eventService.getEvent(eventId, false);
+        }
+    }
 
     //@XapiRequestMapping(restrictTo = Authenticated, value = "/events/actionproviders", method = GET)
     //@ApiOperation(value = "Get Action Providers and associated Actions")

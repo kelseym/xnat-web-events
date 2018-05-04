@@ -16,7 +16,7 @@ import java.util.Map;
 public abstract class Subscription {
 
     @Nullable @JsonProperty("id") public abstract Long id();
-    @JsonProperty("name") public abstract String name();
+    @Nullable @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("project-id") public abstract String projectId();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();

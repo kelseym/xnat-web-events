@@ -25,7 +25,7 @@ public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreate
 
     @Override
     public String getPayloadXnatType() {
-        return "arc:project";
+        return "xnat:projectData";
     }
 
     @Override
