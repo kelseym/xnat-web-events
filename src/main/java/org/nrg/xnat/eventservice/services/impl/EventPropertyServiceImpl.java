@@ -131,23 +131,25 @@ public class EventPropertyServiceImpl implements EventPropertyService {
     public Subscription resolveEventPropertyVariables(final Subscription subscription, final EventServiceEvent esEvent,
                                                       final UserI user, final Long deliveryId) {
         Subscription resolvedSubscription = subscription;
-        Map<String, String> attributes = subscription.attributes();
-        if(attributes != null && !attributes.isEmpty()) {
+        Map<String, String> resolvedAttributes = subscription.attributes();
+        if(resolvedAttributes != null && !resolvedAttributes.isEmpty()) {
             // Check which, if any, of the attributes contain replacement matcher keys
-            Pattern REGEX = Pattern.compile(".*#(\\S+)#.*");
-            List<Map.Entry<String, String>> resolvableAttributes = attributes.entrySet().stream()
+            Pattern REGEX = Pattern.compile(".*(#\\S+#).*");
+            List<Map.Entry<String, String>> resolvableAttributes = resolvedAttributes.entrySet().stream()
                                                                              .filter(entry -> REGEX.matcher(entry.getValue()).matches())
                                                                              .collect(Collectors.toList());
             if(resolvableAttributes != null && !resolvableAttributes.isEmpty()){
                 // Get all of the event property nodes for this event
-                List<EventPropertyNode> eventPropertyNodes = generateEventPropertyKeys(esEvent);
+                List<EventPropertyNode> eventPropertyNodes = generateEventPropertyValues(esEvent, user);
                 // Collect property nodes that are needed to replace found replacement keys
-                for(Map.Entry<String, String> attributeMap : resolvableAttributes){
-                    log.debug("Resolving event property : " + attributeMap.getKey() + " in " + attributeMap.getValue());
+                for(Map.Entry<String, String> resolvableAttribute : resolvableAttributes){
+                    log.debug("Resolving event property in " + resolvableAttribute.getValue());
                     List<EventPropertyNode> matchingPropertyNodes = eventPropertyNodes.stream()
-                            .filter(epn -> (epn.replacementKey() != null && (!Strings.isNullOrEmpty(attributeMap.getValue()) && attributeMap.getValue().contains(epn.replacementKey()))))
+                            .filter(epn -> (epn.replacementKey() != null && (!Strings.isNullOrEmpty(resolvableAttribute.getValue()) && resolvableAttribute.getValue().contains(epn.replacementKey()))))
                             .collect(Collectors.toList());
-
+                    String resolvedValue = "";
+                    // TODO: There are properties in the key generator that are not in the value nodes ???
+                    resolvedAttributes.put(resolvableAttribute.getKey(), resolvedValue);
                 }
             }
 
@@ -157,7 +159,23 @@ public class EventPropertyServiceImpl implements EventPropertyService {
     }
 
 
-    private List<EventPropertyNode> generatePayloadPropertyValues(Object eventPayloadObject, UserI user) {
+    private List<EventPropertyNode> generateEventPropertyValues(EventServiceEvent event, UserI user) {
+        List eventProperties = new ArrayList<EventPropertyNode>();
+        eventProperties.add(EventPropertyNode.withName("event-id", "string").withValue(event.getId()));
+        eventProperties.add(EventPropertyNode.withName("event-display-name", "string").withValue(event.getDisplayName()));
+        eventProperties.add(EventPropertyNode.withName("event-description", "string").withValue(event.getDescription()));
+
+        List payloadProperties = generateEventPropertyValues(event.getObject(), user);
+        if (payloadProperties != null && !payloadProperties.isEmpty()) {
+            eventProperties.addAll(payloadProperties);
+        }
+        return eventProperties;
+    }
+
+    private List<EventPropertyNode> generateEventPropertyValues(Object eventPayloadObject, UserI user) {
+        if(eventPayloadObject == null){
+            return null;
+        }
         List properties = new ArrayList<EventPropertyNode>();
         JsonNode jsonNode = null;
         try {
@@ -166,7 +184,6 @@ public class EventPropertyServiceImpl implements EventPropertyService {
             if (modelObject != null && mapper.canSerialize(modelObject.getClass())) {
                 // Serialize data object
                 log.debug("Mapping event object as known Model Object.");
-
                 jsonNode = mapper.valueToTree(modelObject);
             // Otherwise, attempt to convert the original object
             } else if (eventPayloadObject != null && mapper.canSerialize(eventPayloadObject.getClass())) {

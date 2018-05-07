@@ -7,7 +7,7 @@
         "cc": "admin",
         "bcc": "admin",
         "subject": "New Project: #id# created.",
-        "body": "This is an automated email triggered by XNAT Event Service, informing you that the new project: #name# was created."
+        "body": "This is an automated email triggered by XNAT Event Service, informing you that the new project: #name#:#id# was created."
     },
     "act-as-event-user": false
 }
