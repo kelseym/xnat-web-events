@@ -32,11 +32,13 @@ public class ActionManagerImpl implements ActionManager {
 
     private final EventServiceComponentManager componentManager;
     private final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService;
+    private EventPropertyService eventPropertyService;
 
     @Autowired
-    public ActionManagerImpl(final EventServiceComponentManager componentManager, SubscriptionDeliveryEntityService subscriptionDeliveryEntityService) {
+    public ActionManagerImpl(final EventServiceComponentManager componentManager, final SubscriptionDeliveryEntityService subscriptionDeliveryEntityService, final EventPropertyService eventPropertyService) {
         this.componentManager = componentManager;
         this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
+        this.eventPropertyService = eventPropertyService;
     }
 
 
@@ -254,7 +256,10 @@ public class ActionManagerImpl implements ActionManager {
     public void processAsync(EventServiceActionProvider provider, Subscription subscription, EventServiceEvent esEvent, final UserI user, final Long deliveryId){
         log.debug("Started Async process on thread: {}", Thread.currentThread().getName());
         try {
-            provider.processEvent(esEvent, subscription, user, deliveryId);
+            log.debug("Resolving subscription event/action attributes.");
+            Subscription resolvedSubscription = eventPropertyService.resolveEventPropertyVariables(subscription, esEvent, user, deliveryId);
+            log.debug("Passing event/action processing off to action provider : " + provider.getName());
+            provider.processEvent(esEvent, resolvedSubscription, user, deliveryId);
         } catch (Throwable e){
             log.error("Exception thrown calling provider processEvent\n" + e.getMessage(),e);
         }

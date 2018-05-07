@@ -133,14 +133,20 @@ public class EventPropertyServiceImpl implements EventPropertyService {
         Subscription resolvedSubscription = subscription;
         Map<String, String> attributes = subscription.attributes();
         if(attributes != null && !attributes.isEmpty()) {
+            // Check which, if any, of the attributes contain replacement matcher keys
             Pattern REGEX = Pattern.compile(".*#(\\S+)#.*");
             List<Map.Entry<String, String>> resolvableAttributes = attributes.entrySet().stream()
                                                                              .filter(entry -> REGEX.matcher(entry.getValue()).matches())
                                                                              .collect(Collectors.toList());
             if(resolvableAttributes != null && !resolvableAttributes.isEmpty()){
-
-                for(Map.Entry<String, String> attribute : resolvableAttributes){
-
+                // Get all of the event property nodes for this event
+                List<EventPropertyNode> eventPropertyNodes = generateEventPropertyKeys(esEvent);
+                // Collect property nodes that are needed to replace found replacement keys
+                for(Map.Entry<String, String> attributeMap : resolvableAttributes){
+                    log.debug("Resolving event property : " + attributeMap.getKey() + " in " + attributeMap.getValue());
+                    List<EventPropertyNode> matchingPropertyNodes = eventPropertyNodes.stream()
+                            .filter(epn -> (epn.replacementKey() != null && (!Strings.isNullOrEmpty(attributeMap.getValue()) && attributeMap.getValue().contains(epn.replacementKey()))))
+                            .collect(Collectors.toList());
 
                 }
             }
