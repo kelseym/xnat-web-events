@@ -558,7 +558,7 @@ var XNAT = getObject(XNAT);
             }
 
             // close dialog if closed from another window
-            if (cookie.SESSION_DIALOG_OPEN.is('false')) {
+            if (cookie.SESSION_DIALOG_OPEN.is('false') && timeout.warningDialog.isOpen) {
                 timeout.warningDialog.hide(0);
             }
 
@@ -624,7 +624,7 @@ var XNAT = getObject(XNAT);
         }
 
         // attach event handler to elements with 'renew-session' class
-        $(document).on('click', '#timeLeftRenew, .renew-session', function(){
+        $(document).on('click', '.renew-session', function(){
             timeout.renew();
         });
 

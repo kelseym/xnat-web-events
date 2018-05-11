@@ -182,7 +182,7 @@ var XNAT = getObject(XNAT);
     // RETURNS A DOM ELEMENT
     usersGroups.userSwitchElement = function(username, type, status){
         return XNAT.ui.input.switchbox({
-            value: firstDefined(status, 'false') + '',
+            value: firstDefined(status, '') + '',
             element: {
                 name: type,
                 className: 'user-' + type,
@@ -191,7 +191,7 @@ var XNAT = getObject(XNAT);
             },
             onText: 'Yes',
             offText: 'No'
-        });
+        }).get();
     };
 
 
@@ -208,13 +208,15 @@ var XNAT = getObject(XNAT);
         // var username = $form.find('input#username').val();
 
         opts = cloneObject(opts);
+        opts.cache = false;
+        var successMsg = opts.msg || 'User info saved.';
 
         var doSubmit = $form.submitJSON(opts);
 
         if (doSubmit.done) {
             doSubmit.done(function(){
                 // xmodal.loading.open();
-                XNAT.ui.banner.top(2000, 'User info saved.', 'success')
+                XNAT.ui.banner.top(2000, successMsg, 'success')
             });
         }
         if (doSubmit.fail) {
@@ -407,6 +409,8 @@ var XNAT = getObject(XNAT);
     function getUserData(username){
         var _url = XNAT.url.restUrl('/xapi/users/profile/' + username);
         delete XNAT.data['/xapi/users/profile/' + username];
+        delete XNAT.data['/xapi/users/profiles'];
+        delete XNAT.data['/xapi/users/current'];
         delete XNAT.data['/xapi/users/' + username];
         return XNAT.xhr.get(_url)
     }
@@ -638,6 +642,92 @@ var XNAT = getObject(XNAT);
         })
     }
 
+    usersGroups.changePasswordDialog = function(data){
+        function changePasswordForm(){
+            var form = {
+                kind: 'panel.form',
+                name: 'changeUserPasswordForm',
+                id: 'change-user-password-form',
+                label: 'Change Password',
+                footer: false,
+                validate: true,
+                method: 'PUT',
+                contentType: 'json',
+                refresh: false,
+                reload: true,
+                action: '~/xapi/users/' + data.username,
+                element: {
+                    autocomplete: 'off'
+                },
+                contents: {
+                    username: {
+                        kind: 'panel.input.hidden',
+                        value: data.username
+                    },
+                    password: {
+                        kind: 'panel.input.password',
+                        label: 'Password',
+                        element: {
+                            placeholder: '*****',
+                            autocomplete: 'off',
+                            data: { message: passwordComplexityMessage }
+                        },
+                        validate: 'required pattern:'+passwordComplexity+' max-length:255'
+                    },
+                    confirmPassword: {
+                        kind: 'panel.input.password',
+                        label: 'Confirm Password',
+                        element: {
+                            placeholder: '*****',
+                            autocomplete: 'off',
+                            data: { message: 'Password fields must match' }
+                        },
+                        validate: 'matches:[name=password]'
+                    }
+                }
+            };
+            return form;
+        }
+
+        var cpForm$ = null;
+        var updated = false;
+        var formContainer$ = null;
+
+
+        XNAT.dialog.open({
+            title: 'Change Password for '+data.username,
+            width: 500,
+            content: '<div id="change-password-form"></div>',
+            beforeShow: function(obj){
+                formContainer$ = obj.dialog$.find('#change-password-form');
+                XNAT.spawner.spawn({
+                    changePasswordForm: changePasswordForm()
+                }).render(formContainer$);
+            },
+            afterShow: function(){
+                cpForm$ = formContainer$.find('form');
+            },
+            buttons: [
+                {
+                    label: 'Update Password',
+                    close: false,
+                    isDefault: true,
+                    action: function(obj){
+                        var doSave = saveUserData(cpForm$, { msg: 'User password updated successfully' });
+                        doSave.done(function(){
+                            updated = true;
+                            obj.close();
+                        });
+                    }
+                },
+                {
+                    label: 'Cancel',
+                    close: true
+                }
+            ]
+        });
+    };
+
 
     function userAccountForm(data){
 
@@ -677,6 +767,49 @@ var XNAT = getObject(XNAT);
             return obj;
         }
 
+        function passwordField(){
+            var obj = {
+                label: 'Password'
+            };
+            if (data && data.username) {
+                obj.kind = 'panel.element';
+                obj.contents = {
+                    changePasswordLink: {
+                        kind: 'html',
+                            content: '<a href="#!" class="change-password" style="margin-top: -2px" data-username="'+data.username+'"><button class="btn btn-xs">Change User Password</button></a>'
+                    }
+                }
+            }
+            else {
+                obj.kind = 'panel.input.password';
+                obj.element = {
+                    placeholder: '*****',
+                    autocomplete: 'off',
+                    data: { message: passwordComplexityMessage }
+                };
+                obj.validate = 'allow-empty pattern:'+passwordComplexity+' max-length:255'
+            }
+            return obj;
+        }
+
+        function confirmPasswordField(){
+            if (data && data.username) {
+                return false;
+            }
+            else {
+                return {
+                    kind: 'panel.input.password',
+                    label: 'Confirm Password',
+                    element: {
+                        placeholder: '*****',
+                        autocomplete: 'off',
+                        data: { message: 'Password fields must match' }
+                    },
+                    validate: 'matches:[name=password]'
+                }
+            }
+        }
+
         var userVerified = data.verified || 'false';
         var userEnabled = data.enabled || 'false';
 
@@ -710,17 +843,8 @@ var XNAT = getObject(XNAT);
                 //     html: '<br>'
                 // },
                 usernameField: usernameField(),
-                password: {
-                    kind: 'panel.input.password',
-                    label: 'Password',
-                    element: {
-                        placeholder: '********',
-                        autocomplete: 'off',
-                        data: { message: passwordComplexityMessage }
-                    },
-                    validate: 'allow-empty pattern:' + passwordComplexity + ' max-length:255'//,
-                    //value: data.password || ''
-                },
+                password: passwordField(),
+                confirmPassword: confirmPasswordField(),
                 firstName: {
                     kind: 'panel.input.text',
                     label: 'First Name',
@@ -782,8 +906,8 @@ var XNAT = getObject(XNAT);
                             on: {
                                 click: function(e){
                                     e.preventDefault();
-                                    var modalId = $(this).closest('div.xnat-dialog').attr('id');
-                                    XNAT.dialog.close(modalId);
+                                    var modalId = $(this).closest('div.xnat-dialog').attr('data-dialog');
+                                    XNAT.dialog.getDialog(modalId).close();
                                     window.top.usernameForUserThatIsCurrentlyBeingEdited = data.username;
                                     userProjectsAndSecurity(e, data.username);
                                 }
@@ -804,6 +928,12 @@ var XNAT = getObject(XNAT);
         return form;
 
     }
+
+    // open a separate dialog to edit user password
+    $(document).on('click','.change-password',function(){
+        var username = $(this).data('username');
+        usersGroups.changePasswordDialog({ username: username });
+    });
 
 
     // open a dialog to edit user properties
@@ -942,10 +1072,10 @@ var XNAT = getObject(XNAT);
             onClose: function(){
                 // always update the whole table when adding a user.
                 // usersGroups.spawnTabs();
-                renderUsersTable();
-                // if (updated) {
-                //     updateUsersTable(true);
-                // }
+                // renderUsersTable();
+                if (updated) {
+                    updateUsersTable(true);
+                }
             }
         })
     }
@@ -1257,7 +1387,7 @@ var XNAT = getObject(XNAT);
             var $dataRows = [];
 
             // load 'current' users initially
-            var URL = url || '/xapi/users/current';
+            var URL = XNAT.url.restUrl(url || '/xapi/users/current');
 
             // TODO:
             // TODO: set min-width as well as max-width

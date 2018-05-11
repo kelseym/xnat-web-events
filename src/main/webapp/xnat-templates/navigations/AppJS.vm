@@ -3,9 +3,12 @@
 
 <!-- START AppJS.vm -->
 
-#set($versionString = "v=1.7.5a")
+#set ($versionString = "v=175rc1")
+
 #set($SITE_ROOT = $content.getURI(""))
-#set($randomVersion = $math.getRandom())
+#set($lastAccessed = "${data.session.lastAccessedTime}")
+
+#set ($js = "js?${versionString}")
 
 ## only load once
 #if ($!appJS != true)
@@ -28,14 +31,13 @@
     <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/style/app.css?${versionString}">
 
     <!-- Icon sets -->
-    ##<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.css?v=${XNAT_CSRF}" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/style/font-awesome.css?v=${data.session.lastAccessedTime}">
+    <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/style/font-awesome.css?x=${lastAccessed}">
     <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/style/icons.css?${versionString}">
     <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/page/admin/style.css?${versionString}">
 
     <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/scripts/xmodal-v1/xmodal.css?${versionString}">
-    <script src="${SITE_ROOT}/scripts/xmodal-v1/xmodal.js"></script>
-    <script src="${SITE_ROOT}/scripts/xmodal-v1/xmodal-migrate.js"></script>
+    <script src="${SITE_ROOT}/scripts/xmodal-v1/xmodal.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xmodal-v1/xmodal-migrate.${js}"></script>
 
     #if ($theme && $theme != "none")
         <!-- Theme CSS -->
@@ -56,34 +58,36 @@
     <link rel="stylesheet" type="text/css" href="${SITE_ROOT}/scripts/xnat/ui/dialog.css?${versionString}">
 
     <!-- XNAT JLAPI scripts -->
-    <script src="${SITE_ROOT}/scripts/xnat/util/sub64.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/validate.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/url.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/xhr.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/cookie.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/event.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/element.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/storage.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/templates.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/input.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/select.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/table.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/panel.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/tabs.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/banner.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/popup.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/ui/dialog.js"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/util/sub64.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/parse.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/validate.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/url.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/xhr.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/cookie.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/event.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/element.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/storage.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/form.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/templates.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/input.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/select.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/table.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/panel.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/tabs.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/banner.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/popup.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/ui/dialog.${js}"></script>
 
     <!-- The Spawner! -->
-    <script src="${SITE_ROOT}/scripts/xnat/spawner.js"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/spawner.${js}"></script>
 
     <!-- XNAT app scripts (do not load on login page) -->
     #if (!$isLoginPage)
 
-    <script src="${SITE_ROOT}/scripts/xnat/app/codeEditor.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/app/pluginSettings.js"></script>
-    <script src="${SITE_ROOT}/scripts/xnat/app/customPage.js"></script>
-    ##    <script src="${SITE_ROOT}/scripts/xnat/app/dataTypeAccess.js"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/app/codeEditor.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/app/pluginSettings.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/app/customPage.${js}"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/app/dataTypeAccess.${js}"></script>
 
     <!-- window.available_elements -->
     <script>
@@ -91,26 +95,14 @@
         window.available_elements = [];
         window.browseableElements = {};
 
-        if (!window.isLoginPage) {
-            window.getBrowseableElements = XNAT.xhr.get({
-                url: serverRoot + '/xapi/access/displays/browseable',
-                // TODO: change 'async' property after UI is refactored for async rendering
-                async: false,
-                success: function(elements){
-                    var sortedElements = sortObjects(elements, 'plural');
-                    forEach(sortedElements, function(elementObj){
-                        elementObj.element_name = elementObj.elementName;
-                        elementObj.isExperiment = elementObj.experiment;
-                        elementObj.isSubjectAssessor = elementObj.subjectAssessor;
-                        elementObj.isImageAssessor = elementObj.imageAssessor;
-                        elementObj.isImageSession = elementObj.imageSession;
-                        elementObj.isImageScan = elementObj.imageScan;
-                        elementObj.lbg = '#f0f0f0';
-                        elementObj.dbg = '#505050';
-                        window.available_elements.push(elementObj);
-                        window.browseableElements[elementObj.element_name] = elementObj;
-                    });
-                }
+        if (!window.isLoginPage && !/(Login\.vm|Register\.vm|VerifyEmail\.vm|XDATRegisterUser)/.test(window.location.href)) {
+            console.log('getBrowseableElements');
+            XNAT.app.dataTypeAccess.getElements['browseable'].ready(function(elements){
+                var sortedElements = sortObjects(elements, 'plural');
+                forEach(sortedElements, function(element){
+                    window.available_elements.push(element);
+                    window.browseableElements[element.element_name] = element;
+                });
             });
         }
 
@@ -140,7 +132,7 @@
     #end
 
     <!-- JS functions to initialize XNAT -->
-    <script src="${SITE_ROOT}/scripts/xnat/init.js"></script>
+    <script src="${SITE_ROOT}/scripts/xnat/init.${js}"></script>
 
     #set ($appJS = true)
 
