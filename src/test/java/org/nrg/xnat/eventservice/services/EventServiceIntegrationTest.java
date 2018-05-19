@@ -921,11 +921,11 @@ public class EventServiceIntegrationTest {
 
         StopWatch sw2 = new StopWatch();
         sw2.start("eventTriggersToActions");
-        for(Integer i=0; i<10000; i++){
+        for(Integer i=0; i<2000; i++){
             eventService.triggerEvent(new SessionArchiveEvent(sessionToIgnore, mockUser.getLogin()));
         }
         sw2.stop();
-        System.out.print("Triggered 10000 ignored events in : " + sw2.getTotalTimeSeconds() + "seconds\n");
+        System.out.print("Triggered 2000 ignored events in : " + sw2.getTotalTimeSeconds() + "seconds\n");
 
         StopWatch sw3 = new StopWatch();
         sw3.start("eventTriggersToActions");
