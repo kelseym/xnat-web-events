@@ -601,7 +601,7 @@ var XNAT = getObject(XNAT);
                 spawneri = spawneri || spawner.spawn(data);
                 if (xhr.status !== 200) {
                     if (isFunction(callback)) {
-                        callback.apply(resolve, arguments)
+                        callback.apply(spawneri, arguments)
                     }
                 }
             });
