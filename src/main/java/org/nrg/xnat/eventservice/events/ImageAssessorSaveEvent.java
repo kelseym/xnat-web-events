@@ -18,17 +18,17 @@ public class ImageAssessorSaveEvent extends CombinedEventServiceEvent<SessionUpd
 
     @Override
     public String getDisplayName() {
-        return "Image Assessor Saved";
+        return "ROI Assessor Saved";
     }
 
     @Override
     public String getDescription() {
-        return "Image Assessor Saved";
+        return "ICR ROI Collection data assessor saved";
     }
 
     @Override
     public String getPayloadXnatType() {
-        return "xnat:";
+        return "icr:roiCollectionData";
     }
 
     @Override
