@@ -23,10 +23,12 @@ import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.events.ImageAssessorSaveEvent;
 import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
 import org.nrg.xnat.eventservice.events.ProjectDeletedEvent;
+import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
 import org.nrg.xnat.eventservice.events.SessionDeletedEvent;
 import org.nrg.xnat.eventservice.events.SubjectCreatedEvent;
 import org.nrg.xnat.eventservice.events.SubjectDeletedEvent;
 import org.nrg.xnat.eventservice.services.EventService;
+import org.nrg.xnat.eventservice.services.XnatObjectIntrospectionService;
 import org.nrg.xnat.helpers.resource.direct.ResourceModifierA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +43,12 @@ public class EventServiceTriggerAspect {
     private static final Logger log = LoggerFactory.getLogger(EventServiceTriggerAspect.class);
 
     private EventService eventService;
+    private XnatObjectIntrospectionService xnatObjectIntrospectionService;
 
     @Autowired
-    public EventServiceTriggerAspect(EventService eventService) {
+    public EventServiceTriggerAspect(EventService eventService, XnatObjectIntrospectionService xnatObjectIntrospectionService) {
         this.eventService = eventService;
+        this.xnatObjectIntrospectionService = xnatObjectIntrospectionService;
     }
 
 /*
@@ -86,6 +90,58 @@ public class EventServiceTriggerAspect {
         }
     }
 */
+    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
+            "&& args(item, user, ..)" +
+            "&& execution(* save(..))")
+    public void triggerOnItemSave(final JoinPoint joinPoint, ItemI item,UserI user) throws Throwable {
+        try {
+            String userLogin = user != null ? user.getLogin() : null;
+            Object[] args = joinPoint.getArgs();
+
+
+            if(StringUtils.containsIgnoreCase(item.getXSIType(), "SessionData")){
+                log.debug("Creating new XnatImageSession object from Item.");
+                Boolean isUpdate = Arrays.stream(args)
+                                         .filter(a -> a instanceof EventMetaI)
+                                         .allMatch(a -> a instanceof ResourceModifierA.UpdateMeta);
+
+                XnatImagesessiondataI session = null;
+                if(item instanceof XnatImagesessiondata){ session = (XnatImagesessiondataI) item; }
+                else{ session = new XnatImagesessiondata(item); }
+
+                xnatObjectIntrospectionService.`
+                if(isUpdate == false) {
+                    eventService.triggerEvent(new SessionArchiveEvent(session, userLogin), session.getProject());
+                }
+
+            }
+
+
+/*
+            if (log.isDebugEnabled()) {
+                if ((StringUtils.equals(item.getXSIType(), "xnat:subjectData")
+                        || StringUtils.containsIgnoreCase(item.getXSIType(), "SessionData")
+                        || StringUtils.equals(item.getXSIType(), "xnat:projectData")
+                        || StringUtils.equals(item.getXSIType(), "xnat:experimentData")
+                        || StringUtils.equals(item.getXSIType(), "xnat:subjectAssessorData")
+                        || StringUtils.equals(item.getXSIType(), "xnat:resourceCatalog")
+                        || StringUtils.equals(item.getXSIType(), "xnat:imageAssessorData")
+                        || StringUtils.equals(item.getXSIType(), "icr:roiCollectionData")
+                )) {
+                    log.debug("triggerOnItemSave AfterReturning aspect called after " + joinPoint.getSignature().getName() + "." +
+                            "  ItemI type = " + (item != null ? item.getClass().getSimpleName() : "null") +
+                            "  ItemI xsiType = " + (item != null ? item.getXSIType() : "null") +
+                            "  UserI = " + userLogin);
+                    log.debug("\n\n" + item.getItem().toString() + "\n\n");
+                }
+            }
+            */
+        } catch (Throwable e) {
+            log.error("Exception processing triggerOnItemSave" + e.getMessage());
+            throw e;
+        }
+    }
+
 
 //    @Pointcut("execution(* org.nrg.xft.utils.SaveItemHelper.save(..))")
 //    public void saveItemHelperPointcut() {}
@@ -122,9 +178,9 @@ public class EventServiceTriggerAspect {
 
 
 
-    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
-            "&& args(item, user, ..)" +
-            "&& execution(* save(..))")
+//    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
+//            "&& args(item, user, ..)" +
+//            "&& execution(* save(..))")
     public void triggerOnExperimentDataSave(final JoinPoint joinPoint, XnatExperimentdata item, UserI user) throws Throwable{
         try {
             String userLogin = user != null ? user.getLogin() : null;
@@ -144,9 +200,9 @@ public class EventServiceTriggerAspect {
 
 
 
-    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
-            "&& args(item, user, ..)" +
-            "&& execution(* save(..))")
+//    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
+//            "&& args(item, user, ..)" +
+//            "&& execution(* save(..))")
     public void triggerOnSubjectAssessorSave(final JoinPoint joinPoint, XnatSubjectassessordata item, UserI user) throws Throwable{
         try {
             String userLogin = user != null ? user.getLogin() : null;
@@ -164,9 +220,9 @@ public class EventServiceTriggerAspect {
         }
     }
 
-    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
-            "&& args(item, user, ..)" +
-            "&& execution(* save(..))")
+//    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
+//            "&& args(item, user, ..)" +
+//            "&& execution(* save(..))")
     public void triggerOnImageAssessorSave(final JoinPoint joinPoint, XnatImageassessordata item, UserI user) throws Throwable{
         try {
             String userLogin = user != null ? user.getLogin() : null;
