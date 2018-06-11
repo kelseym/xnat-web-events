@@ -25,7 +25,7 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
     @Override
     public Boolean isModified(XnatExperimentdataI experiment) {
         try{
-            dao.
+            return dao.isExperimentModified(experiment.getId());
         }catch (Throwable e){
             e.printStackTrace();
         }

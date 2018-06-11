@@ -109,7 +109,7 @@ public class EventServiceTriggerAspect {
                 if(item instanceof XnatImagesessiondata){ session = (XnatImagesessiondataI) item; }
                 else{ session = new XnatImagesessiondata(item); }
 
-                xnatObjectIntrospectionService.`
+                Boolean isModified = xnatObjectIntrospectionService.isModified(session);
                 if(isUpdate == false) {
                     eventService.triggerEvent(new SessionArchiveEvent(session, userLogin), session.getProject());
                 }

@@ -18,7 +18,11 @@ public class XnatObjectIntrospectionDao extends AbstractHibernateDAO<Subscriptio
     }
 
     public Boolean isExperimentModified(String experimentId){
-        
+        List<Integer> modified =  getSession()
+                .createQuery("SELECT modified FROM xnat_experimentdata WHERE id = :experimentId")
+                .setString("experimentId", experimentId)
+                .list();
+        return modified == null || modified.isEmpty() ? false : modified.get(0) == 1;
     }
 
 }
