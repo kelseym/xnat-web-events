@@ -1,12 +1,10 @@
 package org.nrg.xnat.eventservice.events;
 
-import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.model.XnatImageassessordataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
-import org.springframework.stereotype.Service;
 
-@Service
-@XnatEventServiceEvent(name="ImageAssessorSaveEvent")
+//@Service
+//@XnatEventServiceEvent(name="ImageAssessorSaveEvent")
 public class ImageAssessorSaveEvent extends CombinedEventServiceEvent<SessionUpdateEvent, XnatImageassessordataI> {
 
     public ImageAssessorSaveEvent(){};
