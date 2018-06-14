@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.services.impl;
 import org.nrg.xdat.model.XnatExperimentdataI;
 import org.nrg.xdat.model.XnatProjectdataI;
 import org.nrg.xdat.model.XnatSubjectdataI;
+import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xnat.eventservice.services.XnatObjectIntrospectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,50 +30,54 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
 
     @Override
     public Boolean isModified(XnatExperimentdataI experiment) {
-        try{
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(QUERY_IS_EXPERIMENT_MODIFIED,
-                                                                        new MapSqlParameterSource("experimentId", experiment.getId()));
-            if (!result.isEmpty() && result.get(0).containsKey("modified") && result.get(0).get("modified").equals(1)) return true;
-            else return false;
-        }catch (Throwable e){
-            e.printStackTrace();
-        }
-        return null;
+        List<Map<String, Object>> result = simpleQuery(QUERY_IS_EXPERIMENT_MODIFIED,"experimentId", experiment.getId());
+        if (!result.isEmpty() && result.get(0).containsKey("modified") && result.get(0).get("modified").equals(1)) return true;
+        else return false;
     }
 
     public Boolean hasResource(XnatExperimentdataI experiment) {
-        try {
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(QUERY_EXPERIMENTDATA_RESOURCE,
-                                                                        new MapSqlParameterSource("experimentId", experiment.getId()));
-            if (result == null || result.isEmpty()) return false;
-            else return true;
-        } catch (Throwable e){
-            e.printStackTrace();
-        }
-        return null;
+        List<Map<String, Object>> result = simpleQuery(QUERY_EXPERIMENTDATA_RESOURCE, "experimentId", experiment.getId());
+        if (result == null || result.isEmpty()) return false;
+        else return true;
     }
 
     public Boolean hasHistory(XnatSubjectdataI subject) {
-        try {
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(QUERY_SUBJECTDATA_HISTORY,
-                    new MapSqlParameterSource("subjectId", subject.getId()));
-            if (result == null || result.isEmpty()) return false;
-            else return true;
-        } catch (Throwable e){
-            e.printStackTrace();
-        }
-        return null;
+        List<Map<String, Object>> result = simpleQuery(QUERY_SUBJECTDATA_HISTORY,"subjectId", subject.getId());
+        if (result == null || result.isEmpty()) return false;
+        else return true;
     }
 
     @Override
     public Boolean hasResource(XnatSubjectdataI subject) {
-        try {
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(QUERY_SUBJECTDATA_RESOURCE,
-                    new MapSqlParameterSource("subjectId", subject.getId()));
-            if (result == null || result.isEmpty()) return false;
-            else return true;
-        } catch (Throwable e){
-            e.printStackTrace();
+        List<Map<String, Object>> result = simpleQuery(QUERY_SUBJECTDATA_RESOURCE,"subjectId", subject.getId());
+        if (result == null || result.isEmpty()) return false;
+        else return true;
+    }
+
+    @Override
+    public Boolean storedInDatabase(XnatSubjectdataI subject) {
+        List<Map<String, Object>> result = simpleQuery(QUERY_SUBJECTDATA, "subjectId", subject.getId());
+        if(result != null && !result.isEmpty()){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean storedInDatabase(XnatExperimentdata experiment) {
+        List<Map<String, Object>> result = simpleQuery(QUERY_EXPERIMENTDATA, "experimentId", experiment.getId());
+        if(result != null && !result.isEmpty()){
+            return true;
+        } else {
+            return false;
+        }    }
+
+    @Override
+    public List<Integer> getScanIds(XnatExperimentdata experiment) {
+        List<Map<String, Object>> result = simpleQuery(QUERY_SCANDATA, "experimentId", experiment.getId());
+        if(result != null){
+            result.stream().filter(scan -> scan.get("id")).collect(Collectors.toList())
         }
         return null;
     }
@@ -84,6 +90,17 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
     }
 
 
+
+    private List<Map<String, Object>> simpleQuery(String queryString, String parameterName, String parameterValue){
+        try {
+            return jdbcTemplate.queryForList(queryString, new MapSqlParameterSource(parameterName, parameterValue));
+        } catch (Throwable e){
+            log.error("XnatObjectIntrospectionService DB query failed. " + e.getMessage());
+        }
+        return null;
+    }
+
+
     private static final String QUERY_IS_EXPERIMENT_MODIFIED =  "SELECT xnat_experimentdata_meta_data.modified AS modified FROM xnat_experimentdata_meta_data WHERE meta_data_id IN " +
                                                                     "(SELECT experimentdata_info FROM xnat_experimentData WHERE id = :experimentId)";
 
@@ -92,6 +109,12 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
     private static final String QUERY_SUBJECTDATA_HISTORY = "SELECT * FROM xnat_subjectdata_history WHERE subjectdata_info IN (SELECT subjectdata_info FROM xnat_subjectdata WHERE id = :subjectId)";
 
     private static final String QUERY_SUBJECTDATA_RESOURCE = "SELECT * FROM xnat_subjectdata_resource WHERE xnat_subjectdata_id = :subjectId";
+
+    private static final String QUERY_SUBJECTDATA = "SELECT * FROM xnat_subjectdata WHERE id = :subjectId";
+
+    private static final String QUERY_EXPERIMENTDATA = "SELECT * FROM xnat_experimentdata WHERE id = :experimentId";
+
+    private static final String QUERY_SCANDATA = "SELECT * FROM xnat_imagescandata WHERE image_session_id = :experimentId";
 
     private static final String COUNT_PROJECTDATA_RESOURCES = "SELECT COUNT(*) FROM xnat_projectdata_meta_data WHERE meta_data_id IN (SELECT projectdata_info FROM xnat_projectdata WHERE id = :projectId)";
 }
