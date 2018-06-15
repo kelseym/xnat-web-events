@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Aspect
 @Component
@@ -87,7 +88,14 @@ public class EventServiceItemSaveAspect {
                     }
                 } else{
                     log.debug("Existing Session Data Save" + " : xsiType:" + item.getXSIType());
+                    List<String> preScanIds = xnatObjectIntrospectionService.getScanIds((XnatExperimentdata) session);
+                    retVal = joinPoint.proceed();
+                    List<String> postScanIds = xnatObjectIntrospectionService.getScanIds((XnatExperimentdata) session);
+                    if(postScanIds.size()>preScanIds.size()){
+                        postScanIds.removeAll(preScanIds);
+                        List<XnatImagescandataI> newScans = session.getScans_scan().stream().filter(scn -> postScanIds.contains(scn.getId())).collect(Collectors.toList());
 
+                    }
                     eventService.triggerEvent(new SessionUpdateEvent(session, userLogin), session.getProject());
 
                 }

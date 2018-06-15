@@ -21,7 +21,7 @@ public interface XnatObjectIntrospectionService {
 
     Boolean storedInDatabase(XnatExperimentdata experiment);
 
-    List<Integer> getScanIds(XnatExperimentdata experiment);
+    List<String> getScanIds(XnatExperimentdata experiment);
 
     Integer getResourceCount(XnatProjectdataI project);
 

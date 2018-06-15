@@ -13,9 +13,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -74,10 +74,12 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
         }    }
 
     @Override
-    public List<Integer> getScanIds(XnatExperimentdata experiment) {
-        List<Map<String, Object>> result = simpleQuery(QUERY_SCANDATA, "experimentId", experiment.getId());
-        if(result != null){
-            result.stream().filter(scan -> scan.get("id")).collect(Collectors.toList())
+    public List<String> getScanIds(XnatExperimentdata experiment) {
+        final List<Map<String, Object>> scans = simpleQuery(QUERY_SCANDATAID, "experimentId", experiment.getId());
+        if(scans != null){
+            List<String> scanIds = new ArrayList<>();
+            scans.forEach(scan->scanIds.add((String) scan.get("id")));
+            return scanIds;
         }
         return null;
     }
@@ -114,7 +116,7 @@ public class XnatObjectIntrospectionServiceImpl implements XnatObjectIntrospecti
 
     private static final String QUERY_EXPERIMENTDATA = "SELECT * FROM xnat_experimentdata WHERE id = :experimentId";
 
-    private static final String QUERY_SCANDATA = "SELECT * FROM xnat_imagescandata WHERE image_session_id = :experimentId";
+    private static final String QUERY_SCANDATAID = "SELECT id FROM xnat_imagescandata WHERE image_session_id = :experimentId";
 
     private static final String COUNT_PROJECTDATA_RESOURCES = "SELECT COUNT(*) FROM xnat_projectdata_meta_data WHERE meta_data_id IN (SELECT projectdata_info FROM xnat_projectdata WHERE id = :projectId)";
 }
