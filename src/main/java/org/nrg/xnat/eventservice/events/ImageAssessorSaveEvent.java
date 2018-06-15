@@ -1,10 +1,12 @@
 package org.nrg.xnat.eventservice.events;
 
+import org.nrg.framework.event.XnatEventServiceEvent;
 import org.nrg.xdat.model.XnatImageassessordataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
+import org.springframework.stereotype.Service;
 
-//@Service
-//@XnatEventServiceEvent(name="ImageAssessorSaveEvent")
+@Service
+@XnatEventServiceEvent(name="ImageAssessorSaveEvent")
 public class ImageAssessorSaveEvent extends CombinedEventServiceEvent<SessionUpdateEvent, XnatImageassessordataI> {
 
     public ImageAssessorSaveEvent(){};
@@ -16,17 +18,17 @@ public class ImageAssessorSaveEvent extends CombinedEventServiceEvent<SessionUpd
 
     @Override
     public String getDisplayName() {
-        return "ROI Assessor Saved";
+        return "Image Assessor Saved";
     }
 
     @Override
     public String getDescription() {
-        return "ICR ROI Collection data assessor saved";
+        return "Image assessor saved.";
     }
 
     @Override
     public String getPayloadXnatType() {
-        return "icr:roiCollectionData";
+        return "xnat:imageAssessorData";
     }
 
     @Override

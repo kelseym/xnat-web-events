@@ -13,12 +13,14 @@ import org.nrg.xdat.model.XnatResourceI;
 import org.nrg.xdat.model.XnatResourcecatalogI;
 import org.nrg.xdat.model.XnatSubjectdataI;
 import org.nrg.xdat.om.XnatExperimentdata;
+import org.nrg.xdat.om.XnatImageassessordata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatResource;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xft.ItemI;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.eventservice.events.ImageAssessorSaveEvent;
 import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
 import org.nrg.xnat.eventservice.events.ResourceSavedEvent;
 import org.nrg.xnat.eventservice.events.ScanArchiveEvent;
@@ -144,10 +146,27 @@ public class EventServiceItemSaveAspect {
         }
     }
 
+    @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
+            "&& args(item, user, ..)" +
+            "&& execution(* org.nrg.xft.utils.SaveItemHelper.save(..))")
+    public void triggerOnImageAssessorSave(final JoinPoint joinPoint, XnatImageassessordata item, UserI user) throws Throwable{
+        try {
+            String userLogin = user != null ? user.getLogin() : null;
+            log.debug("triggerOnImageAssessorSave AfterReturning aspect called after " + joinPoint.getSignature().getName() + "." +
+                    "  ItemI type = " + (item != null ? item.getClass().getSimpleName() : "null") +
+                    "  ItemI xsiType = " + (item != null ? item.getXSIType() : "null") +
+                    "  UserI = " + userLogin);
+            eventService.triggerEvent(new ImageAssessorSaveEvent(item, userLogin), item.getProject());
+
+        } catch (Throwable e){
+            log.error("Exception processing triggerOnImageAssessorSave" + e.getMessage());
+            throw e;
+        }
+    }
 
     @AfterReturning(pointcut = "@annotation(org.nrg.xft.utils.EventServiceTrigger) " +
             "&& args(item, user, ..)" +
-            "&& execution(* delete(..))")
+            "&& execution(* org.nrg.xft.utils.SaveItemHelper.delete(..))")
     public void triggerOnItemDelete(final JoinPoint joinPoint, ItemI item, UserI user) throws Throwable{
         try {
 
