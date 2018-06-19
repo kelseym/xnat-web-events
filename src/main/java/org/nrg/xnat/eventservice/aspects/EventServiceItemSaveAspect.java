@@ -20,13 +20,7 @@ import org.nrg.xdat.om.XnatResource;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xft.ItemI;
 import org.nrg.xft.security.UserI;
-import org.nrg.xnat.eventservice.events.ImageAssessorSaveEvent;
-import org.nrg.xnat.eventservice.events.ProjectCreatedEvent;
-import org.nrg.xnat.eventservice.events.ResourceSavedEvent;
-import org.nrg.xnat.eventservice.events.ScanArchiveEvent;
-import org.nrg.xnat.eventservice.events.SessionArchiveEvent;
-import org.nrg.xnat.eventservice.events.SessionUpdateEvent;
-import org.nrg.xnat.eventservice.events.SubjectCreatedEvent;
+import org.nrg.xnat.eventservice.events.*;
 import org.nrg.xnat.eventservice.services.EventService;
 import org.nrg.xnat.eventservice.services.SubjectUpdatedEvent;
 import org.nrg.xnat.eventservice.services.XnatObjectIntrospectionService;
@@ -42,7 +36,7 @@ import java.util.stream.Collectors;
 @Component
 public class EventServiceItemSaveAspect {
 
-    private static final Logger log = LoggerFactory.getLogger(EventServiceTriggerAspect.class);
+    private static final Logger log = LoggerFactory.getLogger(EventServiceItemSaveAspect.class);
     private EventService eventService;
     private XnatObjectIntrospectionService xnatObjectIntrospectionService;
 
@@ -118,24 +112,6 @@ public class EventServiceItemSaveAspect {
                 eventService.triggerEvent(new ResourceSavedEvent((XnatResourcecatalogI) resource, userLogin), project);
             }
 
-
-
-
-            //if ((StringUtils.equals(item.getXSIType(), "xnat:subjectData")
-            //        || StringUtils.containsIgnoreCase(item.getXSIType(), "SessionData")
-            //        || StringUtils.equals(item.getXSIType(), "xnat:projectData")
-            //        || StringUtils.equals(item.getXSIType(), "arc:project")
-            //        || StringUtils.equals(item.getXSIType(), "xnat:experimentData")
-            //        || StringUtils.equals(item.getXSIType(), "xnat:subjectAssessorData")
-            //        || StringUtils.equals(item.getXSIType(), "xnat:resourceCatalog")
-            //        || StringUtils.equals(item.getXSIType(), "xnat:imageAssessorData")
-            //        || StringUtils.equals(item.getXSIType(), "icr:roiCollectionData")
-            //)){
-            //    log.debug("Proceeding with processItemSaveTrigger pointcut on " + item.getXSIType());
-            //Hashtable props = item.getProps();
-            //props.keySet().stream().forEach(k-> log.debug("Key: " + k.toString() + "\n" + props.get(k).toString()));
-
-
         } catch (Throwable e) {
             log.error("Exception in EventServiceItemSaveAspect.processItemSaveTrigger() joinpoint.proceed(): " + joinPoint.toString()
                     + "item: " + item.toString()
@@ -170,13 +146,27 @@ public class EventServiceItemSaveAspect {
     public void triggerOnItemDelete(final JoinPoint joinPoint, ItemI item, UserI user) throws Throwable{
         try {
 
-
             String userLogin = user != null ? user.getLogin() : null;
 
             log.debug("triggerOnItemDelete AfterReturning aspect called after " + joinPoint.getSignature().getName() + "." +
                     "  ItemI type = " + (item != null ? item.getClass().getSimpleName() : "null") +
                     "  ItemI xsiType = " + (item != null ? item.getXSIType() : "null") +
                     "  UserI = " + userLogin);
+
+            if(StringUtils.equals(item.getXSIType(),"xnat:projectData")){
+                XnatProjectdataI project = new XnatProjectdata(item);
+                eventService.triggerEvent(new ProjectDeletedEvent(project, userLogin), project.getId());
+
+            }else if(StringUtils.containsIgnoreCase(item.getXSIType(),"xnat:") &&
+                    StringUtils.containsIgnoreCase(item.getXSIType(),"SessionData")){
+                XnatImagesessiondataI session = new XnatImagesessiondata(item);
+                eventService.triggerEvent(new SessionDeletedEvent(session, userLogin), session.getProject());
+
+            }else if(StringUtils.equals(item.getXSIType(), "xnat:subjectData")){
+                XnatSubjectdataI subject = new XnatSubjectdata(item);
+                eventService.triggerEvent(new SubjectDeletedEvent(subject, userLogin), subject.getProject());
+
+            }
 
         } catch (Throwable e){
             log.error("Exception processing triggerOnItemDelete" + e.getMessage());
