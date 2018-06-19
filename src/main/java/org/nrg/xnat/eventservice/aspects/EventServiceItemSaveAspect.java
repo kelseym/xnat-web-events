@@ -50,11 +50,11 @@ public class EventServiceItemSaveAspect {
     public Object processItemSaveTrigger(final ProceedingJoinPoint joinPoint, ItemI item, UserI user) throws Throwable {
         Object retVal = null;
         try {
-            String userLogin = user.getLogin();
-            if(StringUtils.contains(item.getXSIType(), "xdat:user")){
-                return joinPoint.proceed();
+            String userLogin = user == null ? null : user.getLogin();
+            if(StringUtils.contains(item.getXSIType(), "xnat:user")){
+                retVal = joinPoint.proceed();
 
-            }else if(StringUtils.equals(item.getXSIType(), "arc:project")){
+            } else if(StringUtils.equals(item.getXSIType(), "arc:project")){
                 log.debug("New Project Data Save" + " : xsiType:" + item.getXSIType());
                 XnatProjectdataI project = item instanceof XnatProjectdataI ? (XnatProjectdataI) item : new XnatProjectdata(item);
                 eventService.triggerEvent(new ProjectCreatedEvent(project, userLogin), project.getId());
@@ -63,7 +63,7 @@ public class EventServiceItemSaveAspect {
                 log.debug("Existing Project Data Save" + " : xsiType:" + item.getXSIType());
                 XnatProjectdataI project = item instanceof XnatProjectdataI ? (XnatProjectdataI) item : new XnatProjectdata(item);
 
-            }else if(StringUtils.equals(item.getXSIType(), "xnat:subjectData")){
+            } else if(StringUtils.equals(item.getXSIType(), "xnat:subjectData")){
                 XnatSubjectdataI subject = item instanceof XnatSubjectdataI ? (XnatSubjectdataI) item : new XnatSubjectdata(item);
                 Boolean alreadyStored = xnatObjectIntrospectionService.storedInDatabase(subject);
                 retVal = joinPoint.proceed();
@@ -102,6 +102,7 @@ public class EventServiceItemSaveAspect {
                     eventService.triggerEvent(new SessionUpdateEvent(session, userLogin), session.getProject());
 
                 }
+
             } else if(item instanceof XnatResource || StringUtils.equals(item.getXSIType(), "xnat:resourceCatalog")){
                 log.debug("Resource Data Save" + " : xsiType:" + item.getXSIType());
                 XnatResourceI resource = item instanceof XnatResourceI ? (XnatResourceI) item : new XnatResource(item);
