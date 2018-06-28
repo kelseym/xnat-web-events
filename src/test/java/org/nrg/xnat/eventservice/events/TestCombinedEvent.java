@@ -5,16 +5,20 @@ import org.nrg.xdat.model.XnatImagesessiondataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
+
 @Service
 @XnatEventServiceEvent(name="TestCombinedEvent")
 public class TestCombinedEvent extends CombinedEventServiceEvent<TestCombinedEvent, XnatImagesessiondataI>  {
     final String displayName = "Test Combined Event";
     final String description ="Combined Event tested.";
 
+    public enum Status {CREATED, UPDATED, DELETED};
+
     public TestCombinedEvent(){};
 
-    public TestCombinedEvent(final XnatImagesessiondataI payload, final String eventUser) {
-        super(payload, eventUser);
+    public TestCombinedEvent(final XnatImagesessiondataI payload, final String eventUser, final Status status) {
+        super(payload, eventUser, status);
     }
 
     @Override
@@ -33,6 +37,8 @@ public class TestCombinedEvent extends CombinedEventServiceEvent<TestCombinedEve
         return true;
     }
 
+    @Override
+    public EnumSet getStatiStates() { return EnumSet.allOf(Status.class); }
 
     @Override
     public EventServiceListener getInstance() {

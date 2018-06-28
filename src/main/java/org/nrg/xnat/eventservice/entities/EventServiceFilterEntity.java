@@ -94,9 +94,9 @@ TYPE_REF_MAP_STRING_FILTER_NODE      = new TypeReference<HashMap<String, JsonPat
                                        .id(this.id)
                                        .name(this.name)
                                        .jsonPathFilter(this.jsonPathFilter)
-                 
 
-    
+
+
 
               .build();
         if(!Strings.isNullOrEmpty(this.nodeFilterJson)){

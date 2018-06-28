@@ -29,9 +29,10 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     private Boolean active;
     private String listenerRegistrationKey;
     private String eventType;
+    private String eventStatus;
     private String customListenerId;
     private String actionKey;
-    private String projectId;
+    private List<String> projectIds;
     private Map<String,String> attributes;
     private EventServiceFilterEntity eventServiceFilterEntity;
     private Boolean actAsEventUser;
@@ -39,7 +40,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     private List<SubscriptionDeliveryEntity> subscriptionDeliveryEntities;
 
     public SubscriptionEntity(String name, Boolean active, String listenerRegistrationKey, String eventType,
-                              String customListenerId, String actionKey, String projectId,
+                              String customListenerId, String actionKey, List<String> projectIds,
                               Map<String, String> attributes,
                               EventServiceFilterEntity eventServiceFilterEntity, Boolean actAsEventUser,
                               String subscriptionOwner,
@@ -50,7 +51,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         this.eventType = eventType;
         this.customListenerId = customListenerId;
         this.actionKey = actionKey;
-        this.projectId = projectId;
+        this.projectIds = projectIds;
         this.attributes = attributes;
         this.eventServiceFilterEntity = eventServiceFilterEntity;
         this.actAsEventUser = actAsEventUser;
@@ -67,7 +68,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                 ", eventType='" + eventType + '\'' +
                 ", customListenerId='" + customListenerId + '\'' +
                 ", actionKey='" + actionKey + '\'' +
-                ", project=" + projectId +
+                ", project=" + (projectIds != null && !projectIds.isEmpty() ? projectIds.toString() : "") +
                 ", attributes=" + attributes +
                 ", eventServiceFilterEntity=" + eventServiceFilterEntity +
                 ", actAsEventUser=" + actAsEventUser +
@@ -87,7 +88,7 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                 Objects.equal(eventType, that.eventType) &&
                 Objects.equal(customListenerId, that.customListenerId) &&
                 Objects.equal(actionKey, that.actionKey) &&
-                Objects.equal(projectId, that.projectId) &&
+                Objects.equal(projectIds, that.projectIds) &&
                 Objects.equal(attributes, that.attributes) &&
                 Objects.equal(eventServiceFilterEntity, that.eventServiceFilterEntity) &&
                 Objects.equal(actAsEventUser, that.actAsEventUser) &&
@@ -96,19 +97,22 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), name, active, listenerRegistrationKey, eventType, customListenerId, actionKey, projectId, attributes, eventServiceFilterEntity, actAsEventUser, subscriptionOwner);
+        return Objects.hashCode(super.hashCode(), name, active, listenerRegistrationKey, eventType, customListenerId, actionKey, projectIds, attributes, eventServiceFilterEntity, actAsEventUser, subscriptionOwner);
     }
 
     @Transactional
     @Nonnull
     public SubscriptionEntity update(@Nonnull final Subscription subscription) throws SubscriptionValidationException {
-        if(subscription.projectId() != null && !subscription.projectId().equals(this.projectId)){
+        if(subscription.projectIds() != null && !subscription.projectIds().equals(this.projectIds)){
             throw new SubscriptionValidationException("Subscription Project ID cannot be changed.");
         }
         if(subscription.eventId() != null && !subscription.eventId().equals(this.eventType)){
             throw new SubscriptionValidationException("Subscription Event ID cannot be changed.");
         }
         if(subscription.actionKey() != null && !subscription.actionKey().equals(this.actionKey)){
+            throw new SubscriptionValidationException("Subscription Action cannot be changed.");
+        }
+        if(subscription.eventStatus() != null && !subscription.actionKey().equals(this.actionKey)){
             throw new SubscriptionValidationException("Subscription Action cannot be changed.");
         }
 
@@ -132,6 +136,10 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
 
     public void setEventType(String eventType) { this.eventType = eventType; }
 
+    public String getEventStatus() { return eventStatus; }
+
+    public void setEventStatus(String eventStatus) { this.eventStatus = eventStatus; }
+
     public String getCustomListenerId() {return this.customListenerId;}
 
     public void setCustomListenerId(String customListenerId) {this.customListenerId = customListenerId;}
@@ -143,12 +151,13 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
     @ElementCollection(fetch = FetchType.EAGER)
     public Map<String, String> getAttributes() { return attributes; }
 
-    public String getProjectId() {
-        return projectId;
+    @ElementCollection
+    public List<String> getProjectIds() {
+        return projectIds;
     }
 
-    public void setProjectId(String projectId) {
-        this.projectId = projectId;
+    public void setProjectIds(List<String> projectIds) {
+        this.projectIds = projectIds;
     }
 
     public void setAttributes(Map<String, String> attributes) {
@@ -190,9 +199,10 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
         template.active = subscription.active() != null ? subscription.active() : (template.active == null ? true : template.active);
         template.listenerRegistrationKey = subscription.listenerRegistrationKey() != null ? subscription.listenerRegistrationKey() : template.listenerRegistrationKey;
         template.eventType = subscription.eventId() != null ? subscription.eventId() : template.eventType;
+        template.eventStatus = subscription.eventStatus() != null ? subscription.eventStatus() : template.eventStatus;
         template.customListenerId = subscription.customListenerId() != null ? subscription.customListenerId() : template.customListenerId;
         template.actionKey = subscription.actionKey() != null ? subscription.actionKey() :template.actionKey;
-        template.projectId = subscription.projectId() != null ? subscription.projectId() : template.projectId;
+        template.projectIds = subscription.projectIds() != null ? subscription.projectIds() : template.projectIds;
         template.attributes = subscription.attributes() != null ? subscription.attributes() : template.attributes;
         template.eventServiceFilterEntity = subscription.eventFilter() != null ? EventServiceFilterEntity.fromPojo(subscription.eventFilter()) : template.eventServiceFilterEntity;
         template.actAsEventUser = subscription.actAsEventUser() != null ? subscription.actAsEventUser() : template.actAsEventUser;
@@ -208,9 +218,10 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                            .active(this.active)
                            .listenerRegistrationKey(this.listenerRegistrationKey)
                            .eventId(this.eventType)
+                           .eventStatus(this.eventStatus)
                            .customListenerId(this.customListenerId)
                            .actionKey(this.actionKey)
-                           .projectId(this.projectId)
+                           .projectIds(this.projectIds)
                            .attributes(this.attributes)
                            .eventFilter(this.eventServiceFilterEntity != null ? this.eventServiceFilterEntity.toPojo() : null)
                            .actAsEventUser(this.actAsEventUser)

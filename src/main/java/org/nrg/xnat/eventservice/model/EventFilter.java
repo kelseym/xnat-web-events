@@ -37,7 +37,7 @@ public abstract class EventFilter {
 
     }
 
-    public abstract EventFilter.Builder toBuilder(); 
+    public abstract Builder toBuilder();
     public void populateJsonPathFilter() {
         // TODO: construct JSONPath filter from nodeFilters
     }

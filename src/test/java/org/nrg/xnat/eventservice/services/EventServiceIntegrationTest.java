@@ -109,7 +109,7 @@ public class EventServiceIntegrationTest {
                                                          .name("TestSubscription")
                                                          .active(true)
                                                          .projectId("PROJECTID-1")
-                                                         .eventId("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
+                                                         .eventId("org.nrg.xnat.eventservice.events.ProjectEvent")
                                                          .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                          .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
                                                          .eventFilter(eventServiceFilter)
@@ -120,7 +120,7 @@ public class EventServiceIntegrationTest {
                                                         .name("TestSubscription2")
                                                         .active(true)
                                                         .projectId("PROJECTID-2")
-                                                        .eventId("org.nrg.xnat.eventservice.events.ProjectCreatedEvent")
+                                                        .eventId("org.nrg.xnat.eventservice.events.ProjectEvent")
                                                         .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                         .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
                                                         .eventFilter(eventServiceFilter)
@@ -523,7 +523,7 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-1");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin());
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED);
 
         eventService.triggerEvent(combinedEvent, "PROJECTID-1");
 
@@ -549,7 +549,7 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-2");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin());
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED);
 
         eventService.triggerEvent(combinedEvent, "PROJECTID-2");
 
@@ -601,7 +601,7 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-1");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin());
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED);
         eventService.triggerEvent(combinedEvent, session.getProject());
 
         // wait for async action (max 1 sec.)
@@ -633,7 +633,7 @@ public class EventServiceIntegrationTest {
                                                                      .name("Test Subscription")
                                                                      .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventId(new SubjectCreatedEvent().getId())
+                                                                     .eventId(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -642,7 +642,7 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
         // Trigger Subject Created Event
-        eventService.triggerEvent(new SubjectCreatedEvent(subject, mockUser.getLogin()), projectId1);
+        eventService.triggerEvent(new SubjectEvent(subject, mockUser.getLogin(), SubjectEvent.Status.CREATED), projectId1);
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
@@ -650,7 +650,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SubjectCreated", action.getDetectedEvents().get(0).getId(), containsString("SubjectCreatedEvent"));
+        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getId(), containsString("SubjectEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -671,7 +671,7 @@ public class EventServiceIntegrationTest {
                                                                      .name("Test Subscription")
                                                                      .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventId(new SubjectCreatedEvent().getId())
+                                                                     .eventId(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -680,7 +680,7 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
         // Trigger Subject Created Event
-        eventService.triggerEvent(new SubjectCreatedEvent(subject, mockUser.getLogin()), projectId1);
+        eventService.triggerEvent(new SubjectEvent(subject, mockUser.getLogin(), SubjectEvent.Status.CREATED), projectId1);
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
@@ -688,7 +688,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SubjectCreated", action.getDetectedEvents().get(0).getId(), containsString("SubjectCreatedEvent"));
+        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getId(), containsString("SubjectEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
 
     }
@@ -711,7 +711,7 @@ public class EventServiceIntegrationTest {
                                                                      .name("Test Subscription")
                                                                      .projectId(projectId2)
                                                                      .active(true)
-                                                                     .eventId(new SubjectCreatedEvent().getId())
+                                                                     .eventId(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -720,7 +720,7 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
         // Trigger Subject Created Event
-        eventService.triggerEvent(new SubjectCreatedEvent(subject, mockUser.getLogin()), projectId1);
+        eventService.triggerEvent(new SubjectEvent(subject, mockUser.getLogin(), SubjectEvent.Status.CREATED), projectId1);
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
@@ -747,7 +747,7 @@ public class EventServiceIntegrationTest {
                                                                      .name("Test Subscription")
                                                                      .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventId(new SessionArchiveEvent().getId())
+                                                                     .eventId(new SessionEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -755,8 +755,8 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed validation.",eventService.validateSubscription(subscription), notNullValue());
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
-        // Trigger SessionArchiveEvent
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId1);
+        // Trigger SessionEvent
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId1);
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
@@ -764,7 +764,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -788,7 +788,7 @@ public class EventServiceIntegrationTest {
                                                                      .name("Test Subscription")
                                                                      .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventId(new ScanArchiveEvent().getId())
+                                                                     .eventId(new ScanEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -797,7 +797,7 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
         // Trigger ScanArchiveEvent
-        eventService.triggerEvent(new ScanArchiveEvent(scan, mockUser.getLogin()), projectId1);
+        eventService.triggerEvent(new ScanEvent(scan, mockUser.getLogin(), ScanEvent.Status.CREATED), projectId1);
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
@@ -805,7 +805,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type ScanArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("ScanArchiveEvent"));
+        assertThat("Expected detected event to be of type ScanEvent", action.getDetectedEvents().get(0).getId(), containsString("ScanEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -830,7 +830,7 @@ public class EventServiceIntegrationTest {
         session.setModality("MR");
         session.setProject(projectId);
         session.setSessionType("xnat:imageSessionData");
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId);
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId);
 
         StopWatch sw2 = new StopWatch();
         sw2.start("eventTriggerToAction");
@@ -840,7 +840,7 @@ public class EventServiceIntegrationTest {
         sw2.stop();
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
         System.out.print("Event caught in : " + sw2.getTotalTimeSeconds() + "seconds\n");
 
@@ -867,9 +867,9 @@ public class EventServiceIntegrationTest {
         session.setModality("MR");
         session.setProject(projectId);
         session.setSessionType("xnat:imageSessionData");
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId + "500");
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(),SessionEvent.Status.CREATED), projectId + "500");
 
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId + "600");
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId + "600");
 
         StopWatch sw2 = new StopWatch();
         sw2.start("eventTriggerToAction");
@@ -879,8 +879,8 @@ public class EventServiceIntegrationTest {
         sw2.stop();
         TestAction action = (TestAction) testAction;
         assertThat("Expected two detected events.", action.getDetectedEvents().size(), is(2));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(1).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(1).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
         System.out.print("Two event caught in : " + sw2.getTotalTimeSeconds() + "seconds\n");
 
@@ -922,7 +922,7 @@ public class EventServiceIntegrationTest {
         StopWatch sw2 = new StopWatch();
         sw2.start("eventTriggersToActions");
         for(Integer i=0; i<10000; i++){
-            eventService.triggerEvent(new SessionArchiveEvent(sessionToIgnore, mockUser.getLogin()));
+            eventService.triggerEvent(new SessionEvent(sessionToIgnore, mockUser.getLogin(), SessionEvent.Status.CREATED));
         }
         sw2.stop();
         System.out.print("Triggered 10000 ignored events in : " + sw2.getTotalTimeSeconds() + "seconds\n");
@@ -930,7 +930,7 @@ public class EventServiceIntegrationTest {
         StopWatch sw3 = new StopWatch();
         sw3.start("eventTriggersToActions");
         for(Integer i=0; i<100; i++){
-            eventService.triggerEvent(new SessionArchiveEvent(sessionToCatch, mockUser.getLogin()), projectIdToCatch);
+            eventService.triggerEvent(new SessionEvent(sessionToCatch, mockUser.getLogin(), SessionEvent.Status.CREATED), projectIdToCatch);
         }
         synchronized (testAction) {
             testAction.wait(100);
@@ -967,7 +967,7 @@ public class EventServiceIntegrationTest {
         // time reaction to 1000 disabled subscriptions and 1 enabled
         StopWatch sw3 = new StopWatch();
         sw3.start("disabledEventTriggersToActions");
-        eventService.triggerEvent(new SessionArchiveEvent(sessionToCatch, mockUser.getLogin()), projectIdToCatch);
+        eventService.triggerEvent(new SessionEvent(sessionToCatch, mockUser.getLogin(), SessionEvent.Status.CREATED), projectIdToCatch);
 
         synchronized (testAction) {
             testAction.wait(100);
@@ -993,7 +993,7 @@ public class EventServiceIntegrationTest {
         StopWatch sw3 = new StopWatch();
         sw3.start("eventTriggersToActions");
         for(Integer i=0; i<10; i++){
-            eventService.triggerEvent(new SessionArchiveEvent(sessionToCatch, mockUser.getLogin()), projectIdToCatch);
+            eventService.triggerEvent(new SessionEvent(sessionToCatch, mockUser.getLogin(), SessionEvent.Status.CREATED), projectIdToCatch);
         }
         synchronized (testAction) {
             testAction.wait(100);
@@ -1040,7 +1040,7 @@ public class EventServiceIntegrationTest {
         session.setProject(projectId);
         session.setSessionType("xnat:imageSessionData");
 
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId);
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId);
 
         synchronized (testAction) {
             testAction.wait(100);
@@ -1048,7 +1048,7 @@ public class EventServiceIntegrationTest {
 
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1081,7 +1081,7 @@ public class EventServiceIntegrationTest {
         session.setProject(projectId);
         session.setSessionType("xnat:imageSessionData");
 
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId);
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId);
 
         synchronized (testAction) {
             testAction.wait(100);
@@ -1089,7 +1089,7 @@ public class EventServiceIntegrationTest {
 
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1122,7 +1122,7 @@ public class EventServiceIntegrationTest {
         session.setProject(projectId);
         session.setSessionType("xnat:imageSessionData");
 
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId);
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId);
 
         synchronized (testAction) {
             testAction.wait(100);
@@ -1133,14 +1133,14 @@ public class EventServiceIntegrationTest {
 
         eventService.activateSubscription(subscriptionToCatch.id());
 
-        eventService.triggerEvent(new SessionArchiveEvent(session, mockUser.getLogin()), projectId);
+        eventService.triggerEvent(new SessionEvent(session, mockUser.getLogin(), SessionEvent.Status.CREATED), projectId);
 
         synchronized (testAction) {
             testAction.wait(100);
         }
 
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionArchiveEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionArchiveEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1152,7 +1152,7 @@ public class EventServiceIntegrationTest {
                                                                      .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(null)
-                                                                     .eventId(new SessionArchiveEvent().getId())
+                                                                     .eventId(new SessionEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1169,7 +1169,7 @@ public class EventServiceIntegrationTest {
                                                                      .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(null)
-                                                                     .eventId(new ScanArchiveEvent().getId())
+                                                                     .eventId(new ScanEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1187,7 +1187,7 @@ public class EventServiceIntegrationTest {
                                                                      .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(filter)
-                                                                     .eventId(new ProjectCreatedEvent().getId())
+                                                                     .eventId(new ProjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1204,7 +1204,7 @@ public class EventServiceIntegrationTest {
                                                                      .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(null)
-                                                                     .eventId(new SubjectCreatedEvent().getId())
+                                                                     .eventId(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();

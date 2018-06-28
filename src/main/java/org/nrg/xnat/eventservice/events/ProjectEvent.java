@@ -5,16 +5,21 @@ import org.nrg.xdat.model.XnatProjectdataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
+
 @Service
-@XnatEventServiceEvent(name="ProjectCreatedEvent")
-public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreatedEvent, XnatProjectdataI>  {
-    final String displayName = "Project Created";
-    final String description ="New project created.";
+@XnatEventServiceEvent(name="ProjectEvent")
+public class ProjectEvent extends CombinedEventServiceEvent<ProjectEvent, XnatProjectdataI>  {
 
-    public ProjectCreatedEvent(){};
+    public enum Status {CREATED, DELETED};
 
-    public ProjectCreatedEvent(final XnatProjectdataI payload, final String eventUser) {
-        super(payload, eventUser);
+    final String displayName = "Project Status Change";
+    final String description = "Project created or deleted.";
+
+    public ProjectEvent(){};
+
+    public ProjectEvent(final XnatProjectdataI payload, final String eventUser, final Status status) {
+        super(payload, eventUser, status);
     }
 
     @Override
@@ -33,10 +38,12 @@ public class ProjectCreatedEvent extends CombinedEventServiceEvent<ProjectCreate
         return true;
     }
 
+    @Override
+    public EnumSet getStatiStates() { return EnumSet.allOf(SessionEvent.Status.class); }
 
     @Override
     public EventServiceListener getInstance() {
-        return new ProjectCreatedEvent();
+        return new ProjectEvent();
     }
 
 }

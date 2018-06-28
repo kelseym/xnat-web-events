@@ -21,6 +21,7 @@ public abstract class ProjectSubscriptionCreator {
     @JsonProperty("project-id") public abstract String projectId();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @JsonProperty("event-id") public abstract String eventId();
+    @Nullable @JsonProperty("event-status") public abstract String eventStatus();
     @Nullable @JsonIgnore public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
@@ -37,6 +38,7 @@ public abstract class ProjectSubscriptionCreator {
                                                     @JsonProperty("project-id")  String projectId,
                                                     @JsonProperty("active") final Boolean active,
                                                     @Nonnull @JsonProperty("event-id") final String eventId,
+                                                    @Nullable @JsonProperty("event-status") final String eventStatus,
                                                     @Nullable @JsonProperty("custom-listener-id") final String customListenerId,
                                                     @Nonnull @JsonProperty("action-key") final String actionKey,
                                                     @JsonProperty("attributes") final Map<String, String> attributes,
@@ -47,6 +49,7 @@ public abstract class ProjectSubscriptionCreator {
                 .projectId(projectId)
                 .active(active)
                 .eventId(eventId)
+                .eventStatus(eventStatus)
                 .customListenerId(customListenerId)
                 .actionKey(actionKey)
                 .attributes(attributes==null ? Collections.<String, String>emptyMap() : attributes)
@@ -67,6 +70,8 @@ public abstract class ProjectSubscriptionCreator {
         public abstract Builder active(Boolean active);
 
         public abstract Builder eventId(String eventId);
+
+        public abstract Builder eventStatus(String eventStatus);
 
         public abstract Builder customListenerId(String customListenerId);
 

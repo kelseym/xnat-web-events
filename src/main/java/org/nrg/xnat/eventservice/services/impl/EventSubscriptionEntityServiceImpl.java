@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.jayway.jsonpath.JsonPath;
+import org.apache.commons.lang.StringUtils;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.exceptions.NrgServiceRuntimeException;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
@@ -142,7 +143,7 @@ public class EventSubscriptionEntityServiceImpl
                 log.error("Could not load Action Provider for key:" + subscription.actionKey());
                 throw new SubscriptionValidationException("Could not load Action Provider for key:" + subscription.actionKey());
             }
-            if (!actionManager.validateAction(subscription.actionKey(), subscription.projectId(), null, actionUser)) {
+            if (!actionManager.validateAction(subscription.actionKey(), subscription.projectIds(), null, actionUser)) {
                 log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + "for user:" + actionUser.getLogin());
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
@@ -171,9 +172,9 @@ public class EventSubscriptionEntityServiceImpl
                 uniqueListener.setEventService(eventService);
                 String eventFilterRegexMatcher;
                 if(subscription.eventFilter() == null){
-                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), subscription.projectId());
+                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
                 } else {
-                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), subscription.projectId());
+                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
                 }
                 Selector selector = R(eventFilterRegexMatcher);
                 log.debug("Building Reactor RegEx Selector on matcher: " + eventFilterRegexMatcher);
@@ -305,9 +306,10 @@ public class EventSubscriptionEntityServiceImpl
         List<Subscription> subscriptions = new ArrayList<>();
         for (SubscriptionEntity se : super.getAll()) {
             try {
-                if((!Strings.isNullOrEmpty(projectId) && projectId.contentEquals(se.getProjectId())) ||
-                        (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(se.getProjectId()))){
-                       subscriptions.add(getSubscription(se.getId()));
+                if(!Strings.isNullOrEmpty(projectId) && se.getProjectIds() != null && se.getProjectIds().contains(projectId)){
+                   subscriptions.add(getSubscription(se.getId()));
+                } else if(Strings.isNullOrEmpty(projectId) && (se.getProjectIds() == null || se.getProjectIds().isEmpty())){
+                    subscriptions.add(getSubscription(se.getId()));
                 }
             } catch (NotFoundException e) {
                 log.error("Could not find subscription for ID: " + Long.toString(se.getId()) + "\n" + e.getMessage());
@@ -354,10 +356,12 @@ public class EventSubscriptionEntityServiceImpl
             String actionName = actionManager.getActionByKey(subscription.actionKey(), actionUser) != null ?
                     actionManager.getActionByKey(subscription.actionKey(), actionUser).displayName() : "Action";
             String eventName = componentManager.getEvent(subscription.eventId()).getDisplayName();
-            String forProject = Strings.isNullOrEmpty(subscription.projectId()) ? "Site" : subscription.projectId();
+            String status = subscription.eventStatus();
+            String forProject = subscription.projectIds() == null || subscription.projectIds().isEmpty() ? "Site" : StringUtils.join(subscription.projectIds(), ',');
             uniqueName += Strings.isNullOrEmpty(actionName) ? "Action" : actionName;
             uniqueName += " on ";
             uniqueName += Strings.isNullOrEmpty(eventName) ? "Event" : eventName;
+            uniqueName += " " + status;
             uniqueName += " for ";
             uniqueName += forProject;
 

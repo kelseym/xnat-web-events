@@ -6,26 +6,29 @@ import org.nrg.xdat.model.XnatImagesessiondataI;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
+
 @Service
-@XnatEventServiceEvent(name="SessionUpdateEvent")
-public class SessionUpdateEvent extends CombinedEventServiceEvent<SessionUpdateEvent, XnatImagesessiondataI> {
+@XnatEventServiceEvent(name="SessionEvent")
+public class SessionEvent extends CombinedEventServiceEvent<SessionEvent, XnatImagesessiondataI> {
 
+    public enum Status {CREATED, UPDATED, DELETED};
 
-    public SessionUpdateEvent(){};
+    public SessionEvent(){};
 
-    public SessionUpdateEvent(XnatImagesessiondataI payload, String eventUser) {
-        super(payload, eventUser);
+    public SessionEvent(final XnatImagesessiondataI payload, final String eventUser, final Status status) {
+        super(payload, eventUser, status);
     }
 
 
     @Override
     public String getDisplayName() {
-        return "Session Updated";
+        return "Session Status Change";
     }
 
     @Override
     public String getDescription() {
-        return "Session Update Event";
+        return "Session created, updated, or deleted.";
     }
 
     @Override
@@ -39,7 +42,10 @@ public class SessionUpdateEvent extends CombinedEventServiceEvent<SessionUpdateE
     }
 
     @Override
+    public EnumSet getStatiStates() { return EnumSet.allOf(Status.class); }
+
+    @Override
     public EventServiceListener getInstance() {
-        return new SessionUpdateEvent();
+        return new SessionEvent();
     }
 }

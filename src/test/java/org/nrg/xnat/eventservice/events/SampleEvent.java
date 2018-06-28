@@ -4,23 +4,27 @@ import com.google.common.reflect.TypeToken;
 import org.nrg.framework.event.XnatEventServiceEvent;
 
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.UUID;
 
 @XnatEventServiceEvent(name = "SomethingHappenedEvent")
 public class SampleEvent implements EventServiceEvent {
 
+    private Status status;
     private Class object;
     private String eventUser;
     Date eventDetectedTimestamp = new Date();
     UUID eventUUID = UUID.randomUUID();
+    public enum Status {CREATED, UPDATED, DELETED};
 
     private final TypeToken<String> typeToken = new TypeToken<String>(getClass()) { };
 
     public SampleEvent(){};
 
-    public SampleEvent(final Class object, final String eventUser){
+    public SampleEvent(final Class object, final String eventUser, final Status status){
         this.object = object;
         this.eventUser = eventUser;
+        this.status = status;
     }
 
     @Override
@@ -69,5 +73,13 @@ public class SampleEvent implements EventServiceEvent {
     @Override
     public UUID getEventUUID() {
         return eventUUID;
+    }
+
+    @Override
+    public EnumSet getStatiStates() { return EnumSet.allOf(SessionEvent.Status.class); }
+
+    @Override
+    public Enum getCurrentStatus() {
+        return status;
     }
 }

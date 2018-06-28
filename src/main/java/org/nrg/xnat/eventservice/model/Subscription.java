@@ -8,6 +8,8 @@ import com.google.auto.value.AutoValue;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.Null;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -17,10 +19,11 @@ public abstract class Subscription {
 
     @Nullable @JsonProperty("id") public abstract Long id();
     @JsonProperty("name") public abstract String name();
-    @Nullable @JsonProperty("project-id") public abstract String projectId();
+    @Nullable @JsonProperty("project-ids") public abstract List<String> projectIds();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();
     @JsonProperty("event-id") public abstract String eventId();
+    @Nullable @JsonProperty("event-status") public abstract String eventStatus();
     @JsonIgnore @Nullable public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
@@ -52,6 +55,7 @@ public abstract class Subscription {
                                       @JsonProperty("active") final Boolean active,
                                       @JsonProperty("registration-key") final String listenerRegistrationKey,
                                       @JsonProperty("event-id") final String eventId,
+                                      @Nullable @JsonProperty("event-status") final String eventStatus,
                                       @Nullable @JsonProperty("custom-listener-id") String customListenerId,
                                       @JsonProperty("action-key") final String actionKey,
                                       @JsonProperty("attributes") final Map<String, String> attributes,
@@ -61,10 +65,11 @@ public abstract class Subscription {
         return builder()
                 .id(id)
                 .name(name)
-                .projectId(projectId)
+                .projectIds(Arrays.asList(projectId))
                 .active(active)
                 .listenerRegistrationKey(listenerRegistrationKey)
                 .eventId(eventId)
+                .eventStatus(eventStatus)
                 .customListenerId(customListenerId)
                 .actionKey(actionKey)
                 .attributes(attributes)
@@ -78,9 +83,10 @@ public abstract class Subscription {
     public static Subscription create(final SubscriptionCreator creator) {
         return builder()
                 .name(creator.name())
-                .projectId(creator.projectId())
+                .projectIds(Arrays.asList(creator.projectId()))
                 .active(creator.active())
                 .eventId(creator.eventId())
+                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
@@ -92,9 +98,10 @@ public abstract class Subscription {
     public static Subscription create(final SubscriptionCreator creator, final String subscriptionOwner) {
         return builder()
                 .name(creator.name())
-                .projectId(creator.projectId())
+                .projectIds(Arrays.asList(creator.projectId()))
                 .active(creator.active())
                 .eventId(creator.eventId())
+                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
@@ -108,9 +115,10 @@ public abstract class Subscription {
     public static Subscription createOnProject(final ProjectSubscriptionCreator creator, final String subscriptionOwner, final String project) {
         return builder()
                 .name(creator.name())
-                .projectId(project)
+                .projectIds(Arrays.asList(project))
                 .active(creator.active())
                 .eventId(creator.eventId())
+                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
@@ -126,13 +134,15 @@ public abstract class Subscription {
 
         public abstract Builder name(String name);
 
-        public abstract Builder projectId(String projectId);
+        public abstract Builder projectIds(List<String> projectIds);
 
         public abstract Builder listenerRegistrationKey(String listenerRegistrationKey);
 
         public abstract Builder active(Boolean active);
 
         public abstract Builder eventId(String eventId);
+
+        public abstract Builder eventStatus(String eventStatus);
 
         public abstract Builder customListenerId(String listenerId);
 
