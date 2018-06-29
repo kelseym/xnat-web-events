@@ -18,8 +18,8 @@ public class ProjectEvent extends CombinedEventServiceEvent<ProjectEvent, XnatPr
 
     public ProjectEvent(){};
 
-    public ProjectEvent(final XnatProjectdataI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public ProjectEvent(final XnatProjectdataI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
     @Override

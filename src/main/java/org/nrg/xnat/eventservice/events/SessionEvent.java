@@ -16,8 +16,8 @@ public class SessionEvent extends CombinedEventServiceEvent<SessionEvent, XnatIm
 
     public SessionEvent(){};
 
-    public SessionEvent(final XnatImagesessiondataI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public SessionEvent(final XnatImagesessiondataI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
 

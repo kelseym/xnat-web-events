@@ -15,8 +15,8 @@ public class ImageAssessorEvent extends CombinedEventServiceEvent<SessionEvent, 
 
     public ImageAssessorEvent(){};
 
-    public ImageAssessorEvent(final XnatImageassessordataI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public ImageAssessorEvent(final XnatImageassessordataI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
     @Override

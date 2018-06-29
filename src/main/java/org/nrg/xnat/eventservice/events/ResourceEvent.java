@@ -18,8 +18,8 @@ public class ResourceEvent extends CombinedEventServiceEvent<ResourceEvent, Xnat
 
     public ResourceEvent(){};
 
-    public ResourceEvent(final XnatResourcecatalogI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public ResourceEvent(final XnatResourcecatalogI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
     @Override

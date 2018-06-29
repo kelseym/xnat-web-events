@@ -169,13 +169,13 @@ public class EventServiceEmailAction extends SingleActionProvider {
                 .splitToList(inputValues.get(BCC_KEY) != null ? inputValues.get(BCC_KEY) : "");
 
 
-        if(!areRecipientsAllowed(toUsersList, subscription.projectIds(), user)){
+        if(!areRecipientsAllowed(toUsersList, event.getProjectId(), user)){
             failWithMessage(deliveryId, "TO: Recipients are not allowed for User: " + user.getLogin());
             return;
-        }else if(!ccUsersList.isEmpty() && !areRecipientsAllowed(ccUsersList, subscription.projectIds(), user)){
+        }else if(!ccUsersList.isEmpty() && !areRecipientsAllowed(ccUsersList, event.getProjectId(), user)){
             failWithMessage(deliveryId, "CC: Recipients are not allowed for User: " + user.getLogin());
             return;
-        }else if(!bccUsersList.isEmpty() && !areRecipientsAllowed(bccUsersList, subscription.projectIds(), user)){
+        }else if(!bccUsersList.isEmpty() && !areRecipientsAllowed(bccUsersList, event.getProjectId(), user)){
             failWithMessage(deliveryId, "BCC: Recipients are not allowed for User: " + user.getLogin());
             return;
         }
@@ -284,10 +284,10 @@ public class EventServiceEmailAction extends SingleActionProvider {
         return jdbcTemplate.query(QUERY, USER_ROW_MAPPER);
     }
 
-    private Boolean areRecipientsAllowed(List<String> recipientUserNames, List<String> projectIDs, UserI actionUser) {
+    private Boolean areRecipientsAllowed(List<String> recipientUserNames, String projectID, UserI actionUser) {
         if (isUserAdmin(actionUser)) { return true;}
-        else if((!Strings.isNullOrEmpty(projectIDs) && isUserOwner(actionUser, projectIDs))){
-            return getAllowedRecipients(projectIDs)
+        else if((!Strings.isNullOrEmpty(projectID) && isUserOwner(actionUser, projectID))){
+            return getAllowedRecipients(projectID)
                     .stream().map(usr -> usr.getUsername())
                     .collect(Collectors.toList())
                     .containsAll(recipientUserNames);

@@ -57,7 +57,7 @@ public class EventServiceItemSaveAspect {
             } else if(StringUtils.equals(item.getXSIType(), "arc:project")){
                 log.debug("New Project Data Save" + " : xsiType:" + item.getXSIType());
                 XnatProjectdataI project = item instanceof XnatProjectdataI ? (XnatProjectdataI) item : new XnatProjectdata(item);
-                eventService.triggerEvent(new ProjectEvent(project, userLogin, ProjectEvent.Status.CREATED), project.getId());
+                eventService.triggerEvent(new ProjectEvent(project, userLogin, ProjectEvent.Status.CREATED, project.getId()));
 
             } else if(StringUtils.equals(item.getXSIType(), "xnat:projectData")){
                 log.debug("Existing Project Data Save" + " : xsiType:" + item.getXSIType());
@@ -69,10 +69,10 @@ public class EventServiceItemSaveAspect {
                 retVal = joinPoint.proceed();
                 if(!alreadyStored && xnatObjectIntrospectionService.storedInDatabase(subject)){
                     log.debug("New Subject Data Save" + " : xsiType:" + item.getXSIType());
-                    eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.CREATED), subject.getProject());
+                    eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.CREATED, subject.getProject()));
                 } else{
                     log.debug("Existing Subject Data Save" + " : xsiType:" + item.getXSIType());
-                    eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.UPDATED), subject.getProject());
+                    eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.UPDATED, subject.getProject()));
 
                 }
 
@@ -84,10 +84,10 @@ public class EventServiceItemSaveAspect {
                 if (!alreadyStored) {
                     log.debug("New Session Data Save" + " : xsiType:" + item.getXSIType());
                     retVal = joinPoint.proceed();
-                    eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.CREATED), session.getProject());
+                    eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.CREATED, session.getProject()));
                     List<XnatImagescandataI> scans = session.getScans_scan();
                     if (scans != null && !scans.isEmpty()) {
-                        scans.forEach(sc -> eventService.triggerEvent(new ScanEvent(sc, userLogin, ScanEvent.Status.CREATED), session.getProject()));
+                        scans.forEach(sc -> eventService.triggerEvent(new ScanEvent(sc, userLogin, ScanEvent.Status.CREATED, session.getProject())));
                     }
                 } else {
                     log.debug("Existing Session Data Save" + " : xsiType:" + item.getXSIType());
@@ -97,9 +97,9 @@ public class EventServiceItemSaveAspect {
                     if (postScanIds.size() > preScanIds.size()) {
                         postScanIds.removeAll(preScanIds);
                         List<XnatImagescandataI> newScans = session.getScans_scan().stream().filter(scn -> postScanIds.contains(scn.getId())).collect(Collectors.toList());
-                        newScans.forEach(sc -> eventService.triggerEvent(new ScanEvent(sc, userLogin, ScanEvent.Status.CREATED), session.getProject()));
+                        newScans.forEach(sc -> eventService.triggerEvent(new ScanEvent(sc, userLogin, ScanEvent.Status.CREATED, session.getProject())));
                     }
-                    eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.UPDATED), session.getProject());
+                    eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.UPDATED, session.getProject()));
 
                 }
 
@@ -110,7 +110,7 @@ public class EventServiceItemSaveAspect {
                 if((project == null || project.isEmpty() && item.getParent() != null)) {
                     project = (String)(item.getParent().getProperty("project"));
                 }
-                eventService.triggerEvent(new ResourceEvent((XnatResourcecatalogI) resource, userLogin, ResourceEvent.Status.CREATED), project);
+                eventService.triggerEvent(new ResourceEvent((XnatResourcecatalogI) resource, userLogin, ResourceEvent.Status.CREATED, project));
             }
 
         } catch (Throwable e) {
@@ -133,7 +133,7 @@ public class EventServiceItemSaveAspect {
                     "  ItemI type = " + (item != null ? item.getClass().getSimpleName() : "null") +
                     "  ItemI xsiType = " + (item != null ? item.getXSIType() : "null") +
                     "  UserI = " + userLogin);
-            eventService.triggerEvent(new ImageAssessorEvent(item, userLogin, ImageAssessorEvent.Status.CREATED), item.getProject());
+            eventService.triggerEvent(new ImageAssessorEvent(item, userLogin, ImageAssessorEvent.Status.CREATED, item.getProject()));
 
         } catch (Throwable e){
             log.error("Exception processing triggerOnImageAssessorSave" + e.getMessage());
@@ -156,16 +156,16 @@ public class EventServiceItemSaveAspect {
 
             if(StringUtils.equals(item.getXSIType(),"xnat:projectData")){
                 XnatProjectdataI project = new XnatProjectdata(item);
-                eventService.triggerEvent(new ProjectEvent(project, userLogin, ProjectEvent.Status.DELETED), project.getId());
+                eventService.triggerEvent(new ProjectEvent(project, userLogin, ProjectEvent.Status.DELETED, project.getId()));
 
             }else if(StringUtils.containsIgnoreCase(item.getXSIType(),"xnat:") &&
                     StringUtils.containsIgnoreCase(item.getXSIType(),"SessionData")){
                 XnatImagesessiondataI session = new XnatImagesessiondata(item);
-                eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.DELETED), session.getProject());
+                eventService.triggerEvent(new SessionEvent(session, userLogin, SessionEvent.Status.DELETED, session.getProject()));
 
             }else if(StringUtils.equals(item.getXSIType(), "xnat:subjectData")){
                 XnatSubjectdataI subject = new XnatSubjectdata(item);
-                eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.DELETED), subject.getProject());
+                eventService.triggerEvent(new SubjectEvent(subject, userLogin, SubjectEvent.Status.DELETED, subject.getProject()));
 
             }
 

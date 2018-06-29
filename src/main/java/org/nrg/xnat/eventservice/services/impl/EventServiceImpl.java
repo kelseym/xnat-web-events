@@ -306,11 +306,21 @@ public class EventServiceImpl implements EventService {
     @Async
     @Override
     public void triggerEvent(EventServiceEvent event, String projectId) {
-        // Manually build event label
-        EventFilter filter = EventFilter.builder().build();
-        String regexKey = filter.toRegexKey(event.getClass().getName(), projectId);
-        eventBus.notify(regexKey, Event.wrap(event));
-        log.debug("Fired EventService Event for Label: " + regexKey);
+        try {
+            // Manually build event label
+            EventFilter filter = EventFilter.builder().build();
+            //String eventKey = filter.toRegexKey(event.getClass().getName(), projectId);
+            EventSignature eventSignature = EventSignature.builder()
+                    .eventId(event.getId())
+                    .projectIds(Arrays.asList(projectId))
+                    .status(event.getCurrentStatus().name())
+                    .build();
+            String eventKey = mapper.writeValueAsString(eventSignature);
+            eventBus.notify(eventKey, Event.wrap(event));
+            log.debug("Fired EventService Event for Label: " + eventSignature.toString());
+        } catch (Throwable e) {
+            log.error("Exception Triggering Event", e.getMessage());
+        }
     }
 
 
@@ -330,7 +340,7 @@ public class EventServiceImpl implements EventService {
                             esEvent,
                             listener,
                             subscription.actAsEventUser() ? esEvent.getUser() : subscription.subscriptionOwner(),
-                            subscription.projectId() == null ? "" : subscription.projectId(),
+                            esEvent.getProjectId() == null ? "" : esEvent.getProjectId(),
                             subscription.attributes() == null ? "" : subscription.attributes().toString());
                     try {
                         subscriptionDeliveryEntityService.addStatus(deliveryId, SUBSCRIPTION_TRIGGERED, new Date(), "Subscription Service process started.");

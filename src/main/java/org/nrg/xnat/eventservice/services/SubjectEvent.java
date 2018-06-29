@@ -16,8 +16,8 @@ public class SubjectEvent extends CombinedEventServiceEvent<SubjectEvent, XnatSu
 
     public SubjectEvent(){};
 
-    public SubjectEvent(final XnatSubjectdataI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public SubjectEvent(final XnatSubjectdataI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
     @Override

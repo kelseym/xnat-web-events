@@ -16,8 +16,8 @@ public class ScanEvent extends CombinedEventServiceEvent<ScanEvent, XnatImagesca
 
     public ScanEvent(){};
 
-    public ScanEvent(final XnatImagescandataI payload, final String eventUser, final Status status) {
-        super(payload, eventUser, status);
+    public ScanEvent(final XnatImagescandataI payload, final String eventUser, final Status status, final String projectId) {
+        super(payload, eventUser, status, projectId);
     }
 
     @Override

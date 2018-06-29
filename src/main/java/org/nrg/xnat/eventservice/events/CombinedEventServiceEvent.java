@@ -31,6 +31,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     UUID listenerId = UUID.randomUUID();
     Date eventDetectedTimestamp = null;
     Enum status = null;
+    String projectId = null;
 
     private static final Logger log = LoggerFactory.getLogger(CombinedEventServiceEvent.class);
     private final TypeToken<EventObjectT> eventObjectTTypeToken = new TypeToken<EventObjectT>(getClass()) { };
@@ -42,10 +43,15 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     public CombinedEventServiceEvent() {}
 
     public CombinedEventServiceEvent(final EventObjectT object, final String eventUser, final Enum status) {
+        this(object, eventUser, status, null);
+    }
+
+    public CombinedEventServiceEvent(final EventObjectT object, final String eventUser, final Enum status, final String projectId) {
         this.object = object;
         this.eventUser = eventUser;
         this.eventCreatedTimestamp = new Date();
         this.status = status;
+        this.projectId = projectId;
     }
 
     @Override
@@ -97,6 +103,12 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     public Enum getCurrentStatus() {
         return status;
     }
+
+    @Override
+    public String getProjectId(){
+        return projectId;
+    }
+
     @Override
     public void accept(Event<EventT> event){
         if( event.getData() instanceof EventServiceEvent) {
