@@ -7,18 +7,18 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import org.nrg.xnat.eventservice.model.EventFilter;
-import
-org.nrg.xnat.eventservice.model.JsonPathFilterNode;
+import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import
-java.util.HashMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -29,15 +29,18 @@ public class EventServiceFilterEntity {
 
     private long id;
     private String name;
+    private String eventId;
+    private List<String> projectIds;
+    private String status;
+
+    private Map<String, JsonPathFilterNode> nodeFilters;
     private String jsonPathFilter;
-
-
-  private String nodeFilterJson;
+    private String nodeFilterJson;
 
     @Autowired
     private static ObjectMapper objectMapper;
     private static final TypeReference<HashMap<String, JsonPathFilterNode>>
-TYPE_REF_MAP_STRING_FILTER_NODE      = new TypeReference<HashMap<String, JsonPathFilterNode>>() {};
+    TYPE_REF_MAP_STRING_FILTER_NODE      = new TypeReference<HashMap<String, JsonPathFilterNode>>() {};
 
     private static final Logger log = LoggerFactory.getLogger(EventServiceFilterEntity.class);
 
@@ -65,12 +68,20 @@ TYPE_REF_MAP_STRING_FILTER_NODE      = new TypeReference<HashMap<String, JsonPat
         return Objects.hashCode(id, name, jsonPathFilter);
     }
 
-    public EventServiceFilterEntity(String name, String jsonPathFilter) {
+    public EventServiceFilterEntity(long id, String name, String eventId, List<String> projectIds, String status,
+                                    Map<String, JsonPathFilterNode> nodeFilters, String jsonPathFilter,
+                                    String nodeFilterJson) {
+        this.id = id;
         this.name = name;
+        this.eventId = eventId;
+        this.projectIds = projectIds;
+        this.status = status;
+        this.nodeFilters = nodeFilters;
         this.jsonPathFilter = jsonPathFilter;
+        this.nodeFilterJson = nodeFilterJson;
     }
 
-     @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getId() {
         return id;     }
@@ -86,6 +97,31 @@ TYPE_REF_MAP_STRING_FILTER_NODE      = new TypeReference<HashMap<String, JsonPat
     public String getNodeFilterJson() {
 
        return nodeFilterJson;
+    }
+
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
+    @ElementCollection
+    public List<String> getProjectIds() {
+        return projectIds;
+    }
+
+    public void setProjectIds(List<String> projectIds) {
+        this.projectIds = projectIds;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public void setNodeFilterJson(String nodeFilterJson) {
