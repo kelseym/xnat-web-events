@@ -57,19 +57,19 @@ public class TimerEvent extends CombinedEventServiceEvent<TimerEvent, Date>{
     @Scheduled(cron = "*/60 * * * * *")
     public void everyMinute()
     {
-        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_MINUTE));
+        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_MINUTE, null));
     }
 
     @Scheduled(cron = "*/3600 * * * * *")
     public void everyHour()
     {
-        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_HOUR));
+        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_HOUR, null));
     }
 
     @Scheduled(cron = "*/86400 * * * * *")
     public void everyDay()
     {
-        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_DAY));
+        eventService.triggerEvent(new TimerEvent(new Date(), null, Status.PER_DAY, null));
     }
 
     @Override

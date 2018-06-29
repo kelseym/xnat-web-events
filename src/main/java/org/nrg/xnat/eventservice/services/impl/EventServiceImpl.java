@@ -19,7 +19,13 @@ import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.*;
 import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
-import org.nrg.xnat.eventservice.services.*;
+import org.nrg.xnat.eventservice.services.ActionManager;
+import org.nrg.xnat.eventservice.services.EventPropertyService;
+import org.nrg.xnat.eventservice.services.EventService;
+import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
+import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
+import org.nrg.xnat.eventservice.services.EventSubscriptionEntityService;
+import org.nrg.xnat.eventservice.services.SubscriptionDeliveryEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +36,20 @@ import reactor.bus.Event;
 import reactor.bus.EventBus;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.*;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.FAILED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.OBJECT_FILTERED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.OBJECT_FILTER_MISMATCH_HALT;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.OBJECT_SERIALIZATION_FAULT;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.OBJECT_SERIALIZED;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.SUBSCRIPTION_DISABLED_HALT;
+import static org.nrg.xnat.eventservice.entities.TimedEventStatusEntity.Status.SUBSCRIPTION_TRIGGERED;
 
 @Service
 @EnableAsync
@@ -48,6 +65,7 @@ public class EventServiceImpl implements EventService {
     private UserManagementServiceI userManagementService;
     private EventPropertyService eventPropertyService;
     private ObjectMapper mapper;
+    private Configuration jaywayConf = Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST);
 
     @Autowired
     public EventServiceImpl(ContextService contextService,
@@ -307,12 +325,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public void triggerEvent(EventServiceEvent event, String projectId) {
         try {
-            // Manually build event label
-            EventFilter filter = EventFilter.builder().build();
-            //String eventKey = filter.toRegexKey(event.getClass().getName(), projectId);
             EventSignature eventSignature = EventSignature.builder()
                     .eventId(event.getId())
-                    .projectIds(Arrays.asList(projectId))
+                    .projectId(projectId)
                     .status(event.getCurrentStatus().name())
                     .build();
             String eventKey = mapper.writeValueAsString(eventSignature);
@@ -379,8 +394,7 @@ public class EventServiceImpl implements EventService {
                                 return;
                             } else {
                                 String jsonFilter = subscription.eventFilter().jsonPathFilter();
-                                Configuration conf = Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST);
-                                List<String> filterResult = JsonPath.using(conf).parse(jsonObject).read(jsonFilter);
+                                List<String> filterResult = JsonPath.using(jaywayConf).parse(jsonObject).read(jsonFilter);
                                 String objectSubString = org.apache.commons.lang.StringUtils.substring(jsonObject, 0, 60);
                                 if (filterResult.isEmpty()) {
                                     log.debug("Aborting event pipeline - Serialized event:\n" + objectSubString + "..." + "\ndidn't match JSONPath Filter:\n" + jsonFilter);

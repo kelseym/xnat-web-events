@@ -2,6 +2,7 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.lang.StringUtils;
 import org.nrg.framework.exceptions.NotFoundException;
@@ -19,7 +20,12 @@ import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.model.EventFilter;
 import org.nrg.xnat.eventservice.model.Subscription;
-import org.nrg.xnat.eventservice.services.*;
+import org.nrg.xnat.eventservice.services.ActionManager;
+import org.nrg.xnat.eventservice.services.EventService;
+import org.nrg.xnat.eventservice.services.EventServiceActionProvider;
+import org.nrg.xnat.eventservice.services.EventServiceComponentManager;
+import org.nrg.xnat.eventservice.services.EventSubscriptionEntityService;
+import org.nrg.xnat.eventservice.services.SubscriptionDeliveryEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -36,7 +42,7 @@ import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static reactor.bus.selector.Selectors.R;
+import static reactor.bus.selector.JsonPathSelector.J;
 
 @Service
 @Transactional
@@ -170,19 +176,19 @@ public class EventSubscriptionEntityServiceImpl
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
-                String eventFilterRegexMatcher;
-                String eventSignitureMatcher;
+                Filter jsonPathReactorFilter;
+                // TODO: Subscription should always have event filter component (and probably have event-id, projects & status removed)
                 if(subscription.eventFilter() == null){
-                    eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
-                    eventSignitureMatcher =
+                    jsonPathReactorFilter = EventFilter.builder().
+                            eventId(subscription.eventId()).projectIds(subscription.projectIds()).status(subscription.eventStatus()).build()
+                            .buildReactorFilter();
 
                 } else {
-                    eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
-                    eventSignitureMatcher =
+                    jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
                 }
-                Selector selector = R(eventFilterRegexMatcher);
-                Selector selector = JSONPath filter (eventSignitureMatcher)
-                log.debug("Building Reactor RegEx Selector on matcher: " + eventFilterRegexMatcher);
+                //Selector selector = R(eventFilterRegexMatcher);
+                Selector selector = J("$.[?]", jsonPathReactorFilter);
+                log.debug("Building Reactor JSONPath Selector on matcher: " + jsonPathReactorFilter.toString());
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 subscription = subscription.toBuilder()

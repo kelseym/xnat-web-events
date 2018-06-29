@@ -82,4 +82,7 @@ public class SampleEvent implements EventServiceEvent {
     public Enum getCurrentStatus() {
         return status;
     }
+
+    @Override
+    public String getProjectId() { return null; }
 }

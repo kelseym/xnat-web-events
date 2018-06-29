@@ -1,16 +1,20 @@
 package org.nrg.xnat.eventservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.jayway.jsonpath.Criteria;
+import com.jayway.jsonpath.Filter;
 
-import java.util.List;
+import javax.annotation.Nullable;
+
 
 @AutoValue
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public abstract class EventSignature {
     @JsonProperty("event-id")   public abstract String eventId();
-    @JsonProperty("project-ids") public abstract List<String> projectIds();
+    @Nullable @JsonProperty("project-id") public abstract String projectId();
     @JsonProperty("status")     public abstract String status();
 
 
@@ -18,11 +22,11 @@ public abstract class EventSignature {
     public abstract Builder toBuilder();
 
     public static EventSignature create(@JsonProperty("event-id")   String eventId,
-                                        @JsonProperty("project-ids") List<String> projectIds,
+                                        @Nullable @JsonProperty("project-id") String projectId,
                                         @JsonProperty("status")     String status) {
         return builder()
                 .eventId(eventId)
-                .projectIds(projectIds)
+                .projectId(projectId)
                 .status(status)
                 .build();
     }
@@ -33,10 +37,11 @@ public abstract class EventSignature {
     public abstract static class Builder {
         public abstract Builder eventId(String eventId);
 
-        public abstract Builder projectIds(List<String> projectIds);
+        public abstract Builder projectId(String projectId);
 
         public abstract Builder status(String status);
 
         public abstract EventSignature build();
     }
+
 }
