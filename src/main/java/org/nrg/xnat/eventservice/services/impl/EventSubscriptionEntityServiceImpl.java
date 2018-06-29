@@ -171,12 +171,17 @@ public class EventSubscriptionEntityServiceImpl
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 String eventFilterRegexMatcher;
+                String eventSignitureMatcher;
                 if(subscription.eventFilter() == null){
                     eventFilterRegexMatcher = EventFilter.builder().build().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
+                    eventSignitureMatcher =
+
                 } else {
                     eventFilterRegexMatcher = subscription.eventFilter().toRegexMatcher(eventClazz.getName(), StringUtils.join(subscription.projectIds(),','));
+                    eventSignitureMatcher =
                 }
                 Selector selector = R(eventFilterRegexMatcher);
+                Selector selector = JSONPath filter (eventSignitureMatcher)
                 log.debug("Building Reactor RegEx Selector on matcher: " + eventFilterRegexMatcher);
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
