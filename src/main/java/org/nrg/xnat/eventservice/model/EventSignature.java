@@ -11,21 +11,20 @@ import javax.annotation.Nullable;
 
 
 @AutoValue
-@JsonInclude(JsonInclude.Include.ALWAYS)
 public abstract class EventSignature {
-    @JsonProperty("event-id")   public abstract String eventId();
+    @JsonProperty("event-type")   public abstract String eventType();
     @Nullable @JsonProperty("project-id") public abstract String projectId();
-    @JsonProperty("status")     public abstract String status();
+    @Nullable @JsonProperty("status")     public abstract String status();
 
 
 
     public abstract Builder toBuilder();
 
-    public static EventSignature create(@JsonProperty("event-id")   String eventId,
+    public static EventSignature create(@JsonProperty("event-type")   String eventType,
                                         @Nullable @JsonProperty("project-id") String projectId,
                                         @JsonProperty("status")     String status) {
         return builder()
-                .eventId(eventId)
+                .eventType(eventType)
                 .projectId(projectId)
                 .status(status)
                 .build();
@@ -35,7 +34,7 @@ public abstract class EventSignature {
 
     @AutoValue.Builder
     public abstract static class Builder {
-        public abstract Builder eventId(String eventId);
+        public abstract Builder eventType(String eventType);
 
         public abstract Builder projectId(String projectId);
 

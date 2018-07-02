@@ -17,7 +17,15 @@ import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
 import org.nrg.xnat.eventservice.events.EventServiceEvent;
 import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
-import org.nrg.xnat.eventservice.model.*;
+import org.nrg.xnat.eventservice.model.Action;
+import org.nrg.xnat.eventservice.model.ActionProvider;
+import org.nrg.xnat.eventservice.model.EventPropertyNode;
+import org.nrg.xnat.eventservice.model.EventSignature;
+import org.nrg.xnat.eventservice.model.JsonPathFilterNode;
+import org.nrg.xnat.eventservice.model.Listener;
+import org.nrg.xnat.eventservice.model.SimpleEvent;
+import org.nrg.xnat.eventservice.model.Subscription;
+import org.nrg.xnat.eventservice.model.SubscriptionDelivery;
 import org.nrg.xnat.eventservice.model.xnat.XnatModelObject;
 import org.nrg.xnat.eventservice.services.ActionManager;
 import org.nrg.xnat.eventservice.services.EventPropertyService;
@@ -98,7 +106,7 @@ public class EventServiceImpl implements EventService {
         if(overpopulateAttributes != null && overpopulateAttributes == true){
             Map<String, String> attributes = new HashMap<>(subscription.attributes());
             try {
-                SimpleEvent event = getEvent(subscription.eventId(), true);
+                SimpleEvent event = getEvent(subscription.eventType(), true);
                 event.eventProperties().forEach(node -> attributes.put(node.name(), node.replacementKey()));
                 subscription = subscription.toBuilder().attributes(attributes).build();
                 log.debug("Overpopulating subscription attributes with: " + event.eventProperties().toString());
@@ -317,8 +325,9 @@ public class EventServiceImpl implements EventService {
     @Async
     @Override
     public void triggerEvent(EventServiceEvent event) {
+        String projectId = event.getProjectId();
         // TODO: Extract project id from event payload
-        triggerEvent(event, null);
+        triggerEvent(event, projectId);
     }
 
     @Async
@@ -326,13 +335,13 @@ public class EventServiceImpl implements EventService {
     public void triggerEvent(EventServiceEvent event, String projectId) {
         try {
             EventSignature eventSignature = EventSignature.builder()
-                    .eventId(event.getId())
+                    .eventType(event.getId())
                     .projectId(projectId)
-                    .status(event.getCurrentStatus().name())
+                    .status(event.getCurrentStatus() != null ?  event.getCurrentStatus().name() : null)
                     .build();
             String eventKey = mapper.writeValueAsString(eventSignature);
             eventBus.notify(eventKey, Event.wrap(event));
-            log.debug("Fired EventService Event for Label: " + eventSignature.toString());
+            log.debug("Fired EventService Event for Label: " + eventKey);
         } catch (Throwable e) {
             log.error("Exception Triggering Event", e.getMessage());
         }

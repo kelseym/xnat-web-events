@@ -22,7 +22,7 @@ public abstract class SubscriptionCreator {
     @Nullable @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("project-id") public abstract String projectId();
     @Nullable @JsonProperty("active") public abstract Boolean active();
-    @JsonProperty("event-id") public abstract String eventId();
+    @JsonProperty("event-type") public abstract String eventType();
     @Nullable @JsonProperty("event-status") public abstract String eventStatus();
     @Nullable @JsonIgnore public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
@@ -40,7 +40,7 @@ public abstract class SubscriptionCreator {
     public static SubscriptionCreator create(@Nullable  @JsonProperty("name") final String name,
                                              @Nullable @JsonProperty("project-id")  String projectId,
                                              @JsonProperty("active") final Boolean active,
-                                             @Nonnull @JsonProperty("event-id") final String eventId,
+                                             @Nonnull @JsonProperty("event-type") final String eventType,
                                              @Nullable @JsonProperty("event-status") final String eventStatus,
                                              @Nullable @JsonProperty("custom-listener-id") final String customListenerId,
                                              @Nonnull @JsonProperty("action-key") final String actionKey,
@@ -55,7 +55,7 @@ public abstract class SubscriptionCreator {
                 .name(name)
                 .projectId(projectId)
                 .active(active)
-                .eventId(eventId)
+                .eventType(eventType)
                 .eventStatus(eventStatus)
                 .customListenerId(customListenerId)
                 .actionKey(actionKey)
@@ -77,7 +77,7 @@ public abstract class SubscriptionCreator {
 
         public abstract Builder active(Boolean active);
 
-        public abstract Builder eventId(String eventId);
+        public abstract Builder eventType(String eventType);
 
         public abstract Builder eventStatus(String eventStatus);
 

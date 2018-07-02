@@ -106,15 +106,15 @@ public class EventSubscriptionEntityServiceImpl
         }
         Class<?> clazz;
         try {
-            clazz = Class.forName(subscription.eventId());
+            clazz = Class.forName(subscription.eventType());
             if (clazz == null || !EventServiceEvent.class.isAssignableFrom(clazz)) {
-                String message = "Event class cannot be found based on Event-Id: " + subscription.eventId() != null ? subscription.eventId() : "unknown";
+                String message = "Event class cannot be found based on Event-Id: " + subscription.eventType() != null ? subscription.eventType() : "unknown";
                 log.error(message);
                 throw new SubscriptionValidationException(message);
             }
         } catch (NoSuchBeanDefinitionException|ClassNotFoundException e) {
-            log.error("Could not load Event class: " + subscription.eventId() != null ? subscription.eventId() : "unknown" + "\n" + e.getMessage());
-            throw new SubscriptionValidationException("Could not load Event class: " + subscription.eventId() != null ? subscription.eventId() : "unknown");
+            log.error("Could not load Event class: " + subscription.eventType() != null ? subscription.eventType() : "unknown" + "\n" + e.getMessage());
+            throw new SubscriptionValidationException("Could not load Event class: " + subscription.eventType() != null ? subscription.eventType() : "unknown");
         }
         String listenerErrorMessage = "";
         try {
@@ -163,7 +163,7 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription activate(Subscription subscription) {
         try {
-            Class<?> eventClazz = Class.forName(subscription.eventId());
+            Class<?> eventClazz = Class.forName(subscription.eventType());
             EventServiceListener listener = null;
             // Is a custom listener defined and valid
             if(!Strings.isNullOrEmpty(subscription.customListenerId())){
@@ -171,7 +171,7 @@ public class EventSubscriptionEntityServiceImpl
             }
             if(listener == null && EventServiceListener.class.isAssignableFrom(eventClazz)) {
             // Is event class a combined event/listener
-                listener = componentManager.getListener(subscription.eventId());
+                listener = componentManager.getListener(subscription.eventType());
             }
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
@@ -180,7 +180,7 @@ public class EventSubscriptionEntityServiceImpl
                 // TODO: Subscription should always have event filter component (and probably have event-id, projects & status removed)
                 if(subscription.eventFilter() == null){
                     jsonPathReactorFilter = EventFilter.builder().
-                            eventId(subscription.eventId()).projectIds(subscription.projectIds()).status(subscription.eventStatus()).build()
+                            eventType(subscription.eventType()).projectIds(subscription.projectIds()).status(subscription.eventStatus()).build()
                             .buildReactorFilter();
 
                 } else {
@@ -366,7 +366,7 @@ public class EventSubscriptionEntityServiceImpl
             UserI actionUser = userManagementService.getUser(subscription.subscriptionOwner());
             String actionName = actionManager.getActionByKey(subscription.actionKey(), actionUser) != null ?
                     actionManager.getActionByKey(subscription.actionKey(), actionUser).displayName() : "Action";
-            String eventName = componentManager.getEvent(subscription.eventId()).getDisplayName();
+            String eventName = componentManager.getEvent(subscription.eventType()).getDisplayName();
             String status = subscription.eventStatus();
             String forProject = subscription.projectIds() == null || subscription.projectIds().isEmpty() ? "Site" : StringUtils.join(subscription.projectIds(), ',');
             uniqueName += Strings.isNullOrEmpty(actionName) ? "Action" : actionName;
