@@ -78,8 +78,15 @@ public abstract class EventFilter {
                 .nodeFilters(creator.nodeFilters())
                 .build();
     }
-    public static EventFilter create(Long id, String name, String eventType, List<String> projectIds, String status,
-                                     String jsonPathFilter, Map<String, JsonPathFilterNode> nodeFilters) {
+
+    @JsonCreator
+    public static EventFilter create(@Nullable @JsonProperty("id")          Long id,
+                                     @Nullable @JsonProperty("name")        String name,
+                                     @JsonProperty("event-type")            String eventType,
+                                     @Nullable @JsonProperty("project-ids") List<String> projectIds,
+                                     @Nullable @JsonProperty("status")      String status,
+                                     @Nullable @JsonProperty("json-path-filter") String jsonPathFilter,
+                                     @Nullable @JsonProperty("filter-nodes")     Map<String, JsonPathFilterNode> nodeFilters) {
         return EventFilter.builder()
                 .id(id)
                 .name(name)

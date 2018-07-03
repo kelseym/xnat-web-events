@@ -6,12 +6,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 
@@ -24,7 +22,7 @@ public abstract class SubscriptionCreator {
     @Nullable @JsonIgnore public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
-    @JsonProperty("event-filter") public abstract EventFilterCreator eventFilter();
+    @Nullable @JsonProperty("event-filter") public abstract EventFilterCreator eventFilter();
     @JsonProperty("act-as-event-user") public abstract boolean actAsEventUser();
 
     public static Builder builder() {

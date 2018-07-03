@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
@@ -24,6 +25,7 @@ public abstract class ProjectEventFilterCreator {
 
     public abstract Builder toBuilder();
 
+    @JsonCreator
     public static ProjectEventFilterCreator create(
             @Nullable @JsonProperty("name")        String name,
             @JsonProperty("event-type")            String eventType,

@@ -18,7 +18,7 @@ import java.util.Map;
 public abstract class Subscription {
 
     @Nullable @JsonProperty("id") public abstract Long id();
-    @JsonProperty("name") public abstract String name();
+    @Nullable @JsonProperty("name") public abstract String name();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();
     @JsonIgnore @Nullable public abstract String customListenerId();
@@ -52,7 +52,7 @@ public abstract class Subscription {
                                       @JsonProperty("registration-key") final String listenerRegistrationKey,
                                       @Nullable @JsonProperty("custom-listener-id") String customListenerId,
                                       @JsonProperty("action-key") final String actionKey,
-                                      @JsonProperty("attributes") final Map<String, String> attributes,
+                                      @Nullable @JsonProperty("attributes") final Map<String, String> attributes,
                                       @JsonProperty("event-filter") final EventFilter eventFilter,
                                       @JsonProperty("act-as-event-user") final Boolean actAsEventUser,
                                       @JsonProperty("subscription-owner") final String subscriptionOwner) {

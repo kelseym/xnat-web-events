@@ -118,7 +118,7 @@ public class EventSubscriptionEntityServiceImpl
                 throw new SubscriptionValidationException(message);
             }
         } catch (NoSuchBeanDefinitionException|ClassNotFoundException e) {
-            log.error("Could not load Event class: " + eventType != null ? eventType : "unknown" + "\n" + e.getMessage());
+            log.error("Could not load Event class: " + (eventType != null ? eventType : "unknown")+ "\n" + e.getMessage());
             throw new SubscriptionValidationException("Could not load Event class: " + eventType != null ? eventType : "unknown");
         }
         String listenerErrorMessage = "";
