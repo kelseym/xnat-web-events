@@ -89,7 +89,7 @@ public class EventServiceComponentManagerImpl implements EventServiceComponentMa
     @Override
     public EventServiceListener getListener(String name) {
         for(EventServiceListener el: installedListeners){
-            if(el.getId().contains(name)) {
+            if(el.getType().contains(name)) {
                 return el;
             }
         }

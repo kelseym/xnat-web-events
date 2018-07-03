@@ -532,7 +532,7 @@ public class EventServiceIntegrationTest {
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder().name("Test Subscription")
                                                                      .active(true)
                                                                      .eventFilter(filterCreator)
-                                                                     .customListenerId(testListener.getId())
+                                                                     .customListenerId(testListener.getType())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1451,7 +1451,7 @@ public class EventServiceIntegrationTest {
         }
 
         @Override
-        public String getId() { return this.getClass().getCanonicalName(); }
+        public String getType() { return this.getClass().getCanonicalName(); }
 
         @Override
         public String getEventType() {
