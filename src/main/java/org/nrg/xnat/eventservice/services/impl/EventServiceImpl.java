@@ -120,7 +120,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Subscription updateSubscription(Subscription subscription) throws SubscriptionValidationException, NotFoundException {
-        return subscriptionService.update(subscription);
+        Subscription updated = subscriptionService.update(subscription);
+        if(updated != null){
+            log.debug("Reactivating updated subscription: " + subscription.id());
+            updated = subscriptionService.activate(updated);
+        }
+        return updated;
     }
 
     @Override

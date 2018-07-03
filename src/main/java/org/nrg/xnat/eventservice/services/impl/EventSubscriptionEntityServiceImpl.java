@@ -168,6 +168,10 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription activate(Subscription subscription) {
         try {
+            if(!Strings.isNullOrEmpty(subscription.listenerRegistrationKey())){
+                log.debug("Deactivating active subscription before reactivating.");
+                deactivate(subscription);
+            }
             String eventType = subscription.eventFilter().eventType();
             Class<?> eventClazz = Class.forName(eventType);
             EventServiceListener listener = null;
@@ -303,14 +307,16 @@ public class EventSubscriptionEntityServiceImpl
     }
 
     @Override
-    public Subscription update(Subscription subscription) throws NotFoundException, SubscriptionValidationException{
+    public Subscription update(final Subscription subscription) throws NotFoundException, SubscriptionValidationException{
         SubscriptionEntity subscriptionEntity = retrieve(subscription.id());
         if(subscription.name() != null && !subscription.name().equals(subscriptionEntity.getName())){
             throwExceptionIfNameExists(subscription);
         }
-        validate(toPojo(subscriptionEntity.update(subscription)));
+        subscriptionEntity = SubscriptionEntity.fromPojoWithTemplate(subscription, subscriptionEntity);
+        Subscription updatedSubscription = toPojo(subscriptionEntity);
+        validate(updatedSubscription);
         super.update(subscriptionEntity);
-        return toPojo(subscriptionEntity);
+        return updatedSubscription;
     }
 
     @Override

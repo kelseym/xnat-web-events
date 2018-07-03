@@ -3,12 +3,18 @@ package org.nrg.xnat.eventservice.entities;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
-import org.nrg.xnat.eventservice.exceptions.SubscriptionValidationException;
 import org.nrg.xnat.eventservice.model.Subscription;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,36 +93,6 @@ public class SubscriptionEntity extends AbstractHibernateEntity {
                 .add("subscriptionDeliveryEntities", subscriptionDeliveryEntities)
                 .toString();
     }
-
-    @Transactional
-    @Nonnull
-    public SubscriptionEntity update(@Nonnull final Subscription subscription) throws SubscriptionValidationException {
-        //TODO: Support reactivation on update
-        return null;
-        //if(subscription.projectIds() != null && !subscription.projectIds().equals(this.projectIds)){
-        //    throw new SubscriptionValidationException("Subscription Project ID cannot be changed.");
-        //}
-        //if(subscription.eventType() != null && !subscription.eventType().equals(this.eventType)){
-        //    throw new SubscriptionValidationException("Subscription Event ID cannot be changed.");
-        //}
-        //if(subscription.actionKey() != null && !subscription.actionKey().equals(this.actionKey)){
-        //    throw new SubscriptionValidationException("Subscription Action cannot be changed.");
-        //}
-        //if(subscription.eventStatus() != null && !subscription.actionKey().equals(this.actionKey)){
-        //    throw new SubscriptionValidationException("Subscription Action cannot be changed.");
-        //}
-
-        //this.name = Strings.isNullOrEmpty(subscription.name()) ? this.name : subscription.name();
-        //this.active = subscription.active() == null ? this.active : subscription.active();
-        //this.listenerRegistrationKey = subscription.listenerRegistrationKey() == null ? this.listenerRegistrationKey : subscription.listenerRegistrationKey();
-        //this.customListenerId = Strings.isNullOrEmpty(subscription.customListenerId()) ? this.customListenerId : subscription.customListenerId();
-        //this.attributes = subscription.attributes() == null ? this.attributes : subscription.attributes();
-        //this.eventServiceFilterEntity = subscription.eventFilter() == null ? null : EventServiceFilterEntity.fromPojo(subscription.eventFilter());
-        //this.actAsEventUser = subscription.actAsEventUser() == null ? this.actAsEventUser : subscription.actAsEventUser();
-        //this.subscriptionOwner = subscription.subscriptionOwner() == null ? this.subscriptionOwner : subscription.subscriptionOwner();
-        //return this;
-    }
-
 
     public String getName() { return name; }
 

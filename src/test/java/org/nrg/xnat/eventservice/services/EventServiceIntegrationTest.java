@@ -811,7 +811,7 @@ public class EventServiceIntegrationTest {
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
         // Trigger Subject Created Event
-        eventService.triggerEvent(new SubjectEvent(subject, mockUser.getLogin(), SubjectEvent.Status.CREATED, projectId1));
+        eventService.triggerEvent(new SubjectEvent(subject, mockUser.getLogin(), SubjectEvent.Status.CREATED, projectId2));
 
         // wait for listener (max 1 sec.)
         synchronized (testAction) {
