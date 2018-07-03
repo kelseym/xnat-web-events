@@ -99,7 +99,9 @@ public class EventServiceIntegrationTest {
 
 
     private SubscriptionCreator project1CreatedSubscription;
+    private EventFilterCreator project1EventFilterCreator;
     private SubscriptionCreator project2CreatedSubscription;
+    private EventFilterCreator project2EventFilterCreator;
     private Scan mrScan1 = new Scan();
     private Scan mrScan2 = new Scan();
     private Scan ctScan1 = new Scan();
@@ -119,28 +121,31 @@ public class EventServiceIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-
-        EventFilter eventServiceFilter = EventFilter.builder().eventType("org.nrg.xnat.eventservice.events.ProjectEvent").status("CREATED").build();
-
+        project1EventFilterCreator = EventFilterCreator.builder()
+                .projectIds(Arrays.asList("PROJECTID-1"))
+                .eventType("org.nrg.xnat.eventservice.events.ProjectEvent")
+                .status("CREATED")
+                .build();
         project1CreatedSubscription = SubscriptionCreator.builder()
                                                          .name("TestSubscription")
                                                          .active(true)
-                                                         .projectId("PROJECTID-1")
-                                                         .eventType("org.nrg.xnat.eventservice.events.ProjectEvent")
                                                          .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                          .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
-                                                         .eventFilter(eventServiceFilter)
+                                                         .eventFilter(project1EventFilterCreator)
                                                          .actAsEventUser(false)
                                                          .build();
 
+        project2EventFilterCreator = EventFilterCreator.builder()
+                .projectIds(Arrays.asList("PROJECTID-2"))
+                .eventType("org.nrg.xnat.eventservice.events.ProjectEvent")
+                .status("CREATED")
+                .build();
         project2CreatedSubscription = SubscriptionCreator.builder()
                                                         .name("TestSubscription2")
                                                         .active(true)
-                                                        .projectId("PROJECTID-2")
-                                                        .eventType("org.nrg.xnat.eventservice.events.ProjectEvent")
                                                         .customListenerId("org.nrg.xnat.eventservice.listeners.TestListener")
                                                         .actionKey("org.nrg.xnat.eventservice.actions.EventServiceLoggingAction:org.nrg.xnat.eventservice.actions.EventServiceLoggingAction")
-                                                        .eventFilter(eventServiceFilter)
+                                                        .eventFilter(project2EventFilterCreator)
                                                         .actAsEventUser(false)
                                                         .build();
 
@@ -261,10 +266,10 @@ public class EventServiceIntegrationTest {
 
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder().name("Test Subscription")
                                                                      .active(true)
-                                                                     .eventType(eventId)
                                                                      .customListenerId(listenerType)
                                                                      .actionKey(actionKey)
                                                                      .actAsEventUser(false)
+                                                                     .eventFilter(EventFilterCreator.builder().eventType(eventId).build())
                                                                      .build();
 
         Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
@@ -281,7 +286,7 @@ public class EventServiceIntegrationTest {
 
         subscriptionCreator = SubscriptionCreator.builder().name("Test 2 Subscription")
                                                                      .active(true)
-                                                                     .eventType(eventId)
+                                                                     .eventFilter(EventFilterCreator.builder().eventType(eventId).build())
                                                                      .customListenerId(listenerType)
                                                                      .actionKey(actionKey)
                                                                      .actAsEventUser(false)
@@ -305,7 +310,7 @@ public class EventServiceIntegrationTest {
 
         String eventType = "org.nrg.xnat.eventservice.events.TestCombinedEvent";
         String projectId = "PROJECTID-1";
-        EventFilter eventServiceFilterWithJson = EventFilter.builder()
+        EventFilterCreator eventServiceFilterWithJson = EventFilterCreator.builder()
                                                             .eventType(eventType)
                                                             .projectIds(Arrays.asList(projectId))
                                                             .jsonPathFilter("$[?(@.modality == \"MR\")]")
@@ -314,8 +319,6 @@ public class EventServiceIntegrationTest {
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("")
                                                                      .active(true)
-                                                                     .projectId(projectId)
-                                                                     .eventType(eventType)
                                                                      .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
                                                                      .eventFilter(eventServiceFilterWithJson)
                                                                      .actAsEventUser(false)
@@ -525,9 +528,10 @@ public class EventServiceIntegrationTest {
         String testActionKey = testAction.getAllActions().get(0).actionKey();
 
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(event.getType()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder().name("Test Subscription")
                                                                      .active(true)
-                                                                     .eventType(event.getId())
+                                                                     .eventFilter(filterCreator)
                                                                      .customListenerId(testListener.getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
@@ -570,7 +574,7 @@ public class EventServiceIntegrationTest {
 
         String projectId = "PROJECTID-1";
         String eventType = "org.nrg.xnat.eventservice.events.TestCombinedEvent";
-        EventFilter eventServiceFilterWithJson = EventFilter.builder()
+        EventFilterCreator eventServiceFilterWithJson = EventFilterCreator.builder()
                                                             .eventType(eventType)
                                                             .projectIds(Arrays.asList(projectId))
                                                             .jsonPathFilter("$[?(@.modality == \"MR\")]")
@@ -579,8 +583,6 @@ public class EventServiceIntegrationTest {
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("FilterTestSubscription")
                                                                      .active(true)
-                                                                     .projectId(projectId)
-                                                                     .eventType(eventType)
                                                                      .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
                                                                      .eventFilter(eventServiceFilterWithJson)
                                                                      .actAsEventUser(false)
@@ -718,14 +720,13 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new SubjectEvent().getType()).projectIds(Arrays.asList(projectId1)).status(SubjectEvent.Status.CREATED.name()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventType(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
-                                                                     .eventStatus(SubjectEvent.Status.CREATED.name())
                                                                      .actAsEventUser(false)
+                                                                     .eventFilter(filterCreator)
                                                                      .build();
         Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
         assertThat("Subscription failed validation.",eventService.validateSubscription(subscription), notNullValue());
@@ -740,7 +741,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getId(), containsString("SubjectEvent"));
+        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getType(), containsString("SubjectEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -757,11 +758,11 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new SubjectEvent().getType()).projectIds(Arrays.asList(projectId1)).status(SubjectEvent.Status.CREATED.name()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
+                                                                     .eventFilter(filterCreator)
                                                                      .active(true)
-                                                                     .eventType(new SubjectEvent().getId())
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -778,7 +779,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getId(), containsString("SubjectEvent"));
+        assertThat("Expected detected event to be of type SubjectEvent", action.getDetectedEvents().get(0).getType(), containsString("SubjectEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
 
     }
@@ -797,11 +798,11 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new SubjectEvent().getType()).projectIds(Arrays.asList(projectId1)).status(SubjectEvent.Status.CREATED.name()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId2)
                                                                      .active(true)
-                                                                     .eventType(new SubjectEvent().getId())
+                                                                     .eventFilter(filterCreator)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -833,11 +834,12 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new SessionEvent().getType()).projectIds(Arrays.asList(projectId1)).status(SubjectEvent.Status.CREATED.name()).build();
+
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventType(new SessionEvent().getId())
+                                                                     .eventFilter(filterCreator)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -854,7 +856,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -874,11 +876,11 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new ScanEvent().getType()).projectIds(Arrays.asList(projectId1)).status(SubjectEvent.Status.CREATED.name()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
-                                                                     .projectId(projectId1)
                                                                      .active(true)
-                                                                     .eventType(new ScanEvent().getId())
+                                                                     .eventFilter(filterCreator)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -895,7 +897,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type ScanEvent", action.getDetectedEvents().get(0).getId(), containsString("ScanEvent"));
+        assertThat("Expected detected event to be of type ScanEvent", action.getDetectedEvents().get(0).getType(), containsString("ScanEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -930,7 +932,7 @@ public class EventServiceIntegrationTest {
         sw2.stop();
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
         System.out.print("Event caught in : " + sw2.getTotalTimeSeconds() + "seconds\n");
 
@@ -969,8 +971,8 @@ public class EventServiceIntegrationTest {
         sw2.stop();
         TestAction action = (TestAction) testAction;
         assertThat("Expected two detected events.", action.getDetectedEvents().size(), is(2));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(1).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(1).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
         System.out.print("Two event caught in : " + sw2.getTotalTimeSeconds() + "seconds\n");
 
@@ -1139,7 +1141,7 @@ public class EventServiceIntegrationTest {
 
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1180,7 +1182,7 @@ public class EventServiceIntegrationTest {
 
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1231,7 +1233,7 @@ public class EventServiceIntegrationTest {
         }
 
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getId(), containsString("SessionEvent"));
+        assertThat("Expected detected event to be of type SessionEvent", action.getDetectedEvents().get(0).getType(), containsString("SessionEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1252,10 +1254,11 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
+        EventFilterCreator filterCreator = EventFilterCreator.builder().eventType(new ScanEvent().getType()).build();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name("Test Subscription")
                                                                      .active(true)
-                                                                     .eventType(new ScanEvent().getId())
+                                                                     .eventFilter(filterCreator)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1273,7 +1276,7 @@ public class EventServiceIntegrationTest {
         }
         TestAction action = (TestAction) testAction;
         assertThat("Expected one detected event.", action.getDetectedEvents().size(), is(1));
-        assertThat("Expected detected event to be of type ScanEvent", action.getDetectedEvents().get(0).getId(), containsString("ScanEvent"));
+        assertThat("Expected detected event to be of type ScanEvent", action.getDetectedEvents().get(0).getType(), containsString("ScanEvent"));
         assertThat("Expected Action User to be subscription creator", action.getActionUser(), is(mockUser.getLogin()));
     }
 
@@ -1282,7 +1285,7 @@ public class EventServiceIntegrationTest {
     @DirtiesContext
     public void missOpenEventWithSpecificSubscription() throws Exception {
         String projectId1 = "PROJECTID_1";
-        String eventType = new ScanEvent().getId();
+        String eventType = new ScanEvent().getType();
         Enum status = ScanEvent.Status.CREATED;
 
         XnatImagesessiondata session = new XnatImagesessiondata();
@@ -1296,16 +1299,14 @@ public class EventServiceIntegrationTest {
         // Subscribe to event
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
-        EventFilter filter = EventFilter.builder().projectIds(Arrays.asList(projectId1)).eventType(eventType).status(status.name()).build();
-        SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
+        ProjectEventFilterCreator filter = ProjectEventFilterCreator.builder().projectIds(Arrays.asList(projectId1)).eventType(eventType).status(status.name()).build();
+        ProjectSubscriptionCreator subscriptionCreator = ProjectSubscriptionCreator.builder()
                                                                      .name("Test Subscription")
                                                                      .eventFilter(filter)
                                                                      .active(true)
-                                                                     .eventType(eventType)
                                                                      .actionKey(testActionKey)
-                                                                     .actAsEventUser(false)
                                                                      .build();
-        Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
+        Subscription subscription = Subscription.createOnProject(subscriptionCreator, mockUser.getLogin());
         assertThat("Subscription failed validation.",eventService.validateSubscription(subscription), notNullValue());
         assertThat("Subscription failed creation.", eventService.createSubscription(subscription), notNullValue());
 
@@ -1332,21 +1333,19 @@ public class EventServiceIntegrationTest {
     }
 
 
-    public Subscription createSessionSubscription(String name, String projectId, EventFilter filter) throws Exception {
-        String eventType = new SessionEvent().getId();
+    public Subscription createSessionSubscription(String name, String projectId, EventFilterCreator filter) throws Exception {
+        String eventType = new SessionEvent().getType();
         Enum status = SessionEvent.Status.CREATED;
         if(filter == null) {
-            filter = EventFilter.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
+            filter = EventFilterCreator.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
         }
 
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(filter)
-                                                                     .eventType(eventType)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1355,20 +1354,18 @@ public class EventServiceIntegrationTest {
         return eventService.createSubscription(subscription);
     }
 
-    public Subscription createScanSubscription(String name, String projectId, EventFilter filter) throws Exception{
-        String eventType = new ScanEvent().getId();
+    public Subscription createScanSubscription(String name, String projectId, EventFilterCreator filter) throws Exception{
+        String eventType = new ScanEvent().getType();
         Enum status = ScanEvent.Status.CREATED;
         if(filter == null) {
-            filter = EventFilter.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
+            filter = EventFilterCreator.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
         }
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(filter)
-                                                                     .eventType(eventType)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1378,20 +1375,18 @@ public class EventServiceIntegrationTest {
         return eventService.createSubscription(subscription);
     }
 
-    public Subscription createProjectCreatedSubscription(String name, String projectId, EventFilter filter) throws Exception {
-        String eventType = new ProjectEvent().getId();
+    public Subscription createProjectCreatedSubscription(String name, String projectId, EventFilterCreator filter) throws Exception {
+        String eventType = new ProjectEvent().getType();
         Enum status = ProjectEvent.Status.CREATED;
         if(filter == null) {
-            filter = EventFilter.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
+            filter = EventFilterCreator.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
         }
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(filter)
-                                                                     .eventType(eventType)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();
@@ -1400,20 +1395,18 @@ public class EventServiceIntegrationTest {
         return eventService.createSubscription(subscription);
     }
 
-    public Subscription createSubjectCreatedSubscription(String name, String projectId, EventFilter filter) throws Exception {
-        String eventType = new SubjectEvent().getId();
+    public Subscription createSubjectCreatedSubscription(String name, String projectId, EventFilterCreator filter) throws Exception {
+        String eventType = new SubjectEvent().getType();
         Enum status = SubjectEvent.Status.CREATED;
         if(filter == null) {
-            filter = EventFilter.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
+            filter = EventFilterCreator.builder().projectIds(Arrays.asList(projectId)).eventType(eventType).status(status.name()).build();
         }
         String testActionKey = testAction.getAllActions().get(0).actionKey();
         eventService.getAllActions();
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
                                                                      .name(name)
-                                                                     .projectId(projectId)
                                                                      .active(true)
                                                                      .eventFilter(filter)
-                                                                     .eventType(eventType)
                                                                      .actionKey(testActionKey)
                                                                      .actAsEventUser(false)
                                                                      .build();

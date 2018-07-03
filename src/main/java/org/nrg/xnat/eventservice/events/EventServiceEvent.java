@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface EventServiceEvent<ObjectT> extends EventI {
 
     // Get descriptive unique identifier for event
-    String getId();
+    String getType();
 
     String getDisplayName();
     String getDescription();

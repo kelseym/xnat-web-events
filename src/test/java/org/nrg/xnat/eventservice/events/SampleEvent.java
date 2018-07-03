@@ -28,7 +28,7 @@ public class SampleEvent implements EventServiceEvent {
     }
 
     @Override
-    public String getId() {
+    public String getType() {
         return this.getClass().getCanonicalName();
     }
 

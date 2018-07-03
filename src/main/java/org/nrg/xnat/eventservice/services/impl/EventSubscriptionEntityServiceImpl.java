@@ -84,7 +84,11 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public Subscription validate(Subscription subscription) throws SubscriptionValidationException {
-        if(subscription.eventFilter() != null && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())) {
+        if(subscription.eventFilter() == null){
+            log.error("Missing EventFilter on subscription ", subscription.name());
+            throw new SubscriptionValidationException("Missing Event Filter");
+        }
+        if(!Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())) {
             String jsonPathFilter = subscription.eventFilter().jsonPathFilter();
             try {
                 JsonPath compile = JsonPath.compile(jsonPathFilter);
@@ -105,16 +109,17 @@ public class EventSubscriptionEntityServiceImpl
             throw new SubscriptionValidationException("Could not load Subscription Owner for userID: " + subscription.subscriptionOwner() != null ? subscription.subscriptionOwner() : "null" + "\n" + e.getMessage());
         }
         Class<?> clazz;
+        String eventType = subscription.eventFilter().eventType();
         try {
-            clazz = Class.forName(subscription.eventType());
+            clazz = Class.forName(eventType);
             if (clazz == null || !EventServiceEvent.class.isAssignableFrom(clazz)) {
-                String message = "Event class cannot be found based on Event-Id: " + subscription.eventType() != null ? subscription.eventType() : "unknown";
+                String message = "Event class cannot be found based on Event-Id: " + eventType != null ? eventType : "unknown";
                 log.error(message);
                 throw new SubscriptionValidationException(message);
             }
         } catch (NoSuchBeanDefinitionException|ClassNotFoundException e) {
-            log.error("Could not load Event class: " + subscription.eventType() != null ? subscription.eventType() : "unknown" + "\n" + e.getMessage());
-            throw new SubscriptionValidationException("Could not load Event class: " + subscription.eventType() != null ? subscription.eventType() : "unknown");
+            log.error("Could not load Event class: " + eventType != null ? eventType : "unknown" + "\n" + e.getMessage());
+            throw new SubscriptionValidationException("Could not load Event class: " + eventType != null ? eventType : "unknown");
         }
         String listenerErrorMessage = "";
         try {
@@ -149,7 +154,7 @@ public class EventSubscriptionEntityServiceImpl
                 log.error("Could not load Action Provider for key:" + subscription.actionKey());
                 throw new SubscriptionValidationException("Could not load Action Provider for key:" + subscription.actionKey());
             }
-            if (!actionManager.validateAction(subscription.actionKey(), subscription.projectIds(), null, actionUser)) {
+            if (!actionManager.validateAction(subscription.actionKey(), subscription.eventFilter().projectIds(), null, actionUser)) {
                 log.error("Could not validate Action Provider Class " + (subscription.actionKey() != null ? subscription.actionKey() : "unknown") + "for user:" + actionUser.getLogin());
                 throw new SubscriptionValidationException("Could not validate Action Provider Class " + subscription.actionKey() != null ? subscription.actionKey() : "unknown");
             }
@@ -163,7 +168,8 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public Subscription activate(Subscription subscription) {
         try {
-            Class<?> eventClazz = Class.forName(subscription.eventType());
+            String eventType = subscription.eventFilter().eventType();
+            Class<?> eventClazz = Class.forName(eventType);
             EventServiceListener listener = null;
             // Is a custom listener defined and valid
             if(!Strings.isNullOrEmpty(subscription.customListenerId())){
@@ -171,21 +177,16 @@ public class EventSubscriptionEntityServiceImpl
             }
             if(listener == null && EventServiceListener.class.isAssignableFrom(eventClazz)) {
             // Is event class a combined event/listener
-                listener = componentManager.getListener(subscription.eventType());
+                listener = componentManager.getListener(eventType);
             }
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 Filter jsonPathReactorFilter;
-                // TODO: Subscription should always have event filter component (and probably have event-id, projects & status removed)
-                if(subscription.eventFilter() == null){
-                    jsonPathReactorFilter = EventFilter.builder().
-                            eventType(subscription.eventType()).projectIds(subscription.projectIds()).status(subscription.eventStatus()).build()
-                            .buildReactorFilter();
+                jsonPathReactorFilter = EventFilter.builder().
+                        eventType(eventType).projectIds(subscription.eventFilter().projectIds()).status(subscription.eventFilter().status()).build()
+                        .buildReactorFilter();
 
-                } else {
-                    jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-                }
                 //Selector selector = R(eventFilterRegexMatcher);
                 Selector selector = J("$.[?]", jsonPathReactorFilter);
                 log.debug("Building Reactor JSONPath Selector on matcher: " + jsonPathReactorFilter.toString());
@@ -317,9 +318,10 @@ public class EventSubscriptionEntityServiceImpl
         List<Subscription> subscriptions = new ArrayList<>();
         for (SubscriptionEntity se : super.getAll()) {
             try {
-                if(!Strings.isNullOrEmpty(projectId) && se.getProjectIds() != null && se.getProjectIds().contains(projectId)){
+                List<String> projectIds = se.getEventServiceFilterEntity().getProjectIds();
+                if(!Strings.isNullOrEmpty(projectId) && projectIds != null && projectIds.contains(projectId)){
                    subscriptions.add(getSubscription(se.getId()));
-                } else if(Strings.isNullOrEmpty(projectId) && (se.getProjectIds() == null || se.getProjectIds().isEmpty())){
+                } else if(Strings.isNullOrEmpty(projectId) && (projectIds == null || projectIds.isEmpty())){
                     subscriptions.add(getSubscription(se.getId()));
                 }
             } catch (NotFoundException e) {
@@ -366,9 +368,10 @@ public class EventSubscriptionEntityServiceImpl
             UserI actionUser = userManagementService.getUser(subscription.subscriptionOwner());
             String actionName = actionManager.getActionByKey(subscription.actionKey(), actionUser) != null ?
                     actionManager.getActionByKey(subscription.actionKey(), actionUser).displayName() : "Action";
-            String eventName = componentManager.getEvent(subscription.eventType()).getDisplayName();
-            String status = subscription.eventStatus();
-            String forProject = subscription.projectIds() == null || subscription.projectIds().isEmpty() ? "Site" : StringUtils.join(subscription.projectIds(), ',');
+            EventFilter eventFilter = subscription.eventFilter();
+            String eventName = componentManager.getEvent(eventFilter.eventType()).getDisplayName();
+            String status = eventFilter.status();
+            String forProject = eventFilter.projectIds() == null || eventFilter.projectIds().isEmpty() ? "Site" : StringUtils.join(eventFilter.projectIds(), ',');
             uniqueName += Strings.isNullOrEmpty(actionName) ? "Action" : actionName;
             uniqueName += " on ";
             uniqueName += Strings.isNullOrEmpty(eventName) ? "Event" : eventName;

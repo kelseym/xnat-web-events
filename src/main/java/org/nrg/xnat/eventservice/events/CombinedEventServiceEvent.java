@@ -55,7 +55,7 @@ public abstract class CombinedEventServiceEvent<EventT extends EventServiceEvent
     }
 
     @Override
-    public String getId() { return this.getClass().getCanonicalName(); }
+    public String getType() { return this.getClass().getCanonicalName(); }
 
     @Override
     public UUID getInstanceId() {return listenerId;}

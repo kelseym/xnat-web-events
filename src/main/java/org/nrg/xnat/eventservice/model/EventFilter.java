@@ -57,9 +57,30 @@ public abstract class EventFilter {
         return Filter.filter(criteria);
     }
 
+    public static EventFilter create(EventFilterCreator creator){
+        return EventFilter.builder()
+                .name(creator.name())
+                .eventType(creator.eventType())
+                .projectIds(creator.projectIds())
+                .status(creator.status())
+                .jsonPathFilter(creator.jsonPathFilter())
+                .nodeFilters(creator.nodeFilters())
+                .build();
+    }
+
+    public static EventFilter create(ProjectEventFilterCreator creator){
+        return EventFilter.builder()
+                .name(creator.name())
+                .eventType(creator.eventType())
+                .projectIds(creator.projectIds())
+                .status(creator.status())
+                .jsonPathFilter(creator.jsonPathFilter())
+                .nodeFilters(creator.nodeFilters())
+                .build();
+    }
     public static EventFilter create(Long id, String name, String eventType, List<String> projectIds, String status,
                                      String jsonPathFilter, Map<String, JsonPathFilterNode> nodeFilters) {
-        return builder()
+        return EventFilter.builder()
                 .id(id)
                 .name(name)
                 .eventType(eventType)

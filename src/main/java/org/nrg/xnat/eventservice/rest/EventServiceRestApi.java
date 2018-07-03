@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.rest;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang.StringUtils;
@@ -94,8 +93,8 @@ public class EventServiceRestApi extends AbstractXapiRestController {
                                                             final @PathVariable String project)
             throws NrgServiceRuntimeException, SubscriptionValidationException, JsonProcessingException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
-        checkProjectSubscriptionCreateAccess(subscription ,project,userI);
-        Subscription toCreate = Subscription.createOnProject(subscription, userI.getLogin(), project);
+        Subscription toCreate = Subscription.createOnProject(subscription, userI.getLogin());
+        checkProjectSubscriptionAccess(toCreate ,project,userI);
         eventService.throwExceptionIfNameExists(toCreate);
         Subscription created = eventService.createSubscription(toCreate);
         if(created == null){
@@ -145,7 +144,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
                                                    final @PathVariable String project)
             throws NrgServiceRuntimeException, SubscriptionValidationException, NotFoundException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
-        checkProjectSubscriptionModifyAccess(subscription, project, userI);
+        checkProjectSubscriptionAccess(subscription, project, userI);
         final Subscription toUpdate =
                 subscription.id() != null && subscription.id() == id
                         ? subscription
@@ -168,7 +167,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
                                                      final @PathVariable String project)
             throws NrgServiceRuntimeException, NotFoundException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
-        checkProjectSubscriptionModifyAccess(id, project, userI);
+        checkProjectSubscriptionAccess(id, project, userI);
         eventService.activateSubscription(id);
         return ResponseEntity.ok().build();
     }
@@ -187,7 +186,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
                                                      final @PathVariable String project)
             throws NrgServiceRuntimeException, NotFoundException, UnauthorizedException {
         final UserI userI = XDAT.getUserDetails();
-        checkProjectSubscriptionModifyAccess(id, project, userI);
+        checkProjectSubscriptionAccess(id, project, userI);
         eventService.deactivateSubscription(id);
         return ResponseEntity.ok().build();
     }
@@ -218,7 +217,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     @ResponseBody
     public Subscription retrieveSubscription(final @PathVariable long id,
                                              final @PathVariable String project) throws NotFoundException, UnauthorizedException {
-        checkProjectSubscriptionModifyAccess(id, project, XDAT.getUserDetails());
+        checkProjectSubscriptionAccess(id, project, XDAT.getUserDetails());
         return eventService.getSubscription(id);
     }
 
@@ -234,7 +233,7 @@ public class EventServiceRestApi extends AbstractXapiRestController {
     public ResponseEntity<Void> delete(final @PathVariable long id,
                                        final @PathVariable String project) throws Exception {
 
-        checkProjectSubscriptionModifyAccess(id, project, XDAT.getUserDetails());
+        checkProjectSubscriptionAccess(id, project, XDAT.getUserDetails());
         eventService.deleteSubscription(id);
         return ResponseEntity.noContent().build();
     }
@@ -357,20 +356,15 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         return eventService.getActionByKey(actionkey, user);
     }
 
-    private void checkProjectSubscriptionCreateAccess(ProjectSubscriptionCreator subscription, String project, UserI userI) throws UnauthorizedException {
-        if(!Strings.isNullOrEmpty(subscription.projectId()) && project != subscription.projectId()){
-            throw new UnauthorizedException(userI.getLogin() + " not authorized to create subscriptions for project: " + subscription.projectId());
-        }
+
+    private void checkProjectSubscriptionAccess(Long subscriptionId, String project, UserI userI) throws UnauthorizedException, NotFoundException {
+        checkProjectSubscriptionAccess(eventService.getSubscription(subscriptionId), project, userI);
     }
 
-    private void checkProjectSubscriptionModifyAccess(Long subscriptionId, String project, UserI userI) throws UnauthorizedException, NotFoundException {
-        checkProjectSubscriptionModifyAccess(eventService.getSubscription(subscriptionId), project, userI);
-    }
-
-    private void checkProjectSubscriptionModifyAccess(Subscription subscription, String project, UserI userI) throws UnauthorizedException {
-        if(subscription.projectIds() == null || subscription.projectIds().isEmpty() || Arrays.asList(project) != subscription.projectIds()){
+    private void checkProjectSubscriptionAccess(Subscription subscription, String project, UserI userI) throws UnauthorizedException {
+        if(subscription.eventFilter().projectIds() == null || subscription.eventFilter().projectIds().isEmpty() || Arrays.asList(project) != subscription.eventFilter().projectIds()){
             throw new UnauthorizedException(userI.getLogin() + " not authorized to modify subscriptions for project(s): "
-                    + ((subscription.projectIds() == null || subscription.projectIds().isEmpty()) ? "Site" : StringUtils.join(subscription.projectIds(),',')));
+                    + ((subscription.eventFilter().projectIds() == null || subscription.eventFilter().projectIds().isEmpty()) ? "Site" : StringUtils.join(subscription.eventFilter().projectIds(),',')));
         }
     }
 

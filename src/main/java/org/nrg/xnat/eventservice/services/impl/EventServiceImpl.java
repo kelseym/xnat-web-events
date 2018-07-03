@@ -106,7 +106,7 @@ public class EventServiceImpl implements EventService {
         if(overpopulateAttributes != null && overpopulateAttributes == true){
             Map<String, String> attributes = new HashMap<>(subscription.attributes());
             try {
-                SimpleEvent event = getEvent(subscription.eventType(), true);
+                SimpleEvent event = getEvent(subscription.eventFilter().eventType(), true);
                 event.eventProperties().forEach(node -> attributes.put(node.name(), node.replacementKey()));
                 subscription = subscription.toBuilder().attributes(attributes).build();
                 log.debug("Overpopulating subscription attributes with: " + event.eventProperties().toString());
@@ -270,7 +270,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public SimpleEvent getEvent(@Nonnull final String eventId, Boolean loadDetails) throws Exception {
         for(EventServiceEvent e : componentManager.getInstalledEvents()){
-            if(eventId.contentEquals(e.getId())){
+            if(eventId.contentEquals(e.getType())){
                 SimpleEvent simpleEvent = toPojo(e);
                 if(loadDetails){
                     Map<String, JsonPathFilterNode> eventFilterNodes = getEventFilterNodes(simpleEvent.id());
@@ -335,7 +335,7 @@ public class EventServiceImpl implements EventService {
     public void triggerEvent(EventServiceEvent event, String projectId) {
         try {
             EventSignature eventSignature = EventSignature.builder()
-                    .eventType(event.getId())
+                    .eventType(event.getType())
                     .projectId(projectId)
                     .status(event.getCurrentStatus() != null ?  event.getCurrentStatus().name() : null)
                     .build();
@@ -398,7 +398,7 @@ public class EventServiceImpl implements EventService {
                         if( subscription.eventFilter() != null && subscription.eventFilter().jsonPathFilter() != null ) {
                             // ** Attempt to filter event if serialization was successful ** //
                             if(Strings.isNullOrEmpty(jsonObject)){
-                                log.debug("Aborting event pipeline - Event: {} has no object that can be serialized and filtered.", esEvent.getId());
+                                log.debug("Aborting event pipeline - Event: {} has no object that can be serialized and filtered.", esEvent.getType());
                                 subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_FILTER_MISMATCH_HALT, new Date(), "Event has no object that can be serialized and filtered.");
                                 return;
                             } else {
@@ -473,7 +473,7 @@ public class EventServiceImpl implements EventService {
 
     private SimpleEvent toPojo(@Nonnull EventServiceEvent event) {
         return SimpleEvent.builder()
-                .id(event.getId() == null ? "" : event.getId())
+                .id(event.getType() == null ? "" : event.getType())
                 .listenerService(
                         event instanceof EventServiceListener
                         ? ((EventServiceListener) event).getClass().getName()

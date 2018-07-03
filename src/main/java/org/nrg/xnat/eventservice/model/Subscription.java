@@ -19,15 +19,12 @@ public abstract class Subscription {
 
     @Nullable @JsonProperty("id") public abstract Long id();
     @JsonProperty("name") public abstract String name();
-    @Nullable @JsonProperty("project-ids") public abstract List<String> projectIds();
     @Nullable @JsonProperty("active") public abstract Boolean active();
     @Nullable @JsonProperty("registration-key") public abstract  String listenerRegistrationKey();
-    @JsonProperty("event-type") public abstract String eventType();
-    @Nullable @JsonProperty("event-status") public abstract String eventStatus();
     @JsonIgnore @Nullable public abstract String customListenerId();
     @JsonProperty("action-key") public abstract String actionKey();
     @Nullable @JsonProperty("attributes") public abstract Map<String, String> attributes();
-    @Nullable @JsonProperty("event-filter") public abstract EventFilter eventFilter();
+    @JsonProperty("event-filter") public abstract EventFilter eventFilter();
     @Nullable @JsonProperty("act-as-event-user") public abstract Boolean actAsEventUser();
     @Nullable @JsonProperty("subscription-owner") public abstract String subscriptionOwner();
     @Nullable @JsonProperty("valid") public abstract Boolean valid();
@@ -51,11 +48,8 @@ public abstract class Subscription {
     @JsonCreator
     public static Subscription create(@JsonProperty("id") final Long id,
                                       @Nullable @JsonProperty("name") final String name,
-                                      @Nullable @JsonProperty("project-id") final String projectId,
                                       @JsonProperty("active") final Boolean active,
                                       @JsonProperty("registration-key") final String listenerRegistrationKey,
-                                      @JsonProperty("event-type") final String eventType,
-                                      @Nullable @JsonProperty("event-status") final String eventStatus,
                                       @Nullable @JsonProperty("custom-listener-id") String customListenerId,
                                       @JsonProperty("action-key") final String actionKey,
                                       @JsonProperty("attributes") final Map<String, String> attributes,
@@ -65,11 +59,8 @@ public abstract class Subscription {
         return builder()
                 .id(id)
                 .name(name)
-                .projectIds(Arrays.asList(projectId))
                 .active(active)
                 .listenerRegistrationKey(listenerRegistrationKey)
-                .eventType(eventType)
-                .eventStatus(eventStatus)
                 .customListenerId(customListenerId)
                 .actionKey(actionKey)
                 .attributes(attributes)
@@ -81,42 +72,24 @@ public abstract class Subscription {
 
     @Deprecated
     public static Subscription create(final SubscriptionCreator creator) {
+        EventFilter filter = EventFilter.create(creator.eventFilter());
         return builder()
                 .name(creator.name())
-                .projectIds(Arrays.asList(creator.projectId()))
                 .active(creator.active())
-                .eventType(creator.eventType())
-                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
-                .eventFilter(creator.eventFilter())
+                .eventFilter(filter)
                 .actAsEventUser(creator.actAsEventUser())
                 .build();
     }
 
     public static Subscription create(final SubscriptionCreator creator, final String subscriptionOwner) {
         // Support projectIds, eventType, and status in either subscription creator or filter
-        EventFilter filter = creator.eventFilter();
-        if(filter == null) {
-            filter = EventFilter.builder()
-                                .projectIds(Arrays.asList(creator.projectId()))
-                                .eventType(creator.eventType())
-                                .status(creator.eventStatus())
-                                .build();
-        } else {
-            filter = filter.toBuilder()
-                                .projectIds(filter.projectIds() == null || filter.projectIds().isEmpty() ? Arrays.asList(creator.projectId()) : filter.projectIds())
-                                .eventType(filter.eventType() == null ? creator.eventType() : filter.eventType())
-                                .status(filter.status() == null ? creator.eventStatus() : filter.status())
-                                .build();
-        }
+        EventFilter filter = EventFilter.create(creator.eventFilter());
         return builder()
                 .name(creator.name())
-                .projectIds(Arrays.asList(creator.projectId()))
                 .active(creator.active())
-                .eventType(creator.eventType())
-                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
@@ -128,32 +101,16 @@ public abstract class Subscription {
     }
 
 
-    public static Subscription createOnProject(final ProjectSubscriptionCreator creator, final String subscriptionOwner, final String project) {
+    public static Subscription createOnProject(final ProjectSubscriptionCreator creator, final String subscriptionOwner) {
         // Support projectIds, eventType, and status in either subscription creator or filter
-        EventFilter filter = creator.eventFilter();
-        if(filter == null) {
-            filter = EventFilter.builder()
-                                .projectIds(Arrays.asList(creator.projectId()))
-                                .eventType(creator.eventType())
-                                .status(creator.eventStatus())
-                                .build();
-        } else {
-            filter = filter.toBuilder()
-                           .projectIds(Arrays.asList(creator.projectId()))
-                           .eventType(creator.eventType())
-                           .status(creator.eventStatus())
-                           .build();
-        }
+        EventFilter filter = EventFilter.create(creator.eventFilter());
         return builder()
                 .name(creator.name())
-                .projectIds(Arrays.asList(project))
                 .active(creator.active())
-                .eventType(creator.eventType())
-                .eventStatus(creator.eventStatus())
                 .customListenerId(creator.customListenerId())
                 .actionKey(creator.actionKey())
                 .attributes(creator.attributes())
-                .eventFilter(creator.eventFilter())
+                .eventFilter(filter)
                 .actAsEventUser(false)
                 .subscriptionOwner(subscriptionOwner)
                 .build();
@@ -165,15 +122,9 @@ public abstract class Subscription {
 
         public abstract Builder name(String name);
 
-        public abstract Builder projectIds(List<String> projectIds);
-
         public abstract Builder listenerRegistrationKey(String listenerRegistrationKey);
 
         public abstract Builder active(Boolean active);
-
-        public abstract Builder eventType(String eventType);
-
-        public abstract Builder eventStatus(String eventStatus);
 
         public abstract Builder customListenerId(String listenerId);
 
