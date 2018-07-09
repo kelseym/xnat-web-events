@@ -103,17 +103,17 @@ public class EventServiceRestApi extends AbstractXapiRestController {
         return new ResponseEntity<>(created.name() + ":" + Long.toString(created.id()), HttpStatus.CREATED);
     }
 
-    @XapiRequestMapping(restrictTo = Admin, value = {"/events/subscription/filter/{event-id}"}, method = GET, produces = JSON)
+    @XapiRequestMapping(restrictTo = Admin, value = {"/events/subscription/filter"}, method = GET, produces = JSON, params = {"event-id"})
     @ApiOperation(value = "Get a subscription filter for a given Event ID")
     @ResponseBody
-    public Map<String, JsonPathFilterNode> retrieveFilterBuilder(final @PathVariable(name="event-id") String eventId) {
+    public Map<String, JsonPathFilterNode> retrieveFilterBuilder(final @RequestParam(name="event-id") String eventId) {
         return eventService.getEventFilterNodes(eventId);
     }
 
-    @XapiRequestMapping(restrictTo = Admin, value = {"/events/event/properties/{event-id}"}, method = GET, produces = JSON)
+    @XapiRequestMapping(restrictTo = Admin, value = {"/events/event/properties"}, method = GET, produces = JSON, params = {"event-id"})
     @ApiOperation(value = "Get a event properties for a given Event ID")
     @ResponseBody
-    public List<EventPropertyNode> retrieveEventProperties(final @PathVariable(name="event-id") String eventId) {
+    public List<EventPropertyNode> retrieveEventProperties(final @RequestParam(value = "event-id") String eventId) {
         return eventService.getEventPropertyNodes(eventId);
     }
 

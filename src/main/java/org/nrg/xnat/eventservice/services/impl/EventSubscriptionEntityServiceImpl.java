@@ -258,9 +258,11 @@ public class EventSubscriptionEntityServiceImpl
         try {
             existing = this.getDao().findByName(name);
         } catch (Exception e) {
+            log.error("Could not check database for duplication subscription name.");
             throw new NrgServiceRuntimeException("Could not check database for duplication subscription name.");
         }
         if (existing != null) {
+            log.error("Subscription with the name :" + name + " exists.");
             throw new NrgServiceRuntimeException("Subscription with the name :" + name + " exists.");
         }
     }
