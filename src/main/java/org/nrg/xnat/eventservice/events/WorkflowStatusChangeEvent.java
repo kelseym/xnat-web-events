@@ -57,7 +57,7 @@ public class WorkflowStatusChangeEvent extends CombinedEventServiceEvent<Workflo
     }
 
     @Override
-    public Boolean serializablePayload() { return true;}
+    public Boolean filterablePayload() { return true;}
 
     @Override
     public String getPayloadSignature() {

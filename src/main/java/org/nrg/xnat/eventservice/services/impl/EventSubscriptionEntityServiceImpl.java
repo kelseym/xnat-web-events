@@ -33,13 +33,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
+import reactor.bus.registry.Registry;
 import reactor.bus.selector.Selector;
+import reactor.fn.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static reactor.bus.selector.JsonPathSelector.J;
@@ -174,6 +179,8 @@ public class EventSubscriptionEntityServiceImpl
             }
             String eventType = subscription.eventFilter().eventType();
             Class<?> eventClazz = Class.forName(eventType);
+            EventServiceEvent event = componentManager.getEvent(eventType);
+
             EventServiceListener listener = null;
             // Is a custom listener defined and valid
             if(!Strings.isNullOrEmpty(subscription.customListenerId())){
@@ -187,19 +194,24 @@ public class EventSubscriptionEntityServiceImpl
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 Filter jsonPathReactorFilter;
-                jsonPathReactorFilter = EventFilter.builder().
-                        eventType(eventType).projectIds(subscription.eventFilter().projectIds()).status(subscription.eventFilter().status()).build()
-                        .buildReactorFilter();
+                Selector selector;
+                if(event.filterablePayload()){
+                    selector = J(subscription.eventFilter().jsonPathFilter());
+                    log.debug("Building Reactor JSONPath Selector on manual filter: " + subscription.eventFilter().jsonPathFilter());
+                } else{
+                    jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
+                    selector = J("$", jsonPathReactorFilter);
+                    log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathReactorFilter.toString());
+                }
 
-                //Selector selector = R(eventFilterRegexMatcher);
-                Selector selector = J("$.[?]", jsonPathReactorFilter);
-                log.debug("Building Reactor JSONPath Selector on matcher: " + jsonPathReactorFilter.toString());
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 subscription = subscription.toBuilder()
                                            .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
                                            .active(true)
+                                           .registration(registration)
                                            .build();
+
             } else {
                 log.error("Could not activate subscription:" + Long.toString(subscription.id()) + ". No appropriate listener found.");
                 throw new SubscriptionValidationException("Could not activate subscription. No appropriate listener found.");
@@ -229,7 +241,11 @@ public class EventSubscriptionEntityServiceImpl
             if(entity != null && entity.getId() != 0) {
                 entity.setActive(false);
                 entity.setListenerRegistrationKey(null);
-                deactivatedSubscription = entity.toPojo();
+                if(subscription.registration() != null) {
+                    subscription.registration().cancel();
+                    entity.setRegistration(null);
+                }
+                deactivatedSubscription = toPojo(entity);
                 update(entity);
                 log.debug("Deactivated subscription:" + Long.toString(subscription.id()));
             }
@@ -237,7 +253,7 @@ public class EventSubscriptionEntityServiceImpl
                 log.error("Failed to deactivate subscription - no entity found for id:" + Long.toString(subscription.id()));
                 throw new EntityNotFoundException("Could not retrieve EventSubscriptionEntity from id: " + subscription.id());
             }
-        } catch(NotFoundException|EntityNotFoundException e){
+        } catch(Throwable e){
             log.error("Failed to deactivate subscription.\n" + e.getMessage());
 
         }
@@ -355,12 +371,12 @@ public class EventSubscriptionEntityServiceImpl
     @Override
     public List<Subscription> getSubscriptionsByKey(String key) throws NotFoundException {
         List<SubscriptionEntity> subscriptionEntities = getDao().findByKey(key);
-        return SubscriptionEntity.toPojo(getDao().findByKey(key));
+        return toPojo(getDao().findByKey(key));
     }
 
     @Override
     public Subscription getSubscription(Long id) throws NotFoundException {
-        Subscription subscription = super.get(id).toPojo();
+        Subscription subscription = toPojo(super.get(id));
         try {
             subscription = validate(subscription).toBuilder().valid(true).validationMessage(null).build();
         } catch (SubscriptionValidationException e) {
@@ -402,10 +418,6 @@ public class EventSubscriptionEntityServiceImpl
         return uniqueName;
     }
 
-    private Subscription toPojo(final SubscriptionEntity eventSubscriptionEntity) {
-        return eventSubscriptionEntity == null ? null : eventSubscriptionEntity.toPojo();
-    }
-
     private SubscriptionEntity fromPojo(final Subscription eventSubscription) {
         return eventSubscription == null ? null : SubscriptionEntity.fromPojo(eventSubscription);
     }
@@ -417,6 +429,50 @@ public class EventSubscriptionEntityServiceImpl
         return SubscriptionEntity.fromPojoWithTemplate(eventSubscription, retrieve(eventSubscription.id()));
     }
 
+    private Registration loadReactorRegistration(@Nonnull Integer registrationHash){
+        Registry<Object, Consumer<? extends Event<?>>> consumerRegistry = eventBus.getConsumerRegistry();
+        Iterator<Registration<Object, ? extends Consumer<? extends Event<?>>>> registrationIterator = consumerRegistry.iterator();
+        while(registrationIterator.hasNext()){
+            Registration registration = registrationIterator.next();
+            if(registration.hashCode() == registrationHash){
+                return registration;
+            }
+        }
+        return null;
+    }
 
+    @Transient
+    @Override
+    public Subscription toPojo(SubscriptionEntity entity) {
+        return Subscription.builder()
+                           .id(entity.getId())
+                           .name(entity.getName())
+                           .active(entity.getActive())
+                           .listenerRegistrationKey(entity.getListenerRegistrationKey())
+                           .customListenerId(entity.getCustomListenerId())
+                           .actionKey(entity.getActionKey())
+                           .attributes(entity.getAttributes())
+                           .eventFilter(entity.getEventServiceFilterEntity() != null ? entity.getEventServiceFilterEntity().toPojo() : null)
+                           .actAsEventUser(entity.getActAsEventUser())
+                           .subscriptionOwner(entity.getSubscriptionOwner())
+                           .registration(entity.getRegistration() == null ?
+                                   null :
+                                   loadReactorRegistration(entity.getRegistration())
+                           )
+                           .build();
+    }
+
+    @Nonnull
+    @Transient
+    @Override
+    public List<Subscription> toPojo(final List<SubscriptionEntity> subscriptionEntities) {
+        List<Subscription> subscriptions = new ArrayList<>();
+        if(subscriptionEntities!= null) {
+            for (SubscriptionEntity subscriptionEntity : subscriptionEntities) {
+                subscriptions.add(this.toPojo(subscriptionEntity));
+            }
+        }
+        return subscriptions;
+    }
 
 }

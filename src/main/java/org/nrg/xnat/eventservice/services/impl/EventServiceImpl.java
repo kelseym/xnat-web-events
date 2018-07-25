@@ -332,14 +332,6 @@ public class EventServiceImpl implements EventService {
     @Async
     @Override
     public void triggerEvent(EventServiceEvent event) {
-        String projectId = event.getProjectId();
-        // TODO: Extract project id from event payload
-        triggerEvent(event, projectId);
-    }
-
-    @Async
-    @Override
-    public void triggerEvent(EventServiceEvent event, String projectId) {
         String payloadSignature = null;
         try {
             payloadSignature = event.getPayloadSignature();
@@ -349,7 +341,7 @@ public class EventServiceImpl implements EventService {
         try{
             EventSignature eventSignature = EventSignature.builder()
                     .eventType(event.getType())
-                    .projectId(projectId)
+                    .projectId(Strings.isNullOrEmpty(event.getProjectId()) ? null : event.getProjectId())
                     .status(event.getCurrentStatus() != null ?  event.getCurrentStatus().name() : null)
                     .payload(payloadSignature)
                     .build();
@@ -508,7 +500,7 @@ public class EventServiceImpl implements EventService {
                       .payloadClass(event.getObjectClass() == null ? "" : event.getObjectClass().getName())
                       .xnatType(event.getPayloadXnatType() == null ? "" : event.getPayloadXnatType())
                       .isXsiType(event.isPayloadXsiType() == null ? false : event.isPayloadXsiType())
-                      .payloadSignature(event.serializablePayload() ? event.getPayloadSignature() : null)
+                      .payloadSignature(event.filterablePayload() ? event.getPayloadSignature() : null)
                       .build();
     }
 

@@ -8,6 +8,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.jayway.jsonpath.Criteria;
 import com.jayway.jsonpath.Filter;
+import com.jayway.jsonpath.Predicate;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
@@ -45,7 +46,7 @@ public abstract class EventFilter {
     //   "project-ids":"ProjectId1",
     //   "status":"CREATED"
     // }
-    public Filter buildReactorFilter(){
+    public Filter  buildReactorFilter(){
         Criteria criteria = Criteria.where("event-type").exists(true).and("event-type").is(eventType());
         if(projectIds() != null && !projectIds().isEmpty() &&
                 !(projectIds().size() > 0 && (projectIds().get(0) == "" || projectIds().get(0) == null))) {
@@ -54,6 +55,7 @@ public abstract class EventFilter {
         if(status() != null){
             criteria = criteria.and("status").exists(true).and("status").is(status());
         }
+
         return Filter.filter(criteria);
     }
 

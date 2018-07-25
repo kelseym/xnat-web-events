@@ -65,6 +65,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
+import static reactor.bus.selector.JsonPathSelector.J;
 import static reactor.bus.selector.Selectors.type;
 
 
@@ -275,7 +276,9 @@ public class EventServiceIntegrationTest {
         Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
         assertThat("Created subscription should not be null", subscription, notNullValue());
 
-        eventService.validateSubscription(subscription);
+        subscription = eventService.validateSubscription(subscription);
+
+        assertThat("Validated subscription should not be null", subscription, notNullValue());
 
         Subscription savedSubscription = eventService.createSubscription(subscription);
         assertThat("eventService.createSubscription() should not return null", savedSubscription, notNullValue());
@@ -614,9 +617,9 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-1");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, null);
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, "PROJECTID-1");
 
-        eventService.triggerEvent(combinedEvent, "PROJECTID-1");
+        eventService.triggerEvent(combinedEvent);
 
         // wait for async action (max 1 sec.)
         synchronized (testAction) {
@@ -626,6 +629,14 @@ public class EventServiceIntegrationTest {
         TestAction actionProvider = (TestAction) testAction.provider();
         assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
         assertThat("List of detected events should not be empty.",actionProvider.getDetectedEvents().size(), not(0));
+    }
+
+    @Test
+    public void testRawJsonPathSelector() throws Exception {
+        TestListener listener = new TestListener();
+        Selector selector = J("$", "[?@['match']]");
+        eventBus.on( )
+
     }
 
     @Test
@@ -640,9 +651,9 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-2");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, null);
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, "PROJECTID-2");
 
-        eventService.triggerEvent(combinedEvent, "PROJECTID-2");
+        eventService.triggerEvent(combinedEvent);
 
         // wait for async action (max 1 sec.)
         synchronized (testAction) {
@@ -692,8 +703,8 @@ public class EventServiceIntegrationTest {
         session.setProject("PROJECTID-1");
         session.setSessionType("xnat:imageSessionData");
 
-        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, null);
-        eventService.triggerEvent(combinedEvent, session.getProject());
+        TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, session.getProject());
+        eventService.triggerEvent(combinedEvent);
 
         // wait for async action (max 1 sec.)
         synchronized (testAction) {
