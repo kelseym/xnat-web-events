@@ -50,12 +50,16 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
 
     @Override
     public void accept(Event<EventServiceEvent> event) {
-        if (event.getData() instanceof EventServiceEvent)
-            this.eventDetectedTimestamp = new Date();
-            if(eventService != null) {
+        this.eventDetectedTimestamp = new Date();
+        if (event.getData() instanceof EventServiceEvent) {
+            if (eventService != null) {
                 eventService.processEvent(this, event);
             } else {
                 log.error("Event Listener: {} is missing reference to eventService. Should have been set at activation.", this.getClass().getCanonicalName());
             }
+        }
+        synchronized (this) {
+            notifyAll();
+        }
     }
 }

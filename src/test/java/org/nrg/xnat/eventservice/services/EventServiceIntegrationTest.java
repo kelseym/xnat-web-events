@@ -634,9 +634,16 @@ public class EventServiceIntegrationTest {
     @Test
     public void testRawJsonPathSelector() throws Exception {
         TestListener listener = new TestListener();
-        Selector selector = J("$", "[?@['match']]");
-        eventBus.on( )
+        Selector selector = J("$.[?(@[\"match\"])]");
+        eventBus.on(selector, listener);
 
+        eventBus.notify("{\"match\":\"matchvalue\"}");
+
+        synchronized (testListener){
+            testListener.wait(1000);
+        }
+        Date detectedTimestamp = testListener.getDetectedTimestamp();
+        assertThat(detectedTimestamp, notNullValue());
     }
 
     @Test
