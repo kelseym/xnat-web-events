@@ -89,23 +89,6 @@ public class EventSubscriptionEntityServiceImpl
 
     @Override
     public Subscription validate(Subscription subscription) throws SubscriptionValidationException {
-        if(subscription.eventFilter() == null){
-            log.error("Missing EventFilter on subscription ", subscription.name());
-            throw new SubscriptionValidationException("Missing Event Filter");
-        }
-        if(!Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())) {
-            String jsonPathFilter = subscription.eventFilter().jsonPathFilter();
-            try {
-                JsonPath compile = JsonPath.compile(jsonPathFilter);
-                if(compile == null) {
-                    log.error("Could not compile jsonPath filter: " + jsonPathFilter);
-                    throw new SubscriptionValidationException("Could not compile jsonPath filter: " + jsonPathFilter);
-                }
-                } catch (Throwable e) {
-                log.error("Could not compile jsonPath filter: " + jsonPathFilter, e.getMessage());
-                throw new SubscriptionValidationException("Could not compile jsonPath filter: " + jsonPathFilter + e.getMessage());
-            }
-        }
         UserI actionUser = null;
         try {
             actionUser = userManagementService.getUser(subscription.subscriptionOwner());
@@ -152,6 +135,36 @@ public class EventSubscriptionEntityServiceImpl
             log.error(listenerErrorMessage + "\n" + e.getMessage());
             throw new SubscriptionValidationException(listenerErrorMessage + "\n" + e.getMessage());
         }
+        // ** Validate event filter ** //
+        if (subscription.eventFilter() == null) {
+            log.error("Missing EventFilter on subscription ", subscription.name());
+            throw new SubscriptionValidationException("Missing Event Filter");
+        } else {
+            try {
+                log.debug("Validating event filter contents.\n" + subscription.eventFilter().toString());
+                String selectorJsonPath = buildSelectorJsonPath(subscription, componentManager.getEvent(eventType));
+                if(JsonPath.compile(selectorJsonPath) == null){
+                    log.error("Could not build JsonPath filter for Reactor: " + selectorJsonPath);
+                    throw new SubscriptionValidationException("Could not build JsonPath filter for Reactor: " + selectorJsonPath);
+                }
+                if (!Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())) {
+                    if(subscription.eventFilter().jsonPathFilter().startsWith("$") || subscription.eventFilter().jsonPathFilter().contains("$[?")){
+                        log.error("Payload JsonPath filter contains $ or $[?. Filter string should include only predicate path." + "\n" + subscription.eventFilter().jsonPathFilter());
+                        throw new SubscriptionValidationException("\"Payload JsonPath filter contains $ or $[?. Filter string should include only predicate path.\"");
+                    }
+                    String jsonPathFilter = "$[?(" + subscription.eventFilter().jsonPathFilter() + ")]";
+                        if (JsonPath.compile(jsonPathFilter) == null) {
+                            log.error("Could not compile jsonPath filter: " + jsonPathFilter);
+                            throw new SubscriptionValidationException("Could not compile jsonPath filter: " + jsonPathFilter);
+                        }
+                }
+            } catch (Throwable e) {
+                log.error("Could not compile jsonPath filter." + e.getMessage());
+                throw new SubscriptionValidationException("Could not compile jsonPath filter. " +  e.getMessage());
+            }
+
+        }
+
         try {
             // Check that Action is valid and service is accessible
             EventServiceActionProvider provider = actionManager.getActionProviderByKey(subscription.actionKey());
@@ -193,15 +206,8 @@ public class EventSubscriptionEntityServiceImpl
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
-                Filter jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-                String jsonPathString = jsonPathReactorFilter.toString();
-                log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathString);
-                if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
-                    log.debug("Adding payload filter to reactor JSONPath Selector: " + subscription.eventFilter().jsonPathFilter());
-
-                }
-                Selector selector = J("$" +jsonPathString);
-
+                String selectorJsonPath = buildSelectorJsonPath(subscription, event);
+                Selector selector = J(selectorJsonPath);
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 subscription = subscription.toBuilder()
@@ -218,14 +224,29 @@ public class EventSubscriptionEntityServiceImpl
             log.debug("Updated subscription: " + subscription.name() + " with registration key: " + subscription.listenerRegistrationKey());
 
         }
-        catch (SubscriptionValidationException | ClassNotFoundException | NotFoundException e) {
+        catch (Throwable e) {
             log.error("Event subscription failed for " + subscription.toString());
             log.error(e.getMessage());
         }
         return subscription;
     }
 
+    private String buildSelectorJsonPath(Subscription subscription, EventServiceEvent event){
+        Filter jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
+        String jsonPathString = jsonPathReactorFilter.toString();
+        log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathString);
+        // ** e.g. $[?(@['event-type'] && @['event-type'] == 'org.nrg.xnat.eventservice.events.ScanEvent' && @['project-id'] && @['project-id'] IN ['Test'] && @['status'] && @['status'] == 'CREATED')]
+        if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
+            log.debug("Adding payload filter to reactor JSONPath Selector:");
+            String payloadJsonPath = " && (" + subscription.eventFilter().jsonPathFilter() + ")";
+            payloadJsonPath = new StringBuilder(payloadJsonPath.replace("@.", "@.payload-filter.")).toString();
+            log.debug(payloadJsonPath);
+            jsonPathString = new StringBuilder(jsonPathString).insert(jsonPathString.length()-2, payloadJsonPath).toString();
+            log.debug("Final JSONPath Reactor filter: " + jsonPathString);
+        }
+        return "$" +jsonPathString;
 
+    }
 
     @Override
     public Subscription deactivate(@Nonnull Subscription subscription) throws NotFoundException, EntityNotFoundException{

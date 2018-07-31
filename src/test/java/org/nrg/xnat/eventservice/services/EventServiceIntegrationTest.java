@@ -14,10 +14,15 @@ import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xdat.bean.XnatImagesessiondataBean;
 import org.nrg.xdat.model.XnatImagesessiondataI;
+import org.nrg.xdat.om.WrkWorkflowdata;
 import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xdat.security.services.UserManagementServiceI;
+import org.nrg.xft.ItemI;
+import org.nrg.xft.XFTItem;
+import org.nrg.xft.event.entities.WorkflowStatusEvent;
+import org.nrg.xft.event.persist.PersistentWorkflowI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.actions.SingleActionProvider;
@@ -30,6 +35,7 @@ import org.nrg.xnat.eventservice.events.SampleEvent;
 import org.nrg.xnat.eventservice.events.ScanEvent;
 import org.nrg.xnat.eventservice.events.SessionEvent;
 import org.nrg.xnat.eventservice.events.TestCombinedEvent;
+import org.nrg.xnat.eventservice.events.WorkflowStatusChangeEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
@@ -318,7 +324,7 @@ public class EventServiceIntegrationTest {
         EventFilterCreator eventServiceFilterWithJson = EventFilterCreator.builder()
                                                             .eventType(eventType)
                                                             .projectIds(Arrays.asList(projectId))
-                                                            .jsonPathFilter("$[?(@.modality == \"MR\")]")
+                                                            .jsonPathFilter("(@.modality == \"MR\")")
                                                             .build();
 
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
@@ -582,7 +588,7 @@ public class EventServiceIntegrationTest {
         EventFilterCreator eventServiceFilterWithJson = EventFilterCreator.builder()
                                                             .eventType(eventType)
                                                             .projectIds(Arrays.asList(projectId))
-                                                            .jsonPathFilter("$[?(@.modality == \"MR\")]")
+                                                            .jsonPathFilter("(@.modality == \"MR\")")
                                                             .build();
 
         SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
@@ -606,6 +612,37 @@ public class EventServiceIntegrationTest {
 
     @Test
     @DirtiesContext
+    public void registerFilterablePayloadWorkflowStatusChangeSubscription() throws Exception {
+        EventServiceEvent event = componentManager.getEvent("org.nrg.xnat.eventservice.events.WorkflowStatusChangeEvent");
+        assertThat("Could not load WorkflowStatusChangeEvent from componentManager", event, notNullValue());
+
+        String projectId = "PROJECTID-1";
+        String eventType = event.getType();
+        EventFilterCreator eventServiceFilterWithJson = EventFilterCreator.builder()
+                                                                          .eventType(eventType)
+                                                                          .projectIds(Arrays.asList(projectId))
+                                                                          .jsonPathFilter("(@.status == \"In Progress\")")
+                                                                          .build();
+        SubscriptionCreator subscriptionCreator = SubscriptionCreator.builder()
+                                                                     .name("PayloadFilterTestSubscription")
+                                                                     .active(true)
+                                                                     .actionKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction")
+                                                                     .eventFilter(eventServiceFilterWithJson)
+                                                                     .actAsEventUser(false)
+                                                                     .build();
+        assertThat("Json Filtered PayloadSubscriptionCreator builder failed :(", subscriptionCreator, notNullValue());
+
+        Subscription subscription = Subscription.create(subscriptionCreator, mockUser.getLogin());
+        assertThat("Json Filtered Payload Subscription creation failed :(", subscription, notNullValue());
+
+        Subscription createdSubsciption = eventService.createSubscription(subscription);
+        assertThat("eventService.createSubscription() returned a null value", createdSubsciption, not(nullValue()));
+        assertThat("Created subscription is missing listener registration key.", createdSubsciption.listenerRegistrationKey(), not(nullValue()));
+        assertThat("Created subscription is missing DB id.", createdSubsciption.id(), not(nullValue()));
+    }
+
+    @Test
+    @DirtiesContext
     public void matchMrSubscriptionToMrSession() throws Exception {
         registerMrSessionSubscription();
 
@@ -622,6 +659,32 @@ public class EventServiceIntegrationTest {
         TestCombinedEvent combinedEvent = new TestCombinedEvent(session, mockUser.getLogin(), TestCombinedEvent.Status.CREATED, "PROJECTID-1");
 
         eventService.triggerEvent(combinedEvent);
+
+        // wait for async action (max 1 sec.)
+        synchronized (testAction) {
+            testAction.wait(1000);
+        }
+
+        TestAction actionProvider = (TestAction) testAction.provider();
+        assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
+        assertThat("List of detected events should not be empty.",actionProvider.getDetectedEvents().size(), not(0));
+    }
+
+    @Test
+    @DirtiesContext
+    public void matchWorkflowStatusChangeEvent() throws Exception {
+        registerFilterablePayloadWorkflowStatusChangeSubscription();
+
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction", mockUser);
+        assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
+
+        String projectId = "PROJECTID-1";
+        ItemI item = XFTItem.NewItem("xnat:SubjectData", null);XXX
+        PersistentWorkflowI workflow = new WrkWorkflowdata(item);
+        workflow.setStatus("In Progress");
+        WorkflowStatusChangeEvent workflowStatusChangeEvent = new WorkflowStatusChangeEvent(new WorkflowStatusEvent(workflow), mockUser.getLogin(), WorkflowStatusChangeEvent.Status.CHANGED, projectId);
+
+        eventService.triggerEvent(workflowStatusChangeEvent);
 
         // wait for async action (max 1 sec.)
         synchronized (testAction) {

@@ -175,5 +175,6 @@ public class EventServiceTestConfig {
     public ScanEvent scanArchiveEvent() {return new ScanEvent();}
     @Bean
     public SessionEvent sessionArchiveEvent() {return new SessionEvent();}
-
+    @Bean
+    public WorkflowStatusChangeEvent workflowStatusChangeEvent() {return new WorkflowStatusChangeEvent();}
 }

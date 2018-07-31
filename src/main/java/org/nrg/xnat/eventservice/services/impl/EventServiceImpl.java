@@ -409,7 +409,7 @@ public class EventServiceImpl implements EventService {
                                 subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_FILTER_MISMATCH_HALT, new Date(), "Event has no object that can be serialized and filtered.");
                                 return;
                             } else {
-                                String jsonFilter = subscription.eventFilter().jsonPathFilter();
+                                String jsonFilter = "$[?(" + subscription.eventFilter().jsonPathFilter() + ")]";
                                 List<String> filterResult = JsonPath.using(jaywayConf).parse(jsonObject).read(jsonFilter);
                                 String objectSubString = org.apache.commons.lang.StringUtils.substring(jsonObject, 0, 60);
                                 if (filterResult.isEmpty()) {
