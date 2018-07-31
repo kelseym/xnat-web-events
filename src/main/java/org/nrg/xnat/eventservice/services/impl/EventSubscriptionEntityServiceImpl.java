@@ -193,16 +193,14 @@ public class EventSubscriptionEntityServiceImpl
             if(listener != null) {
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
-                Filter jsonPathReactorFilter;
-                Selector selector;
-                if(event.filterablePayload()){
-                    selector = J(subscription.eventFilter().jsonPathFilter());
-                    log.debug("Building Reactor JSONPath Selector on manual filter: " + subscription.eventFilter().jsonPathFilter());
-                } else{
-                    jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-                    selector = J("$" + jsonPathReactorFilter.toString());
-                    log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathReactorFilter.toString());
+                Filter jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
+                String jsonPathString = jsonPathReactorFilter.toString();
+                log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathString);
+                if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
+                    log.debug("Adding payload filter to reactor JSONPath Selector: " + subscription.eventFilter().jsonPathFilter());
+
                 }
+                Selector selector = J("$" +jsonPathString);
 
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));

@@ -26,7 +26,7 @@ public abstract class EventFilter {
     @Nullable @JsonProperty("status")     public abstract String status();
 
     // ** Post-detection filter components ** //
-    @Nullable @JsonProperty("json-path-filter") public abstract String jsonPathFilter();
+    @Nullable @JsonProperty("jsonpath-payload-filter") public abstract String jsonPathFilter();
     @Nullable @JsonProperty("filter-nodes") public abstract Map<String, JsonPathFilterNode> nodeFilters();
 
 
