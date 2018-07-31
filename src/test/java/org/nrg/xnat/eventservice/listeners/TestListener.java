@@ -48,6 +48,10 @@ public class TestListener implements EventServiceListener<EventServiceEvent> {
         return eventDetectedTimestamp;
     }
 
+    public void clearDetectedTimestamp(){
+        eventDetectedTimestamp = null;
+    }
+
     @Override
     public void accept(Event<EventServiceEvent> event) {
         this.eventDetectedTimestamp = new Date();

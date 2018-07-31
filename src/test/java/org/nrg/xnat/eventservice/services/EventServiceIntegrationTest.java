@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.Criteria;
 import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.After;
@@ -46,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
+import reactor.bus.registry.Registration;
 import reactor.bus.selector.Selector;
 
 import java.util.ArrayList;
@@ -634,16 +636,59 @@ public class EventServiceIntegrationTest {
     @Test
     public void testRawJsonPathSelector() throws Exception {
         TestListener listener = new TestListener();
-        Selector selector = J("$.[?(@[\"match\"])]");
+        Selector selector = J("$.[?(@.match && @.match =~ /matchvalue/i)]");
         eventBus.on(selector, listener);
 
         eventBus.notify("{\"match\":\"matchvalue\"}");
-
-        synchronized (testListener){
-            testListener.wait(1000);
+        synchronized (listener){
+            listener.wait(1000);
         }
-        Date detectedTimestamp = testListener.getDetectedTimestamp();
-        assertThat(detectedTimestamp, notNullValue());
+        assertThat(listener.getDetectedTimestamp(), notNullValue());
+
+
+        listener.clearDetectedTimestamp();
+        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
+
+        eventBus.notify("{\"match\":\"mismatchvalue\"}");
+        synchronized (listener){
+            listener.wait(1000);
+        }
+        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
+    }
+
+    @Test
+    public void testManuallySetReactorSelector() throws Exception
+    {
+        Criteria criteria = Criteria.where("event-type").exists(true).and("event-type").is("org.nrg.xnat.eventservice.events.SessionEvent");
+        criteria = criteria.and("project-id").exists(true).and("project-id").in(Arrays.asList("Test"));
+        criteria = criteria.and("status").exists(true).and("status").is("CREATED");
+        Filter jsonPathReactorFilter = Filter.filter(criteria);
+        Selector selector = J("$" + jsonPathReactorFilter.toString());
+
+        TestListener listener = new TestListener();
+        Registration registration = eventBus.on(selector, listener);
+
+        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
+        String eventKey = "{\"event-type\":\"org.nrg.xnat.eventservice.events.ScanEvent\",\"project-id\":\"Test\",\"status\":\"CREATED\"}";
+        EventServiceEvent scanEvent = new ScanEvent(null,"TestID",ScanEvent.Status.CREATED,"Test");
+        eventBus.notify(eventKey, Event.wrap(scanEvent));
+        synchronized (listener){
+            listener.wait(1000);
+        }
+        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
+
+        listener.clearDetectedTimestamp();
+        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
+        eventKey = "{\"event-type\":\"org.nrg.xnat.eventservice.events.SessionEvent\",\"project-id\":\"Test\",\"status\":\"CREATED\"}";
+        EventServiceEvent sessionEvent = new SessionEvent(null,"TestID",SessionEvent.Status.CREATED,"Test");
+        eventBus.notify(eventKey, Event.wrap(sessionEvent));
+        synchronized (listener){
+            listener.wait(1000);
+        }
+        assertThat(listener.getDetectedTimestamp(), notNullValue());
+
+
+
     }
 
     @Test

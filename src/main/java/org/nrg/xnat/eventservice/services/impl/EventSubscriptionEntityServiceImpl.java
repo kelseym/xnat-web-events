@@ -200,7 +200,7 @@ public class EventSubscriptionEntityServiceImpl
                     log.debug("Building Reactor JSONPath Selector on manual filter: " + subscription.eventFilter().jsonPathFilter());
                 } else{
                     jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-                    selector = J("$", jsonPathReactorFilter);
+                    selector = J("$" + jsonPathReactorFilter.toString());
                     log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathReactorFilter.toString());
                 }
 
