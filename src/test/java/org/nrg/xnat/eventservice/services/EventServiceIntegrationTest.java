@@ -14,28 +14,18 @@ import org.nrg.framework.services.ContextService;
 import org.nrg.framework.utilities.BasicXnatResourceLocator;
 import org.nrg.xdat.bean.XnatImagesessiondataBean;
 import org.nrg.xdat.model.XnatImagesessiondataI;
-import org.nrg.xdat.om.WrkWorkflowdata;
 import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xdat.security.services.UserManagementServiceI;
-import org.nrg.xft.ItemI;
-import org.nrg.xft.XFTItem;
 import org.nrg.xft.event.entities.WorkflowStatusEvent;
-import org.nrg.xft.event.persist.PersistentWorkflowI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.eventservice.actions.EventServiceLoggingAction;
 import org.nrg.xnat.eventservice.actions.SingleActionProvider;
 import org.nrg.xnat.eventservice.actions.TestAction;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.events.EventServiceEvent;
-import org.nrg.xnat.eventservice.events.ProjectEvent;
-import org.nrg.xnat.eventservice.events.SampleEvent;
-import org.nrg.xnat.eventservice.events.ScanEvent;
-import org.nrg.xnat.eventservice.events.SessionEvent;
-import org.nrg.xnat.eventservice.events.TestCombinedEvent;
-import org.nrg.xnat.eventservice.events.WorkflowStatusChangeEvent;
+import org.nrg.xnat.eventservice.events.*;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
@@ -56,19 +46,9 @@ import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
 import reactor.bus.selector.Selector;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
@@ -679,10 +659,9 @@ public class EventServiceIntegrationTest {
         assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
 
         String projectId = "PROJECTID-1";
-        ItemI item = XFTItem.NewItem("xnat:SubjectData", null);XXX
-        PersistentWorkflowI workflow = new WrkWorkflowdata(item);
+        WorkflowStatusEvent workflow = new WorkflowStatusEvent();
         workflow.setStatus("In Progress");
-        WorkflowStatusChangeEvent workflowStatusChangeEvent = new WorkflowStatusChangeEvent(new WorkflowStatusEvent(workflow), mockUser.getLogin(), WorkflowStatusChangeEvent.Status.CHANGED, projectId);
+        WorkflowStatusChangeEvent workflowStatusChangeEvent = new WorkflowStatusChangeEvent(workflow, mockUser.getLogin(), WorkflowStatusChangeEvent.Status.CHANGED, projectId);
 
         eventService.triggerEvent(workflowStatusChangeEvent);
 
