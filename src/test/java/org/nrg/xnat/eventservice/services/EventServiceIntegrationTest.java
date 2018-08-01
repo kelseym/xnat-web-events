@@ -1,6 +1,7 @@
 package org.nrg.xnat.eventservice.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
 import com.jayway.jsonpath.Criteria;
 import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
@@ -25,7 +26,13 @@ import org.nrg.xnat.eventservice.actions.SingleActionProvider;
 import org.nrg.xnat.eventservice.actions.TestAction;
 import org.nrg.xnat.eventservice.config.EventServiceTestConfig;
 import org.nrg.xnat.eventservice.entities.SubscriptionEntity;
-import org.nrg.xnat.eventservice.events.*;
+import org.nrg.xnat.eventservice.events.EventServiceEvent;
+import org.nrg.xnat.eventservice.events.ProjectEvent;
+import org.nrg.xnat.eventservice.events.SampleEvent;
+import org.nrg.xnat.eventservice.events.ScanEvent;
+import org.nrg.xnat.eventservice.events.SessionEvent;
+import org.nrg.xnat.eventservice.events.TestCombinedEvent;
+import org.nrg.xnat.eventservice.events.WorkflowStatusChangeEvent;
 import org.nrg.xnat.eventservice.listeners.EventServiceListener;
 import org.nrg.xnat.eventservice.listeners.TestListener;
 import org.nrg.xnat.eventservice.model.*;
@@ -46,9 +53,19 @@ import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
 import reactor.bus.selector.Selector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
@@ -661,6 +678,8 @@ public class EventServiceIntegrationTest {
         String projectId = "PROJECTID-1";
         WorkflowStatusEvent workflow = new WorkflowStatusEvent();
         workflow.setStatus("In Progress");
+        workflow.setJustification("Unit Test");
+        workflow.setEventSpecificFields(Sets.newHashSet());
         WorkflowStatusChangeEvent workflowStatusChangeEvent = new WorkflowStatusChangeEvent(workflow, mockUser.getLogin(), WorkflowStatusChangeEvent.Status.CHANGED, projectId);
 
         eventService.triggerEvent(workflowStatusChangeEvent);
@@ -674,6 +693,34 @@ public class EventServiceIntegrationTest {
         assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
         assertThat("List of detected events should not be empty.",actionProvider.getDetectedEvents().size(), not(0));
     }
+
+    @Test
+    @DirtiesContext
+    public void mismatchWorkflowStatusChangeEvent() throws Exception {
+        registerFilterablePayloadWorkflowStatusChangeSubscription();
+
+        Action testAction = actionManager.getActionByKey("org.nrg.xnat.eventservice.actions.TestAction:org.nrg.xnat.eventservice.actions.TestAction", mockUser);
+        assertThat("Could not load TestAction from actionManager", testAction, notNullValue());
+
+        String projectId = "PROJECTID-1";
+        WorkflowStatusEvent workflow = new WorkflowStatusEvent();
+        workflow.setStatus("Complete");
+        workflow.setJustification("Unit Test");
+        workflow.setEventSpecificFields(Sets.newHashSet());
+        WorkflowStatusChangeEvent workflowStatusChangeEvent = new WorkflowStatusChangeEvent(workflow, mockUser.getLogin(), WorkflowStatusChangeEvent.Status.CHANGED, projectId);
+
+        eventService.triggerEvent(workflowStatusChangeEvent);
+
+        // wait for async action (max 1 sec.)
+        synchronized (testAction) {
+            testAction.wait(1000);
+        }
+
+        TestAction actionProvider = (TestAction) testAction.provider();
+        assertThat("List of detected events should not be null.",actionProvider.getDetectedEvents(), notNullValue());
+        assertThat("List of detected events should be empty.",actionProvider.getDetectedEvents().size(), is(0));
+    }
+
 
     @Test
     public void testRawJsonPathSelector() throws Exception {

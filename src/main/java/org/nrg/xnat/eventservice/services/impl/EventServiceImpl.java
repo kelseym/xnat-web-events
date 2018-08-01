@@ -332,9 +332,9 @@ public class EventServiceImpl implements EventService {
     @Async
     @Override
     public void triggerEvent(EventServiceEvent event) {
-        String payloadSignature = null;
+        Object payloadSignature = null;
         try {
-            payloadSignature = event.getPayloadSignature();
+            payloadSignature = event.getPayloadSignatureObject();
         } catch (Throwable e) {
             log.error("Exception extracting payload signature from " + event.getDisplayName() + "\n" + e.getMessage());
         }
@@ -346,9 +346,9 @@ public class EventServiceImpl implements EventService {
                     .payload(payloadSignature)
                     .build();
             String eventKey = mapper.writeValueAsString(eventSignature);
+            log.debug("Firing EventService Event for Label: " + eventKey);
             eventBus.notify(eventKey, Event.wrap(event));
             recentTriggers.add(eventKey);
-            log.debug("Fired EventService Event for Label: " + eventKey);
         } catch (Throwable e) {
             log.error("Exception Triggering Event: " + e.getMessage());
         }
@@ -500,7 +500,7 @@ public class EventServiceImpl implements EventService {
                       .payloadClass(event.getObjectClass() == null ? "" : event.getObjectClass().getName())
                       .xnatType(event.getPayloadXnatType() == null ? "" : event.getPayloadXnatType())
                       .isXsiType(event.isPayloadXsiType() == null ? false : event.isPayloadXsiType())
-                      .payloadSignature(event.filterablePayload() ? event.getPayloadSignature() : null)
+                      .payloadSignature(event.filterablePayload() ? event.getPayloadSignatureObject() : null)
                       .build();
     }
 

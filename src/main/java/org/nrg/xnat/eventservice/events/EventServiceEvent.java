@@ -24,7 +24,7 @@ public interface EventServiceEvent<ObjectT> extends EventI {
     // Event is expected to be triggered with JSON representation of (at least some of) the payload object
     Boolean filterablePayload();
     // JSON String representation of payload - used for Reactor filtering
-    String getPayloadSignature();
+    Object getPayloadSignatureObject();
     // Get the user triggering the event
     String getUser();
      // Get the time of event triggering

@@ -210,6 +210,7 @@ public class EventSubscriptionEntityServiceImpl
                 Selector selector = J(selectorJsonPath);
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
+                log.debug("JSONPath Selector:\n" + selectorJsonPath);
                 subscription = subscription.toBuilder()
                                            .listenerRegistrationKey(uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString())
                                            .active(true)
@@ -233,18 +234,18 @@ public class EventSubscriptionEntityServiceImpl
 
     private String buildSelectorJsonPath(Subscription subscription, EventServiceEvent event){
         Filter jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-        String jsonPathString = jsonPathReactorFilter.toString();
+        String jsonPathString = "$" + jsonPathReactorFilter.toString();
         log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathString);
         // ** e.g. $[?(@['event-type'] && @['event-type'] == 'org.nrg.xnat.eventservice.events.ScanEvent' && @['project-id'] && @['project-id'] IN ['Test'] && @['status'] && @['status'] == 'CREATED')]
         if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
             log.debug("Adding payload filter to reactor JSONPath Selector:");
             String payloadJsonPath = " && (" + subscription.eventFilter().jsonPathFilter() + ")";
-            payloadJsonPath = new StringBuilder(payloadJsonPath.replace("@.", "@.payload-filter.")).toString();
+            payloadJsonPath = new StringBuilder(payloadJsonPath.replace("@.", "@.payload.")).toString();
             log.debug(payloadJsonPath);
             jsonPathString = new StringBuilder(jsonPathString).insert(jsonPathString.length()-2, payloadJsonPath).toString();
             log.debug("Final JSONPath Reactor filter: " + jsonPathString);
         }
-        return "$" +jsonPathString;
+        return jsonPathString;
 
     }
 
@@ -418,7 +419,7 @@ public class EventSubscriptionEntityServiceImpl
             uniqueName += Strings.isNullOrEmpty(actionName) ? "Action" : actionName;
             uniqueName += " on ";
             uniqueName += Strings.isNullOrEmpty(eventName) ? "Event" : eventName;
-            uniqueName += " " + status;
+            uniqueName += status != null ? (" " + status) : "";
             uniqueName += " for ";
             uniqueName += forProject;
 

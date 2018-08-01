@@ -68,7 +68,7 @@ public class SampleEvent implements EventServiceEvent {
     }
 
     @Override
-    public String getPayloadSignature() {
+    public String getPayloadSignatureObject() {
         return null;
     }
 
