@@ -87,7 +87,7 @@ public abstract class EventFilter {
                                      @JsonProperty("event-type")            String eventType,
                                      @Nullable @JsonProperty("project-ids") List<String> projectIds,
                                      @Nullable @JsonProperty("status")      String status,
-                                     @Nullable @JsonProperty("json-path-filter") String jsonPathFilter,
+                                     @Nullable @JsonProperty("payload-filter") String jsonPathFilter,
                                      @Nullable @JsonProperty("filter-nodes")     Map<String, JsonPathFilterNode> nodeFilters) {
         return EventFilter.builder()
                 .id(id)

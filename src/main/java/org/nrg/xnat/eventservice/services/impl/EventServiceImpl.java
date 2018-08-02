@@ -345,7 +345,7 @@ public class EventServiceImpl implements EventService {
                     .status(event.getCurrentStatus() != null ?  event.getCurrentStatus().name() : null)
                     .payload(payloadSignature)
                     .build();
-            String eventKey = mapper.writeValueAsString(eventSignature);
+            String eventKey = "{" + "\"eventservice\" : " +  mapper.writeValueAsString(eventSignature) + "}";
             log.debug("Firing EventService Event for Label: " + eventKey);
             eventBus.notify(eventKey, Event.wrap(event));
             recentTriggers.add(eventKey);

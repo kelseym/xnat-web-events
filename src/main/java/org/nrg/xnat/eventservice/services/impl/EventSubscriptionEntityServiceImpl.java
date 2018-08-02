@@ -2,8 +2,15 @@ package org.nrg.xnat.eventservice.services.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import org.apache.commons.lang.StringUtils;
 import org.nrg.framework.exceptions.NotFoundException;
 import org.nrg.framework.exceptions.NrgServiceRuntimeException;
@@ -46,6 +53,7 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import static reactor.bus.selector.JsonPathSelector.J;
 
@@ -84,8 +92,33 @@ public class EventSubscriptionEntityServiceImpl
         this.userManagementService = userManagementService;
         this.subscriptionDeliveryEntityService = subscriptionDeliveryEntityService;
         log.debug("EventSubscriptionService started normally.");
+
+        configureJsonPath();
     }
 
+    private void configureJsonPath() {
+        // Set the default JayWay JSONPath configuration
+        Configuration.setDefaults(new Configuration.Defaults() {
+
+            private final JsonProvider jsonProvider = new JacksonJsonProvider();
+            private final MappingProvider mappingProvider = new JacksonMappingProvider();
+
+            @Override
+            public JsonProvider jsonProvider() {
+                return jsonProvider;
+            }
+
+            @Override
+            public MappingProvider mappingProvider() {
+                return mappingProvider;
+            }
+
+            @Override
+            public Set<Option> options() {
+                return Sets.newHashSet(Option.SUPPRESS_EXCEPTIONS);
+            }
+        });
+    }
 
     @Override
     public Subscription validate(Subscription subscription) throws SubscriptionValidationException {
@@ -207,7 +240,7 @@ public class EventSubscriptionEntityServiceImpl
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 String selectorJsonPath = buildSelectorJsonPath(subscription, event);
-                Selector selector = J(selectorJsonPath);
+                Selector selector = J("$..eventservice", Filter.parse(selectorJsonPath));
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
                 log.debug("JSONPath Selector:\n" + selectorJsonPath);
@@ -234,7 +267,7 @@ public class EventSubscriptionEntityServiceImpl
 
     private String buildSelectorJsonPath(Subscription subscription, EventServiceEvent event){
         Filter jsonPathReactorFilter = subscription.eventFilter().buildReactorFilter();
-        String jsonPathString = "$" + jsonPathReactorFilter.toString();
+        String jsonPathString = jsonPathReactorFilter.toString();
         log.debug("Building Reactor JSONPath Selector on generated filter: " + jsonPathString);
         // ** e.g. $[?(@['event-type'] && @['event-type'] == 'org.nrg.xnat.eventservice.events.ScanEvent' && @['project-id'] && @['project-id'] IN ['Test'] && @['status'] && @['status'] == 'CREATED')]
         if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
