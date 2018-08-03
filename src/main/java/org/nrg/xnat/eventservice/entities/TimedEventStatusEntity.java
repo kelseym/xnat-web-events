@@ -56,8 +56,8 @@ public class TimedEventStatusEntity implements Serializable {
         this.statusTimestamp = statusTimestamp;
     }
 
+    @Column
     @Lob
-    @Column(name="message", columnDefinition = "CLOB")
     public String getMessage() {
         return message;
     }

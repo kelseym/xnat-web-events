@@ -175,7 +175,7 @@ public class EventSubscriptionEntityServiceImpl
         } else {
             try {
                 log.debug("Validating event filter contents.\n" + subscription.eventFilter().toString());
-                String payloadJsonPath = buildPayoadJsonPath(subscription, componentManager.getEvent(eventType));
+                String payloadJsonPath = buildPayloadJsonPath(subscription, componentManager.getEvent(eventType));
                 if(!Strings.isNullOrEmpty(payloadJsonPath) && JsonPath.compile(payloadJsonPath) == null){
                     log.error("Could not build JsonPath filter for payload: " + payloadJsonPath);
                     throw new SubscriptionValidationException("Could not build JsonPath filter for Reactor: " + payloadJsonPath);
@@ -265,9 +265,8 @@ public class EventSubscriptionEntityServiceImpl
         return subscription;
     }
 
-    private String buildPayoadJsonPath(Subscription subscription, EventServiceEvent event){
+    private String buildPayloadJsonPath(Subscription subscription, EventServiceEvent event){
         String payloadJsonPath = null;
-        log.debug("Building Reactor JSONPath on for payload.");
         if(event.filterablePayload() && !Strings.isNullOrEmpty(subscription.eventFilter().jsonPathFilter())){
             log.debug("Creating payload filter for Reactor Selector:");
             payloadJsonPath = "$[?(" + subscription.eventFilter().jsonPathFilter() + ")]";
