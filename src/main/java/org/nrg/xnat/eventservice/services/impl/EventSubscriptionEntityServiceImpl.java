@@ -44,8 +44,11 @@ import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.bus.registry.Registration;
 import reactor.bus.registry.Registry;
+import reactor.bus.selector.PredicateSelector;
 import reactor.bus.selector.Selector;
+import reactor.bus.selector.Selectors;
 import reactor.fn.Consumer;
+import reactor.fn.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityNotFoundException;
@@ -240,6 +243,7 @@ public class EventSubscriptionEntityServiceImpl
                 EventServiceListener uniqueListener = listener.getInstance();
                 uniqueListener.setEventService(eventService);
                 String selectorJsonPath = buildSelectorJsonPath(subscription, event);
+                PredicateSelector predicateSelector = Selectors.predicate(new SubscriptionSelector(selectorJsonPath));
                 Selector selector = J("$..eventservice", Filter.parse(selectorJsonPath));
                 Registration registration = eventBus.on(selector, uniqueListener);
                 log.debug("Activated Reactor Registration: " + registration.hashCode() + "  RegistrationKey: " + (uniqueListener.getInstanceId() == null ? "" : uniqueListener.getInstanceId().toString()));
@@ -526,6 +530,29 @@ public class EventSubscriptionEntityServiceImpl
             }
         }
         return subscriptions;
+    }
+
+    private class SubscriptionSelector implements Predicate<String> {
+        String jsonFilter;
+        private Configuration subscriptionConf = Configuration.defaultConfiguration()
+                    .addOptions(Option.ALWAYS_RETURN_LIST, Option.SUPPRESS_EXCEPTIONS);
+        public SubscriptionSelector(String jsonFilter) {
+            this.jsonFilter = jsonFilter;
+        }
+
+        @Override
+        public boolean test(String jsonEventKey) {
+            try{
+                // TODO: Check if event key is an event service JSON blob
+                List<String> filterResult = JsonPath.using(subscriptionConf).parse(jsonEventKey).read(jsonFilter);
+                if(filterResult != null && !filterResult.isEmpty()){
+                    return true;
+                }
+            } catch (Throwable e){
+                return false;
+            }
+            return false;
+        }
     }
 
 }
