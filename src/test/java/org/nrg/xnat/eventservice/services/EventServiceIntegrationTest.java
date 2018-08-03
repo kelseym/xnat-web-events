@@ -2,7 +2,6 @@ package org.nrg.xnat.eventservice.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-import com.jayway.jsonpath.Criteria;
 import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.After;
@@ -50,7 +49,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
-import reactor.bus.registry.Registration;
 import reactor.bus.selector.Selector;
 
 import java.util.ArrayList;
@@ -70,7 +68,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
-import static reactor.bus.selector.JsonPathSelector.J;
 import static reactor.bus.selector.Selectors.type;
 
 
@@ -640,6 +637,21 @@ public class EventServiceIntegrationTest {
 
     @Test
     @DirtiesContext
+    public void tryToBreakReactorWithStringEventKey() throws Exception {
+        String finished = null;
+        try {
+            registerFilterablePayloadWorkflowStatusChangeSubscription();
+            eventBus.notify("org.this.could.cause.problems", Event.wrap("MisterBug"));
+            eventBus.notify(Event.wrap("MrsBug"));
+            finished = "yay";
+        } catch (Throwable throwable){
+            throwable.printStackTrace();
+        }
+        assertThat("Exception raised when attempting to handle string event key.", finished, notNullValue());
+    }
+
+    @Test
+    @DirtiesContext
     public void matchMrSubscriptionToMrSession() throws Exception {
         registerMrSessionSubscription();
 
@@ -721,64 +733,6 @@ public class EventServiceIntegrationTest {
         assertThat("List of detected events should be empty.",actionProvider.getDetectedEvents().size(), is(0));
     }
 
-
-    @Test
-    public void testRawJsonPathSelector() throws Exception {
-        TestListener listener = new TestListener();
-        Selector selector = J("$.[?(@.match && @.match =~ /matchvalue/i)]");
-        eventBus.on(selector, listener);
-
-        eventBus.notify("{\"match\":\"matchvalue\"}");
-        synchronized (listener){
-            listener.wait(1000);
-        }
-        assertThat(listener.getDetectedTimestamp(), notNullValue());
-
-
-        listener.clearDetectedTimestamp();
-        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
-
-        eventBus.notify("{\"match\":\"mismatchvalue\"}");
-        synchronized (listener){
-            listener.wait(1000);
-        }
-        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
-    }
-
-    @Test
-    public void testManuallySetReactorSelector() throws Exception
-    {
-        Criteria criteria = Criteria.where("event-type").exists(true).and("event-type").is("org.nrg.xnat.eventservice.events.SessionEvent");
-        criteria = criteria.and("project-id").exists(true).and("project-id").in(Arrays.asList("Test"));
-        criteria = criteria.and("status").exists(true).and("status").is("CREATED");
-        Filter jsonPathReactorFilter = Filter.filter(criteria);
-        Selector selector = J("$" + jsonPathReactorFilter.toString());
-
-        TestListener listener = new TestListener();
-        Registration registration = eventBus.on(selector, listener);
-
-        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
-        String eventKey = "{\"event-type\":\"org.nrg.xnat.eventservice.events.ScanEvent\",\"project-id\":\"Test\",\"status\":\"CREATED\"}";
-        EventServiceEvent scanEvent = new ScanEvent(null,"TestID",ScanEvent.Status.CREATED,"Test");
-        eventBus.notify(eventKey, Event.wrap(scanEvent));
-        synchronized (listener){
-            listener.wait(1000);
-        }
-        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
-
-        listener.clearDetectedTimestamp();
-        assertThat(listener.getDetectedTimestamp(), is(nullValue()));
-        eventKey = "{\"event-type\":\"org.nrg.xnat.eventservice.events.SessionEvent\",\"project-id\":\"Test\",\"status\":\"CREATED\"}";
-        EventServiceEvent sessionEvent = new SessionEvent(null,"TestID",SessionEvent.Status.CREATED,"Test");
-        eventBus.notify(eventKey, Event.wrap(sessionEvent));
-        synchronized (listener){
-            listener.wait(1000);
-        }
-        assertThat(listener.getDetectedTimestamp(), notNullValue());
-
-
-
-    }
 
     @Test
     @DirtiesContext
