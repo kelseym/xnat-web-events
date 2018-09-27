@@ -69,7 +69,7 @@ public class AutomationScriptActionProvider extends MultiActionProvider{
 
     @Override
     public List<Action> getActions(String projectId, String xnatType, UserI user) {
-        return null;
+        return getAllActions();
     }
 
     @Override

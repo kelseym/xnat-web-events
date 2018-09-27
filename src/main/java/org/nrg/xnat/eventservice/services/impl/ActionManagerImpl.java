@@ -3,6 +3,7 @@ package org.nrg.xnat.eventservice.services.impl;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.nrg.xdat.base.BaseElement;
 import org.nrg.xft.XFTItem;
 import org.nrg.xft.event.EventUtils;
@@ -78,37 +79,31 @@ public class ActionManagerImpl implements ActionManager {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
             List<Action> providerActions = provider.getAllActions();
-            if(providerActions != null)
+            if(CollectionUtils.isNotEmpty(providerActions)) {
                 actions.addAll(providerActions);
+            }
         }
         return actions;
     }
 
     @Override
     public List<Action> getActions(UserI user) {
-        List<Action> actions = new ArrayList<>();
-        for(EventServiceActionProvider provider:getActionProviders()) {
-            List<Action> providerActions = provider.getActions(null, null, user);
-            if(providerActions != null)
-                actions.addAll(providerActions);
-        }
-        return actions;
+        return getActions(null, null, user);
     }
 
     @Override
     public List<Action> getActions(String xnatType, UserI user) {
-        List<Action> actions = new ArrayList<>();
-        for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions(null, xnatType, user));
-        }
-        return actions;
+        return getActions(null, xnatType, user);
     }
 
     @Override
     public List<Action> getActions(String projectId, String xnatType, UserI user) {
         List<Action> actions = new ArrayList<>();
         for(EventServiceActionProvider provider:getActionProviders()) {
-            actions.addAll(provider.getActions(projectId, xnatType, user));
+            List<Action> providerActions = provider.getActions(projectId, xnatType, user);
+            if(CollectionUtils.isNotEmpty(providerActions)) {
+                actions.addAll(providerActions);
+            }
         }
         return actions;
     }
