@@ -74,7 +74,14 @@ public class AutomationScriptActionProvider extends MultiActionProvider{
 
     @Override
     public Boolean isActionAvailable(String actionKey, String projectId, String xnatType, UserI user) {
-        return null;
+        String actionId = actionKeyToActionId(actionKey);
+        List<Action> actions = getActions(projectId, xnatType, user);
+        for(Action action : actions){
+            if(action.id().contentEquals(actionId)){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
