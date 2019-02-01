@@ -401,7 +401,7 @@ public class EventServiceImpl implements EventService {
 
                             if(!Strings.isNullOrEmpty(jsonObject)) {
                                 String objectSubString = org.apache.commons.lang.StringUtils.substring(jsonObject, 0, 200);
-                                log.debug("Serialized Object: " + objectSubString + "...");
+                                log.debug("Serialized Object: \n" + jsonObject);
                                 subscriptionDeliveryEntityService.addStatus(deliveryId, OBJECT_SERIALIZED, new Date(), "Object Serialized: " + objectSubString + "...");
                             }
                         }catch(NullPointerException e){
